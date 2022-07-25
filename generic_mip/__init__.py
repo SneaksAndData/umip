@@ -10,3 +10,4 @@ from .abstract_obj_builder import AbstractObjectiveBuilder
 from .exception import OptimizationException, AbnormalException, InfeasibleException
 from .variable_data_type import VariableDataType
 from .solver import GurobiSolver, OrToolsSolver
+from .abstract_model_factory import AbstractOptimizationModelFactory
