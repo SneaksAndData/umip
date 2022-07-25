@@ -1,16 +1,23 @@
 [tool.poetry]
-name = "python-project"
+name = "generic-mip"
 version = "0.0.0"
-description = "My ESD Python Project"
-authors = ["ECCO Sneaks & Data <esdsupport@ecco.com>"]
+description = "Generic MIP framework"
+authors = ["Matthias Als <mata@ecco.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.9,<3.11"
+ortools = "==9.3.10497"
+gurobipy = "==9.5.2"
+pandas = "~1.3.2"
+numpy = "~1.22.3"
+scipy = "~1.7.1"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "~6.2"
-pylint = "~2.12"
+pytest = "~6.2.0"
+pylint = "~2.14.0"
+pytest-cov = "~2.12.1"
+pyarrow = "5.0.0"
 
 [build-system]
 requires = ["poetry-core"]

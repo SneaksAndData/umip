@@ -4,4 +4,15 @@
 # can either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
-disable=W0212,R0903,C0301
+disable=C0301,W1203,E0402,R0903,W0108,W0212,C0415,R0913,R0902,R0914,R0915
+
+# Minimum lines number of a similarity.
+min-similarity-lines=8
+
+[Format]
+
+good-names=i,j,k,e,ex,_,pk,x,y,df,f,d,lb,ub
+
+[TYPECHECK]
+
+extension-pkg-allow-list = gurobipy
