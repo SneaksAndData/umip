@@ -131,3 +131,16 @@ class OrToolsSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-pub
             self._solver.EnableOutput()
         else:
             self._solver.SuppressOutput()
+
+    def get_variable_count(self):
+        return self._solver.NumVariables()
+
+    def get_constraint_count(self):
+        return self._solver.NumConstraints()
+
+    def get_objective_terms_count(self):
+        return len([coeff for var in self._solver.variables() if (coeff := self._objective.GetCoefficient(var)) != 0])
+
+    def force_update(self):
+        # OR Tools uses eager updates.
+        pass

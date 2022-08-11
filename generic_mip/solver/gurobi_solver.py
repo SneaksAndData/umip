@@ -80,12 +80,14 @@ class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-publ
 
     def add_variable(self, lb: float, ub: float, name: str, dtype: VariableDataType) -> gp.Var:
         if dtype == VariableDataType.INT:
-            return self._solver.addVar(lb, ub, 0, gp.GRB.INTEGER, name, None)
-        if dtype == VariableDataType.FLOAT:
-            return self._solver.addVar(lb, ub, 0, gp.GRB.CONTINUOUS, name, None)
-        if dtype == VariableDataType.BOOL:
-            return self._solver.addVar(lb, ub, 0, gp.GRB.BINARY, name, None)
-        raise ValueError("Unsupported variable data type")
+            var = self._solver.addVar(lb, ub, 0, gp.GRB.INTEGER, name, None)
+        elif dtype == VariableDataType.FLOAT:
+            var = self._solver.addVar(lb, ub, 0, gp.GRB.CONTINUOUS, name, None)
+        elif dtype == VariableDataType.BOOL:
+            var = self._solver.addVar(lb, ub, 0, gp.GRB.BINARY, name, None)
+        else:
+            raise ValueError("Unsupported variable data type")
+        return var
 
     def get_variable_value(self, var: gp.Var) -> float:
         return var.x
@@ -94,13 +96,13 @@ class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-publ
         self._objective += coeff*var
 
     def set_optimization_direction(self, maximization: bool):
-        self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MINIMIZE if maximization else gp.GRB.MINIMIZE)
+        self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE)
 
     def get_objective_value(self) -> float:
         return self._solver.getObjective().getValue()
 
     def solve(self) -> int:
-        self._solver.setObjective(self._objective, gp.GRB.MINIMIZE)
+        self._solver.setObjective(self._objective)
         self._solver.optimize()
         self.status = self._solver.getAttr(gp.GRB.Attr.Status)
         return self.status
@@ -134,3 +136,15 @@ class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-publ
             self._solver.setParam(gp.GRB.Param.LogToConsole, 1)
         else:
             self._solver.setParam(gp.GRB.Param.LogToConsole, 0)
+
+    def get_constraint_count(self):
+        return len(self._solver.getConstrs())
+
+    def get_variable_count(self):
+        return len(self._solver.getVars())
+
+    def get_objective_terms_count(self):
+        return self._objective.size()
+
+    def force_update(self):
+        self._solver.update()

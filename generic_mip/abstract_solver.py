@@ -1,11 +1,11 @@
 """Abstract definition of a solver."""
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from typing import Optional, Union
 import numpy.typing as npt
 from generic_mip.variable_data_type import VariableDataType
 
 
-class AbstractOptimizationSolver(ABC):  # pylint: disable=too-many-public-methods
+class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too-many-public-methods
     """
     The optimization solver contains all optimization related states, variables, constraints and objectives.
     This class serves as a generic API for various implementations through solver specific APIs.
@@ -228,5 +228,35 @@ class AbstractOptimizationSolver(ABC):  # pylint: disable=too-many-public-method
         """
         Set solver setting.
         :param setting: The setting to set.
+        :return:
+        """
+
+    @abstractmethod
+    def get_variable_count(self):
+        """
+        Get number of variables in the model.
+        :return: Number of variables.
+        """
+
+    @abstractmethod
+    def get_constraint_count(self):
+        """
+        Get number of constraints in the model.
+        :return: Number of constraints.
+        """
+
+    @abstractmethod
+    def get_objective_terms_count(self):
+        """
+        Get number of objective terms in the model.
+        :return: Number of objective terms.
+        """
+
+    @abstractmethod
+    def force_update(self):
+        """
+        Some models add variables, constraints and objective lazily.
+        Use this method to force an update of the model, if the specific implementation uses lazy updates.
+        E.g. Gurobi uses lazy updates.
         :return:
         """
