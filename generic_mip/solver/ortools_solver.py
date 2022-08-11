@@ -7,7 +7,7 @@ from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
-class OrToolsSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-public-methods
+class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Google OR-Tools library."""
     def __init__(self, solver: pywraplp.Solver):
         self._solver = solver
@@ -20,8 +20,8 @@ class OrToolsSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-pub
     def set_multiple_variable_hints(self, vars_: npt.NDArray[pywraplp.Variable], hints: npt.NDArray[float]) -> None:
         self._solver.SetHint(vars_, hints)
 
-    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> any:
-        return [self.add_variable(lb, ub, f'{name}{i}', dtype) for i in range(count)]
+    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> npt.NDArray[pywraplp.Variable]:
+        return np.array([self.add_variable(lb, ub, f'{name}{i}', dtype) for i in range(count)])
 
     def add_multiple_constraints(
         self,
@@ -30,7 +30,7 @@ class OrToolsSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-pub
         coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
         vars_: Union[npt.NDArray[npt.NDArray[pywraplp.Variable]], npt.NDArray[pywraplp.Variable]],
         name: Optional[str] = None
-    ) -> any:
+    ) -> None:
         if coeffs.size == 0:
             return
 
@@ -79,14 +79,14 @@ class OrToolsSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-pub
     def get_variable_value(self, var: pywraplp.Variable) -> float:
         return var.SolutionValue()
 
-    def add_objective_term(self, coeff: float, var: pywraplp.Variable):
+    def add_objective_term(self, coeff: float, var: pywraplp.Variable) -> None:
         self._objective.SetCoefficient(var, coeff)
 
     def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[pywraplp.Variable]) -> None:
         for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
             self.add_objective_term(coeffs[i], vars_[i])
 
-    def set_optimization_direction(self, maximization: bool):
+    def set_optimization_direction(self, maximization: bool) -> None:
         self._objective.SetOptimizationDirection(maximization)
 
     def get_objective_value(self) -> float:
@@ -102,22 +102,22 @@ class OrToolsSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-pub
     def infinity(self) -> float:
         return self._solver.infinity()
 
-    def is_optimal(self):
+    def is_optimal(self) -> bool:
         return self.status == pywraplp.Solver.OPTIMAL
 
-    def is_infeasible(self):
+    def is_infeasible(self) -> bool:
         return self.status == pywraplp.Solver.INFEASIBLE
 
-    def is_unbounded(self):
+    def is_unbounded(self) -> bool:
         return self.status == pywraplp.Solver.UNBOUNDED
 
-    def is_abnormal(self):
+    def is_abnormal(self) -> bool:
         return self.status == pywraplp.Solver.ABNORMAL
 
-    def set_solver_setting(self, setting: str):
+    def set_solver_setting(self, setting: str) -> None:
         self._solver.SetSolverSpecificParametersAsString(setting)
 
-    def export_to_file(self, path: str):
+    def export_to_file(self, path: str) -> None:
         if path.lower().endswith('.lp'):
             file_content = self._solver.ExportModelAsLpFormat(False)
         else:

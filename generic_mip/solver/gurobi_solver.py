@@ -8,7 +8,7 @@ from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
-class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-public-methods
+class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Gurobi library."""
     def __init__(self):
         self._solver = gp.Model()
@@ -25,10 +25,17 @@ class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-publ
     def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var]) -> None:
         self._objective += coeffs.dot(vars_)
 
-    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> any:
+    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> npt.NDArray[gp.Var]:
         return self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=name).tolist()
 
-    def add_multiple_constraints(self, lb: Union[None, npt.NDArray[float]], ub: Union[None, npt.NDArray[float]], coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]], vars_: Union[npt.NDArray[npt.NDArray[gp.Var]], npt.NDArray[gp.Var]], name: Optional[str] = None) -> any:
+    def add_multiple_constraints(
+        self,
+        lb: Union[None, npt.NDArray[float]],
+        ub: Union[None, npt.NDArray[float]],
+        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
+        vars_: Union[npt.NDArray[npt.NDArray[gp.Var]], npt.NDArray[gp.Var]],
+        name: Optional[str] = None
+    ) -> None:
         if coeffs.ndim == 1 and not isinstance(coeffs[0], np.ndarray):
             coeffs = np.asarray([coeffs]).T
             vars_ = np.asarray([vars_]).T
@@ -92,10 +99,10 @@ class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-publ
     def get_variable_value(self, var: gp.Var) -> float:
         return var.x
 
-    def add_objective_term(self, coeff: float, var: gp.Var):
+    def add_objective_term(self, coeff: float, var: gp.Var) -> None:
         self._objective += coeff*var
 
-    def set_optimization_direction(self, maximization: bool):
+    def set_optimization_direction(self, maximization: bool) -> None:
         self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE)
 
     def get_objective_value(self) -> float:
@@ -113,19 +120,19 @@ class GurobiSolver(AbstractOptimizationSolver):  # pylint: disable=too-many-publ
     def infinity(self) -> float:
         return gp.GRB.INFINITY
 
-    def is_optimal(self):
+    def is_optimal(self) -> bool:
         return self.status == gp.GRB.OPTIMAL
 
-    def is_infeasible(self):
+    def is_infeasible(self) -> bool:
         return self.status == gp.GRB.INFEASIBLE
 
-    def is_unbounded(self):
+    def is_unbounded(self) -> bool:
         return self.status == gp.GRB.UNBOUNDED
 
-    def is_abnormal(self):
+    def is_abnormal(self) -> bool:
         return self.status not in (gp.GRB.OPTIMAL, gp.GRB.INFEASIBLE, gp.GRB.UNBOUNDED)
 
-    def set_solver_setting(self, setting: str):
+    def set_solver_setting(self, setting: str) -> None:
         raise ValueError("Not supported in Gurobi solver")
 
     def export_to_file(self, path: str) -> None:

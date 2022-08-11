@@ -1,11 +1,14 @@
 """Abstract definition of a solver."""
-from abc import ABC, abstractmethod, ABCMeta
-from typing import Optional, Union
+from abc import ABC, abstractmethod
+from typing import Optional, Union, TypeVar, Generic
 import numpy.typing as npt
 from generic_mip.variable_data_type import VariableDataType
 
+CT = TypeVar('CT')  # Constraint type
+VT = TypeVar('VT')  # Variable type
 
-class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too-many-public-methods
+
+class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-many-public-methods
     """
     The optimization solver contains all optimization related states, variables, constraints and objectives.
     This class serves as a generic API for various implementations through solver specific APIs.
@@ -16,9 +19,9 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         lb: Optional[float],
         ub: Optional[float],
         coeffs: Union[npt.NDArray[float], float],
-        vars_:  Union[npt.NDArray[any], any],
+        vars_:  Union[npt.NDArray[VT], VT],
         name: Optional[str] = None
-    ) -> any:
+    ) -> CT:
         """
         Add a single constraint:
         lb <= c_1x_1 + c_2x_2 + ... <= ub
@@ -36,7 +39,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def get_constraint(self, name: str) -> any:
+    def get_constraint(self, name: str) -> CT:
         """
         Retrieves a constraint by name.
         :param name: Name of the constraint.
@@ -49,9 +52,9 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         lb: Optional[npt.NDArray[float]],
         ub: Optional[npt.NDArray[float]],
         coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[any]], npt.NDArray[any]],
+        vars_: Union[npt.NDArray[npt.NDArray[VT]], npt.NDArray[VT]],
         name: Optional[str] = None
-    ) -> any:
+    ) -> None:
         """
         Adds multiple constraints at once, such that:
             lb_1 <= c_11x_11 + c_12x_12 + ... <= ub_1
@@ -76,7 +79,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def add_variable(self, lb: float, ub: float, name: str, dtype: VariableDataType) -> any:
+    def add_variable(self, lb: float, ub: float, name: str, dtype: VariableDataType) -> VT:
         """
         Adds variable to the model.
 
@@ -88,7 +91,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> any:
+    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
 
@@ -101,7 +104,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def set_variable_hint(self, var: any, hint: float) -> None:
+    def set_variable_hint(self, var: VT, hint: float) -> None:
         """
         Adds solution hint to decision variable.
 
@@ -111,7 +114,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[any], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(self, vars_: npt.NDArray[VT], hints: npt.NDArray[float]) -> None:
         """
         Adds solution hints to multiple decision variables. Number of variables and hints must be identical.
 
@@ -121,7 +124,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def add_objective_term(self, coeff: float, var: any) -> None:
+    def add_objective_term(self, coeff: float, var: VT) -> None:
         """
         Adds a single objective term.
 
@@ -131,7 +134,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[any]) -> None:
+    def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT]) -> None:
         """
         Adds multiple objective terms at once: c_1x_1 + c_2x_2 + ...
 
@@ -159,7 +162,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def solve(self) -> any:
+    def solve(self) -> int:
         """
         Solve the optimization problem.
         :return: The status of the optimization.
@@ -201,7 +204,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         """
 
     @abstractmethod
-    def get_variable_value(self, var: any) -> float:
+    def get_variable_value(self, var: VT) -> float:
         """
         Get value of a decision variable.
         :param var: Variable to get value from.
@@ -224,7 +227,7 @@ class AbstractOptimizationSolver(ABC, metaclass=ABCMeta):  # pylint: disable=too
         :return:
         """
 
-    def set_solver_setting(self, setting: str):
+    def set_solver_setting(self, setting: str) -> None:
         """
         Set solver setting.
         :param setting: The setting to set.
