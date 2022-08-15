@@ -1,5 +1,6 @@
 """A solver implemented in the Google OR-Tools library."""
 from typing import Optional, Union, Iterable
+from enum import Enum
 from ortools.linear_solver import pywraplp
 import numpy.typing as npt
 import numpy as np
@@ -8,12 +9,22 @@ from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
+class OrToolsSolverEngine(Enum):
+    """OR-Tools compatible MIP solver engines."""
+    SCIP = 'SCIP'
+    GUROBI = 'GUROBI'
+    CBC = 'CBC'
+    CPLEX = 'CPLEX'
+    XPRESS = 'XPRESS'
+    GLPK = 'GLPK'
+
+
 class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Google OR-Tools library."""
-    def __init__(self, solver: pywraplp.Solver, logger: ProteusLogger):
+    def __init__(self, solver_engine: OrToolsSolverEngine, logger: ProteusLogger):
         super().__init__(logger)
-        self._solver = solver
-        self._objective: pywraplp.Objective = solver.Objective()
+        self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
+        self._objective: pywraplp.Objective = self._solver.Objective()
         self.status = None
 
     def set_variable_hint(self, var: pywraplp.Variable, hint: float) -> None:

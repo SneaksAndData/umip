@@ -1,8 +1,5 @@
 import pytest
 import numpy as np
-from typing import Type, Callable
-from ortools.linear_solver import pywraplp
-from generic_mip.solver import GurobiSolver, OrToolsSolver
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
