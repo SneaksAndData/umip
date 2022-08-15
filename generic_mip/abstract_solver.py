@@ -17,7 +17,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def __init__(self, logger: ProteusLogger):
         """
         Initialize the solver.
-        :param logger: The logger to use.
+        :param logger: The logger to use. Notice that most solvers call C-based libraries that do not use the logger.
+            If these libraries produce output, it will need to be caught by redirecting their logs.
+            Log redirect is not performed in this class due to the overhead it would add to each method call.
         """
         self._logger = logger
 

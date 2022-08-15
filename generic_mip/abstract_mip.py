@@ -62,29 +62,32 @@ class AbstractMipModel(AbstractOptimizationModel):
         self._logger.info(template="Spent {time}s preparing data", time=time.time() - start_time)
         start_time = time.time()
 
-        for variable_builder in self._variable_builders:
-            self._dfs = variable_builder.build(
-                solver=self._solver,
-                input_dfs=self._dfs
-            )
+        with self._logger.redirect(log_level=LogLevel.INFO):
+            for variable_builder in self._variable_builders:
+                self._dfs = variable_builder.build(
+                    solver=self._solver,
+                    input_dfs=self._dfs
+                )
 
         self._logger.info(template="Spent {time}s building variables", time=time.time() - start_time)
         start_time = time.time()
 
-        for constraint_builder in self._constraint_builders:
-            constraint_builder.build(
-                solver=self._solver,
-                input_dfs=self._dfs
-            )
+        with self._logger.redirect(log_level=LogLevel.INFO):
+            for constraint_builder in self._constraint_builders:
+                constraint_builder.build(
+                    solver=self._solver,
+                    input_dfs=self._dfs
+                )
 
         self._logger.info(template="Spent {time}s building constraints", time=time.time() - start_time)
         start_time = time.time()
 
-        for objective_builder in self._objective_builders:
-            objective_builder.build(
-                solver=self._solver,
-                input_dfs=self._dfs
-            )
+        with self._logger.redirect(log_level=LogLevel.INFO):
+            for objective_builder in self._objective_builders:
+                objective_builder.build(
+                    solver=self._solver,
+                    input_dfs=self._dfs
+                )
 
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._built = True
@@ -94,16 +97,18 @@ class AbstractMipModel(AbstractOptimizationModel):
             raise ValueError("Model must be built before calling .solve()")
 
         start_time = time.time()
-        status = self._solver.solve()
+        with self._logger.redirect(log_level=LogLevel.INFO):
+            status = self._solver.solve()
         exec_time = time.time() - start_time
         self._logger.info(template="Spent {time}s optimising.", time=exec_time)
         self._solved = True
 
-        for variable_builder in self._variable_builders:
-            self._dfs = variable_builder.unpack(
-                solver=self._solver,
-                input_dfs=self._dfs
-            )
+        with self._logger.redirect(log_level=LogLevel.INFO):
+            for variable_builder in self._variable_builders:
+                self._dfs = variable_builder.unpack(
+                    solver=self._solver,
+                    input_dfs=self._dfs
+                )
 
         if self._solver.is_optimal():
             return None
