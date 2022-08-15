@@ -24,6 +24,9 @@ jobs:
           set -e
           curl -sSL https://install.python-poetry.org | python3 - --preview
       - name: Install Dependencies
+        env:
+          POETRY_HTTP_BASIC_AZOPS_USERNAME: ${{ secrets.AZOPS_PAT_USER }}
+          POETRY_HTTP_BASIC_AZOPS_PASSWORD: ${{ secrets.AZOPS_PAT }}
         run: |
           set -e
           poetry install

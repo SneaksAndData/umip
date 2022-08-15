@@ -1,6 +1,10 @@
 """Abstract definition of a MIP model."""
 import time
+import sys
 from typing import List
+from logging import StreamHandler
+from proteus.logs import ProteusLogger
+from proteus.logs.models import LogLevel
 import pandas as pd
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
@@ -17,9 +21,29 @@ class AbstractMipModel(AbstractOptimizationModel):
     The MIP model contains builders for variables, constraints and objectives as well as the data preparator.
     The model orchestrates the building and solving processes.
     """
-    def __init__(self, solver: AbstractOptimizationSolver, constraint_builders: List[AbstractConstraintBuilder],
-                 variable_builders: List[AbstractDecisionVariableBuilder],
-                 objective_builders: List[AbstractObjectiveBuilder], data_preparator: AbstractDataPreparator):
+    def __init__(
+        self,
+        solver: AbstractOptimizationSolver,
+        constraint_builders: List[AbstractConstraintBuilder],
+        variable_builders: List[AbstractDecisionVariableBuilder],
+        objective_builders: List[AbstractObjectiveBuilder],
+        data_preparator: AbstractDataPreparator,
+        logger: ProteusLogger = ProteusLogger().add_log_source(
+            log_source_name='AbstractMipModel',
+            min_log_level=LogLevel.INFO,
+            log_handlers=[StreamHandler(sys.stdout)],
+            is_default=True
+        )
+    ):
+        """
+        Initialize the MIP model.
+        :param solver: The solver implementation to use.
+        :param constraint_builders: The builders of the model constraints.
+        :param variable_builders: The builders of the model decision variables.
+        :param objective_builders: The builders of the model objective terms.
+        :param data_preparator: The data preparator.
+        :param logger: The logger to use. Logging to stdout by default.
+        """
         self._objective_builders = objective_builders
         self._variable_builders = variable_builders
         self._constraint_builders = constraint_builders
@@ -28,15 +52,14 @@ class AbstractMipModel(AbstractOptimizationModel):
         self._dfs = None
         self._built = False
         self._solved = False
-        self._verbose = False
+        self._logger = logger
 
     def build(self, **input_dfs: pd.DataFrame) -> None:
         start_time = time.time()
 
         self._dfs = self._data_preparator.prepare(input_dfs)
 
-        if self._verbose:
-            print(f"Spent {time.time() - start_time}s preparing data")
+        self._logger.info(template="Spent {time}s preparing data", time=time.time() - start_time)
         start_time = time.time()
 
         for variable_builder in self._variable_builders:
@@ -45,8 +68,7 @@ class AbstractMipModel(AbstractOptimizationModel):
                 input_dfs=self._dfs
             )
 
-        if self._verbose:
-            print(f"Spent {time.time() - start_time}s building variables")
+        self._logger.info(template="Spent {time}s building variables", time=time.time() - start_time)
         start_time = time.time()
 
         for constraint_builder in self._constraint_builders:
@@ -55,8 +77,7 @@ class AbstractMipModel(AbstractOptimizationModel):
                 input_dfs=self._dfs
             )
 
-        if self._verbose:
-            print(f"Spent {time.time() - start_time}s building constraints")
+        self._logger.info(template="Spent {time}s building constraints", time=time.time() - start_time)
         start_time = time.time()
 
         for objective_builder in self._objective_builders:
@@ -65,8 +86,7 @@ class AbstractMipModel(AbstractOptimizationModel):
                 input_dfs=self._dfs
             )
 
-        if self._verbose:
-            print(f"Spent {time.time() - start_time}s building objective")
+        self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._built = True
 
     def solve(self, **kwargs: any) -> any:
@@ -76,8 +96,7 @@ class AbstractMipModel(AbstractOptimizationModel):
         start_time = time.time()
         status = self._solver.solve()
         exec_time = time.time() - start_time
-        if self._verbose:
-            print(f"Spent {exec_time}s optimising.")
+        self._logger.info(template="Spent {time}s optimising.", time=exec_time)
         self._solved = True
 
         for variable_builder in self._variable_builders:
@@ -99,13 +118,6 @@ class AbstractMipModel(AbstractOptimizationModel):
             raise ValueError("Model must be solved before calling .objective_value()")
 
         return self._solver.get_objective_value()
-
-    def set_verbose_mode(self, verbose: bool) -> None:
-        if self._built:
-            raise ValueError("Verbose mode cannot be changed after the model is built")
-
-        self._verbose = verbose
-        self._solver.set_verbose(verbose)
 
     def export_model_to_file(self, path: str) -> None:
         """

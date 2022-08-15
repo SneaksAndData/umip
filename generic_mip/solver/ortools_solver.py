@@ -3,13 +3,15 @@ from typing import Optional, Union, Iterable
 from ortools.linear_solver import pywraplp
 import numpy.typing as npt
 import numpy as np
+from proteus.logs import ProteusLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
 class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Google OR-Tools library."""
-    def __init__(self, solver: pywraplp.Solver):
+    def __init__(self, solver: pywraplp.Solver, logger: ProteusLogger):
+        super().__init__(logger)
         self._solver = solver
         self._objective: pywraplp.Objective = solver.Objective()
         self.status = None

@@ -2,11 +2,19 @@
 from abc import ABC, abstractmethod
 from typing import Dict
 import pandas as pd
+from proteus.logs import ProteusLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 
 class AbstractDecisionVariableBuilder(ABC):
     """A variable builder has the responsibility of building one or more decision variables."""
+    def __init__(self, logger: ProteusLogger):
+        """
+        Initialize the variable builder.
+        :param logger: The logger to use.
+        """
+        self._logger = logger
+
     @abstractmethod
     def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[any, pd.DataFrame]) -> Dict[any, pd.DataFrame]:
         """

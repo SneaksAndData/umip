@@ -27,11 +27,3 @@ class AbstractOptimizationModel(ABC):
         Get the objective value of the optimization.
         :return: The objective value.
         """
-
-    @abstractmethod
-    def set_verbose_mode(self, verbose: bool) -> None:
-        """
-        Sets verbose mode of the building and solving processes.
-        :param verbose: Whether to enable verbose mode.
-        :return:
-        """

@@ -7,7 +7,7 @@ from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
-@pytest.mark.parametrize("solver", [GurobiSolver(), OrToolsSolver(solver=pywraplp.Solver.CreateSolver('SCIP'))])
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
 def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding a variable, a constraint, and an objective term is reflected in the solver.
@@ -23,7 +23,7 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_objective_terms_count() == 1
 
 
-@pytest.mark.parametrize("solver", [GurobiSolver(), OrToolsSolver(solver=pywraplp.Solver.CreateSolver('SCIP'))])
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
 def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding 3 variables, 3 constraints, and 3 objective terms is reflected in the solver.
@@ -46,17 +46,13 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_objective_terms_count() == 3
 
 
-@pytest.mark.parametrize("solver_class, get_solver_args", [
-    (GurobiSolver, lambda: {}),
-    (OrToolsSolver, lambda: {'solver': pywraplp.Solver.CreateSolver('SCIP')})
-])
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT, VariableDataType.BOOL])
 @pytest.mark.parametrize("maximisation", [True, False])
-def test_optimal_solution(solver_class: Type[AbstractOptimizationSolver], get_solver_args: Callable[[], dict], dtype: VariableDataType, maximisation: bool):
+def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDataType, maximisation: bool):
     """
     Testing that the solver returns the known optimal solution, and it is reflected in the optimisation status.
     """
-    solver = solver_class(**get_solver_args())
     solver.set_optimization_direction(maximization=maximisation)
     var = solver.add_variable(lb=0.0, ub=100.0, name='x', dtype=dtype)
     solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name='c1')
@@ -71,16 +67,12 @@ def test_optimal_solution(solver_class: Type[AbstractOptimizationSolver], get_so
     assert solver.get_variable_value(var) == int(maximisation)
 
 
-@pytest.mark.parametrize("solver_class, get_solver_args", [
-    (GurobiSolver, lambda: {}),
-    (OrToolsSolver, lambda: {'solver': pywraplp.Solver.CreateSolver('SCIP')})
-])
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT])
-def test_unbounded_problem(solver_class: Type[AbstractOptimizationSolver], get_solver_args: Callable[[], dict], dtype: VariableDataType):
+def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDataType):
     """
     Testing that the solver recognises an unbounded solution, and it is reflected in the optimisation status.
     """
-    solver = solver_class(**get_solver_args())
     solver.set_optimization_direction(maximization=True)
     var = solver.add_variable(lb=0.0, ub=solver.infinity(), name='x', dtype=dtype)
     solver.add_objective_term(coeff=1.0, var=var)
@@ -92,16 +84,12 @@ def test_unbounded_problem(solver_class: Type[AbstractOptimizationSolver], get_s
     assert not solver.is_infeasible()
 
 
-@pytest.mark.parametrize("solver_class, get_solver_args", [
-    (GurobiSolver, lambda: {}),
-    (OrToolsSolver, lambda: {'solver': pywraplp.Solver.CreateSolver('SCIP')})
-])
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT])
-def test_infeasible_problem(solver_class: Type[AbstractOptimizationSolver], get_solver_args: Callable[[], dict], dtype: VariableDataType):
+def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableDataType):
     """
     Testing that the solver recognises an infeasible solution, and it is reflected in the optimisation status.
     """
-    solver = solver_class(**get_solver_args())
     var = solver.add_variable(lb=0.0, ub=1.0, name='x', dtype=dtype)
     solver.add_constraint(lb=5.0, ub=6.0, coeffs=np.array([1.0]), vars_=np.array([var]), name='c1')
     solver.add_objective_term(coeff=1.0, var=var)
@@ -113,7 +101,7 @@ def test_infeasible_problem(solver_class: Type[AbstractOptimizationSolver], get_
     assert solver.is_infeasible()
 
 
-@pytest.mark.parametrize("solver", [GurobiSolver(), OrToolsSolver(solver=pywraplp.Solver.CreateSolver('SCIP'))])
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
 @pytest.mark.parametrize("verbose", [True, False])
 def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """

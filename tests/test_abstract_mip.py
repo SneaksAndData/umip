@@ -42,16 +42,17 @@ class MockDataPreparator(AbstractDataPreparator):
 @mock.patch.object(MockConstraintBuilder, "build")
 @mock.patch.object(MockDecisionVariableBuilder, "build")
 @mock.patch.object(MockDataPreparator, "prepare")
-def test_build_abstract_mip(prepare, var_build, constr_build, obj_build, unpack):
+def test_build_abstract_mip(prepare, var_build, constr_build, obj_build, unpack, logger):
     """
     Testing that all provided builders are called.
     """
     model = AbstractMipModel(
         solver=mock.Mock(),
-        constraint_builders=[MockConstraintBuilder()],
-        variable_builders=[MockDecisionVariableBuilder()],
-        objective_builders=[MockObjectiveBuilder()],
-        data_preparator=MockDataPreparator()
+        constraint_builders=[MockConstraintBuilder(logger)],
+        variable_builders=[MockDecisionVariableBuilder(logger)],
+        objective_builders=[MockObjectiveBuilder(logger)],
+        data_preparator=MockDataPreparator(logger),
+        logger=logger
     )
     model.build(df=pd.DataFrame({"a": [1, 2, 3]}))
     prepare.assert_called_once()
@@ -63,52 +64,17 @@ def test_build_abstract_mip(prepare, var_build, constr_build, obj_build, unpack)
     unpack.assert_called_once()
 
 
-def test_early_solve():
+def test_early_solve(logger):
     """
     Testing that the solve method raises an error if the model is not built.
     """
     model = AbstractMipModel(
         solver=mock.Mock(),
-        constraint_builders=[MockConstraintBuilder()],
-        variable_builders=[MockDecisionVariableBuilder()],
-        objective_builders=[MockObjectiveBuilder()],
-        data_preparator=MockDataPreparator()
+        constraint_builders=[MockConstraintBuilder(logger)],
+        variable_builders=[MockDecisionVariableBuilder(logger)],
+        objective_builders=[MockObjectiveBuilder(logger)],
+        data_preparator=MockDataPreparator(logger),
+        logger=logger
     )
     with pytest.raises(ValueError):
         model.solve()
-
-
-def test_early_set_verbose():
-    """
-    Testing that the set_verbose method raises an error if the model is built.
-    """
-    model = AbstractMipModel(
-        solver=mock.Mock(),
-        constraint_builders=[MockConstraintBuilder()],
-        variable_builders=[MockDecisionVariableBuilder()],
-        objective_builders=[MockObjectiveBuilder()],
-        data_preparator=MockDataPreparator()
-    )
-    model.build(df=pd.DataFrame())
-    with pytest.raises(ValueError):
-        model.set_verbose_mode(verbose=True)
-
-
-@pytest.mark.parametrize("verbose", [True, False])
-def test_set_verbose(capfd, verbose):
-    model = AbstractMipModel(
-        solver=mock.Mock(),
-        constraint_builders=[MockConstraintBuilder()],
-        variable_builders=[MockDecisionVariableBuilder()],
-        objective_builders=[MockObjectiveBuilder()],
-        data_preparator=MockDataPreparator()
-    )
-    model.set_verbose_mode(verbose=verbose)
-    model.build(df=pd.DataFrame())
-
-    out, err = capfd.readouterr()
-
-    if verbose:
-        assert len(out) > 0
-    else:
-        assert len(out) == 0
