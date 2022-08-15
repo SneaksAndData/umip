@@ -24,6 +24,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
     def __init__(self, solver_engine: OrToolsSolverEngine, logger: ProteusLogger):
         super().__init__(logger)
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
+        self._solver.EnableOutput()
         self._objective: pywraplp.Objective = self._solver.Objective()
         self.status = None
 
