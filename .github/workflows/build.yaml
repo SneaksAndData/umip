@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - uses: SneaksAndData/github-actions/semver_release@v0.0.2
+      - uses: SneaksAndData/github-actions/semver_release@v0.0.5
         with:
           major_v: 0
           minor_v: 1
