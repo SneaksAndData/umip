@@ -12,8 +12,7 @@ gurobipy = "9.5.2"
 pandas = "~1.4.3"
 numpy = "~1.22.3"
 scipy = "~1.8.1"
-proteus = "~0.6.18"
-coverage = "<6.4.3" # Newest version (6.4.3) is unable to install
+proteus = "~1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "~6.2.0"

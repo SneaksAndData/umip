@@ -15,21 +15,16 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9.x'
           architecture: 'x64'
-      - name: Install Poetry
-        run: |
-          set -e
-          curl -sSL https://install.python-poetry.org | python3 - --preview
-      - name: Install Dependencies
-        env:
-          POETRY_HTTP_BASIC_AZOPS_USERNAME: ${{ secrets.AZOPS_PAT_USER }}
-          POETRY_HTTP_BASIC_AZOPS_PASSWORD: ${{ secrets.AZOPS_PAT }}
-        run: |
-          set -e
-          poetry install
+      - name: Install Poetry and dependencies
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.8
+        with:
+           pypi_repo_url: ${{ secrets.AZOPS_PYPI_REPO_URL }}
+           pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}
+           pypi_token: ${{ secrets.AZOPS_PAT }}
       - name: Lint code
         run: |
           set -e
@@ -53,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - uses: SneaksAndData/github-actions/semver_release@v0.0.5
+      - uses: SneaksAndData/github-actions/semver_release@v0.0.8
         with:
           major_v: 0
           minor_v: 1
@@ -65,16 +60,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9.x'
+          architecture: 'x64'
       - name: Install Poetry
-        env:
-          REPO_URL: ${{ secrets.AZOPS_PYPI_UPLOAD }}
-        run: |
-          set -e
-          curl -sSL https://install.python-poetry.org | python3 - --preview
-          poetry config repositories.azops $REPO_URL
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.8
+        with:
+           pypi_repo_url: ${{ secrets.AZOPS_PYPI_REPO_URL }}
+           pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}
+           pypi_token: ${{ secrets.AZOPS_PAT }}
+           skip_dependencies: true
       - name: Publish distribution to Azure Artifacts
         env:
           POETRY_HTTP_BASIC_AZOPS_USERNAME: ${{ secrets.AZOPS_PAT_USER }}
