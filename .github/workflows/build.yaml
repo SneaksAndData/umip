@@ -75,8 +75,10 @@ jobs:
         env:
           POETRY_HTTP_BASIC_AZOPS_USERNAME: ${{ secrets.AZOPS_PAT_USER }}
           POETRY_HTTP_BASIC_AZOPS_PASSWORD: ${{ secrets.AZOPS_PAT }}
+          REPO_URL: ${{ secrets.AZOPS_PYPI_UPLOAD }}
         run: |
           set -e
+          poetry config repositories.azops $REPO_URL
           version=$(git describe --tags --abbrev=7)
           sed -i "s/version = \"0.0.0\"/version = \"${version:1}\"/" pyproject.toml
           echo "__version__ = '${version:1}'" > ./generic_mip/_version.py
