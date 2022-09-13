@@ -1,0 +1,147 @@
+from typing import Dict, Union, Tuple, List
+import pandas as pd
+import numpy as np
+import sys
+from logging import StreamHandler
+from proteus.logs import ProteusLogger
+from proteus.logs.models import LogLevel
+from generic_mip import AbstractDataPreparator, AbstractDecisionVariableBuilder, AbstractOptimizationSolver, VariableDataType, AbstractObjectiveBuilder, AbstractConstraintBuilder, AbstractMipModel, OrToolsSolver, GurobiSolver
+from generic_mip.solver.ortools_solver import OrToolsSolverEngine
+
+"""
+Model to implement:
+
+maximize x + 4y
+
+subject to:
+x + y <= 100
+y <= 20
+100 >= x, y >= 0
+x, y are integers
+
+This model is equivalent to the example in solver_example.py.
+
+You can access the solver API directly (as in solver_example.py) for local experiments, prototyping, debugging and project initialization.
+For production grade models, use the generic_mip framework.
+"""
+
+SOLVER = 'ortools'
+
+logger = ProteusLogger().add_log_source(
+    log_source_name='MyModel',
+    min_log_level=LogLevel.DEBUG,
+    log_handlers=[StreamHandler(sys.stdout)],
+    is_default=True
+)
+
+if SOLVER == 'ortools':
+    solver = OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
+elif SOLVER == 'gurobi':
+    solver = GurobiSolver(logger=logger)
+else:
+    raise ValueError(f'Invalid solver: {SOLVER}')
+
+
+class AutoReplenishmentDataPreparator(AbstractDataPreparator):
+    def prepare(self, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        return input_dfs
+
+
+class MyVariableBuilder(AbstractDecisionVariableBuilder):
+    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        my_df = input_dfs['my_df']
+        x = solver.add_variable(lb=0, ub=100, name='x', dtype=VariableDataType.INT)
+        y = solver.add_variable(lb=0, ub=100, name='y', dtype=VariableDataType.INT)
+        my_df['vars'] = [x, y]
+        return input_dfs
+
+    def unpack(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        my_df = input_dfs['my_df']
+        my_df['value'] = my_df['vars'].apply(lambda x: solver.get_variable_value(x))
+        return input_dfs
+
+
+class MyObjectiveBuilder(AbstractObjectiveBuilder):
+    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame], **kwargs: any) -> None:
+        my_df = input_dfs['my_df']
+
+        solver.add_objective_term(
+            coeff=1,
+            var=my_df.iloc[0]['vars'],
+        )
+        solver.add_objective_term(
+            coeff=4,
+            var=my_df.iloc[1]['vars'],
+        )
+
+
+class MyConstraintBuilder(AbstractConstraintBuilder):
+    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> None:
+        my_df = input_dfs['my_df']
+        solver.add_constraint(
+            lb=None,
+            ub=100,
+            coeffs=np.array([1.0, 1.0]),
+            vars_=np.array([my_df.iloc[0]['vars'], my_df.iloc[1]['vars']]),
+            name='my_constraint'
+        )
+
+
+class MyOtherConstraintBuilder(AbstractConstraintBuilder):
+    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> None:
+        my_df = input_dfs['my_df']
+        solver.add_constraint(
+            lb=None,
+            ub=20,
+            coeffs=np.array([1.0]),
+            vars_=np.array([my_df.iloc[1]['vars']]),
+            name='my_constraint_2'
+        )
+
+
+class MyMipModel(AbstractMipModel):
+    def __init__(
+        self,
+        solver: AbstractOptimizationSolver,
+        constraint_builders: List[AbstractConstraintBuilder],
+        variable_builders: List[AbstractDecisionVariableBuilder],
+        objective_builders: List[AbstractObjectiveBuilder],
+        data_preparator: AutoReplenishmentDataPreparator,
+        logger: ProteusLogger
+    ):
+        super().__init__(
+            solver=solver,
+            constraint_builders=constraint_builders,
+            variable_builders=variable_builders,
+            objective_builders=objective_builders,
+            data_preparator=data_preparator,
+            logger=logger
+        )
+        solver.set_verbose(True)
+
+    def build(self, **input_dfs: pd.DataFrame) -> None:
+        super().build(**input_dfs)
+        self._solver.set_optimization_direction(True)
+
+    def solve(self, **kwargs: any) -> Union[pd.DataFrame, Tuple[pd.DataFrame, ...]]:
+        super().solve(**kwargs)
+        return self._dfs['my_df']
+
+
+my_model = MyMipModel(
+    solver=solver,
+    constraint_builders=[MyConstraintBuilder(logger=logger), MyOtherConstraintBuilder(logger=logger)],
+    variable_builders=[MyVariableBuilder(logger=logger)],
+    objective_builders=[MyObjectiveBuilder(logger=logger)],
+    data_preparator=AutoReplenishmentDataPreparator(logger=logger),
+    logger=logger
+)
+
+my_model.build(my_df=pd.DataFrame(data={
+    'row_number': [1, 2],
+}))
+
+result = my_model.solve()
+
+print(result.iloc[0]['value'])
+print(result.iloc[1]['value'])
