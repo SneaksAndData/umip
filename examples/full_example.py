@@ -42,7 +42,7 @@ else:
     raise ValueError(f'Invalid solver: {SOLVER}')
 
 
-class AutoReplenishmentDataPreparator(AbstractDataPreparator):
+class MyDataPreparator(AbstractDataPreparator):
     def prepare(self, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
         return input_dfs
 
@@ -133,7 +133,7 @@ my_model = MyMipModel(
     constraint_builders=[MyConstraintBuilder(logger=logger), MyOtherConstraintBuilder(logger=logger)],
     variable_builders=[MyVariableBuilder(logger=logger)],
     objective_builders=[MyObjectiveBuilder(logger=logger)],
-    data_preparator=AutoReplenishmentDataPreparator(logger=logger),
+    data_preparator=MyDataPreparator(logger=logger),
     logger=logger
 )
 
