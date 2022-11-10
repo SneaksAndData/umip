@@ -20,7 +20,7 @@ jobs:
           python-version: '3.9.x'
           architecture: 'x64'
       - name: Install Poetry and dependencies
-        uses: SneaksAndData/github-actions/install_poetry@v0.0.8
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.9
         with:
            pypi_repo_url: ${{ secrets.AZOPS_PYPI_REPO_URL }}
            pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}
@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - uses: SneaksAndData/github-actions/semver_release@v0.0.8
+      - uses: SneaksAndData/github-actions/semver_release@v0.0.9
         with:
           major_v: 0
           minor_v: 1
@@ -65,7 +65,7 @@ jobs:
           python-version: '3.9.x'
           architecture: 'x64'
       - name: Install Poetry
-        uses: SneaksAndData/github-actions/install_poetry@v0.0.8
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.9
         with:
            pypi_repo_url: ${{ secrets.AZOPS_PYPI_REPO_URL }}
            pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}

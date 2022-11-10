@@ -10,9 +10,9 @@ python = ">=3.9,<3.11"
 ortools = "9.3.10497"
 gurobipy = "9.5.2"
 pandas = "~1.4.3"
-numpy = "~1.23.2"
+numpy = "~1.23.2,!=1.23.4"
 scipy = "~1.9.0"
-proteus = "~1.0.0"
+proteus = "~1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "~6.2.0"
