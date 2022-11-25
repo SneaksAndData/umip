@@ -27,15 +27,27 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var]) -> None:
         self._objective += coeffs.dot(vars_)
 
-    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> npt.NDArray[gp.Var]:
-        return self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=name).tolist()
+    def add_multiple_variables(self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> npt.NDArray[gp.Var]:
+        lb = lb if lb is not None else -self.infinity()
+        ub = ub if ub is not None else self.infinity()
+
+        if dtype == VariableDataType.INT:
+            vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=name)
+        elif dtype == VariableDataType.FLOAT:
+            vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=name)
+        elif dtype == VariableDataType.BOOL:
+            vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.BINARY, name=name)
+        else:
+            raise ValueError("Unsupported variable data type")
+
+        return vars_.tolist()
 
     def add_multiple_constraints(
         self,
-        lb: Union[None, npt.NDArray[float]],
-        ub: Union[None, npt.NDArray[float]],
         coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
         vars_: Union[npt.NDArray[npt.NDArray[gp.Var]], npt.NDArray[gp.Var]],
+        lb: Optional[npt.NDArray[float]] = None,
+        ub: Optional[npt.NDArray[float]] = None,
         name: Optional[str] = None
     ) -> None:
         if coeffs.ndim == 1 and not isinstance(coeffs[0], np.ndarray):
@@ -60,12 +72,12 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def add_constraint(
         self,
-        lb: Optional[float],
-        ub: Optional[float],
         coeffs: Union[npt.NDArray[float], float],
-        vars_:  Union[npt.NDArray[any], any],
+        vars_:  Union[npt.NDArray[gp.Var], gp.Var],
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
         name: Optional[str] = None
-    ) -> gp.Constr:
+    ) -> Optional[gp.Constr]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -87,7 +99,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
         return constr_lb or constr_ub
 
-    def add_variable(self, lb: float, ub: float, name: str, dtype: VariableDataType) -> gp.Var:
+    def add_variable(self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> gp.Var:
+        lb = lb if lb is not None else -self.infinity()
+        ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
             var = self._solver.addVar(lb, ub, 0, gp.GRB.INTEGER, name, None)
         elif dtype == VariableDataType.FLOAT:

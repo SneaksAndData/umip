@@ -3,7 +3,6 @@ import pytest
 from logging import StreamHandler
 from proteus.logs._base import ProteusLogger
 from proteus.logs.models import LogLevel
-from ortools.linear_solver import pywraplp
 from generic_mip.solver import GurobiSolver, OrToolsSolver, OrToolsSolverEngine
 
 

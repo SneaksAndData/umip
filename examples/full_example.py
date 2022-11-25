@@ -42,28 +42,28 @@ else:
     raise ValueError(f'Invalid solver: {SOLVER}')
 
 
-class MyDataPreparator(AbstractDataPreparator):
-    def prepare(self, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
-        return input_dfs
+class MyDataPreparator(AbstractDataPreparator[pd.DataFrame, pd.DataFrame]):
+    def prepare(self, input_data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        return input_data
 
 
-class MyVariableBuilder(AbstractDecisionVariableBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
-        my_df = input_dfs['my_df']
+class MyVariableBuilder(AbstractDecisionVariableBuilder[pd.DataFrame]):
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        my_df = data['my_df']
         x = solver.add_variable(lb=0, ub=100, name='x', dtype=VariableDataType.INT)
         y = solver.add_variable(lb=0, ub=100, name='y', dtype=VariableDataType.INT)
         my_df['vars'] = [x, y]
-        return input_dfs
+        return data
 
-    def unpack(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
-        my_df = input_dfs['my_df']
+    def unpack(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        my_df = data['my_df']
         my_df['value'] = my_df['vars'].apply(lambda x: solver.get_variable_value(x))
-        return input_dfs
+        return data
 
 
-class MyObjectiveBuilder(AbstractObjectiveBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame], **kwargs: any) -> None:
-        my_df = input_dfs['my_df']
+class MyObjectiveBuilder(AbstractObjectiveBuilder[pd.DataFrame]):
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame], **kwargs: any) -> None:
+        my_df = data['my_df']
 
         solver.add_objective_term(
             coeff=1,
@@ -75,9 +75,9 @@ class MyObjectiveBuilder(AbstractObjectiveBuilder):
         )
 
 
-class MyConstraintBuilder(AbstractConstraintBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> None:
-        my_df = input_dfs['my_df']
+class MyConstraintBuilder(AbstractConstraintBuilder[pd.DataFrame]):
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
+        my_df = data['my_df']
         solver.add_constraint(
             lb=None,
             ub=100,
@@ -87,9 +87,9 @@ class MyConstraintBuilder(AbstractConstraintBuilder):
         )
 
 
-class MyOtherConstraintBuilder(AbstractConstraintBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[str, pd.DataFrame]) -> None:
-        my_df = input_dfs['my_df']
+class MyOtherConstraintBuilder(AbstractConstraintBuilder[pd.DataFrame]):
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
+        my_df = data['my_df']
         solver.add_constraint(
             lb=None,
             ub=20,
@@ -99,14 +99,14 @@ class MyOtherConstraintBuilder(AbstractConstraintBuilder):
         )
 
 
-class MyMipModel(AbstractMipModel):
+class MyMipModel(AbstractMipModel[pd.DataFrame]):
     def __init__(
         self,
         solver: AbstractOptimizationSolver,
-        constraint_builders: List[AbstractConstraintBuilder],
-        variable_builders: List[AbstractDecisionVariableBuilder],
-        objective_builders: List[AbstractObjectiveBuilder],
-        data_preparator: AutoReplenishmentDataPreparator,
+        constraint_builders: List[AbstractConstraintBuilder[pd.DataFrame]],
+        variable_builders: List[AbstractDecisionVariableBuilder[pd.DataFrame]],
+        objective_builders: List[AbstractObjectiveBuilder[pd.DataFrame]],
+        data_preparator: MyDataPreparator[[pd.DataFrame, pd.DataFrame]],
         logger: ProteusLogger
     ):
         super().__init__(
@@ -119,13 +119,13 @@ class MyMipModel(AbstractMipModel):
         )
         solver.set_verbose(True)
 
-    def build(self, **input_dfs: pd.DataFrame) -> None:
-        super().build(**input_dfs)
+    def build(self, **input_data: pd.DataFrame) -> None:
+        super().build(**input_data)
         self._solver.set_optimization_direction(True)
 
     def solve(self, **kwargs: any) -> Union[pd.DataFrame, Tuple[pd.DataFrame, ...]]:
         super().solve(**kwargs)
-        return self._dfs['my_df']
+        return self._data['my_df']
 
 
 my_model = MyMipModel(

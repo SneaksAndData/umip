@@ -1,11 +1,10 @@
 """Abstract definition of a MIP model."""
 import time
 import sys
-from typing import List
+from typing import List, TypeVar, Generic
 from logging import StreamHandler
 from proteus.logs import ProteusLogger
 from proteus.logs.models import LogLevel
-import pandas as pd
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
 from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder
@@ -13,10 +12,13 @@ from generic_mip.abstract_obj_builder import AbstractObjectiveBuilder
 from generic_mip.abstract_data_prep import AbstractDataPreparator
 from generic_mip.abstract_model import AbstractOptimizationModel
 from generic_mip.exception import OptimizationException, AbnormalException, \
-    InfeasibleException
+    InfeasibleException, UnboundedException
+
+T = TypeVar('T')
+U = TypeVar('U')
 
 
-class AbstractMipModel(AbstractOptimizationModel):
+class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
     """
     The MIP model contains builders for variables, constraints and objectives as well as the data preparator.
     The model orchestrates the building and solving processes.
@@ -24,10 +26,10 @@ class AbstractMipModel(AbstractOptimizationModel):
     def __init__(
         self,
         solver: AbstractOptimizationSolver,
-        constraint_builders: List[AbstractConstraintBuilder],
-        variable_builders: List[AbstractDecisionVariableBuilder],
-        objective_builders: List[AbstractObjectiveBuilder],
-        data_preparator: AbstractDataPreparator,
+        data_preparator: AbstractDataPreparator[T, U],
+        constraint_builders: List[AbstractConstraintBuilder[U]],
+        variable_builders: List[AbstractDecisionVariableBuilder[U]],
+        objective_builders: List[AbstractObjectiveBuilder[U]],
         logger: ProteusLogger = ProteusLogger().add_log_source(
             log_source_name='AbstractMipModel',
             min_log_level=LogLevel.INFO,
@@ -49,24 +51,24 @@ class AbstractMipModel(AbstractOptimizationModel):
         self._constraint_builders = constraint_builders
         self._data_preparator = data_preparator
         self._solver = solver
-        self._dfs = None
+        self._data = None
         self._built = False
         self._solved = False
         self._logger = logger
 
-    def build(self, **input_dfs: pd.DataFrame) -> None:
+    def build(self, **input_data: T) -> None:
         start_time = time.time()
 
-        self._dfs = self._data_preparator.prepare(input_dfs)
+        self._data = self._data_preparator.prepare(input_data)
 
         self._logger.info(template="Spent {time}s preparing data", time=time.time() - start_time)
         start_time = time.time()
 
         with self._logger.redirect(log_level=LogLevel.INFO):
             for variable_builder in self._variable_builders:
-                self._dfs = variable_builder.build(
+                self._data = variable_builder.build(
                     solver=self._solver,
-                    input_dfs=self._dfs
+                    data=self._data
                 )
 
         self._logger.info(template="Spent {time}s building variables", time=time.time() - start_time)
@@ -76,7 +78,7 @@ class AbstractMipModel(AbstractOptimizationModel):
             for constraint_builder in self._constraint_builders:
                 constraint_builder.build(
                     solver=self._solver,
-                    input_dfs=self._dfs
+                    data=self._data
                 )
 
         self._logger.info(template="Spent {time}s building constraints", time=time.time() - start_time)
@@ -86,7 +88,7 @@ class AbstractMipModel(AbstractOptimizationModel):
             for objective_builder in self._objective_builders:
                 objective_builder.build(
                     solver=self._solver,
-                    input_dfs=self._dfs
+                    data=self._data
                 )
 
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
@@ -103,17 +105,18 @@ class AbstractMipModel(AbstractOptimizationModel):
         self._logger.info(template="Spent {time}s optimising.", time=exec_time)
         self._solved = True
 
-        with self._logger.redirect(log_level=LogLevel.INFO):
-            for variable_builder in self._variable_builders:
-                self._dfs = variable_builder.unpack(
-                    solver=self._solver,
-                    input_dfs=self._dfs
-                )
-
         if self._solver.is_optimal():
+            with self._logger.redirect(log_level=LogLevel.INFO):
+                for variable_builder in self._variable_builders:
+                    self._data = variable_builder.unpack(
+                        solver=self._solver,
+                        data=self._data
+                    )
             return None
         if self._solver.is_infeasible():
             raise InfeasibleException("The model is infeasible.")
+        if self._solver.is_unbounded():
+            raise UnboundedException("The model is unbounded.")
         if self._solver.is_abnormal():
             raise AbnormalException("The optimization failed with status ABNORMAL.")
         raise OptimizationException(f"Ended with status code {status}.")

@@ -15,26 +15,26 @@ from generic_mip.abstract_mip import AbstractMipModel
 
 
 class MockConstraintBuilder(AbstractConstraintBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[any, pd.DataFrame]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
         pass
 
 
 class MockDecisionVariableBuilder(AbstractDecisionVariableBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[any, pd.DataFrame]) -> Dict[any, pd.DataFrame]:
-        return input_dfs
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        return data
 
-    def unpack(self, solver: AbstractOptimizationSolver, input_dfs: Dict[any, pd.DataFrame]) -> Dict[any, pd.DataFrame]:
-        return input_dfs
+    def unpack(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        return data
 
 
 class MockObjectiveBuilder(AbstractObjectiveBuilder):
-    def build(self, solver: AbstractOptimizationSolver, input_dfs: Dict[any, pd.DataFrame], **kwargs: any) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
         pass
 
 
 class MockDataPreparator(AbstractDataPreparator):
-    def prepare(self, input_dfs: Dict[any, pd.DataFrame]) -> Dict[any, pd.DataFrame]:
-        return input_dfs
+    def prepare(self, input_data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+        return input_data
 
 
 @mock.patch.object(MockDecisionVariableBuilder, "unpack")

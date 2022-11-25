@@ -51,7 +51,7 @@ jobs:
       - uses: SneaksAndData/github-actions/semver_release@v0.0.9
         with:
           major_v: 0
-          minor_v: 1
+          minor_v: 2
   release_to_azure_artifacts:
     name: Release distribution to Azure Artifacts
     runs-on: ubuntu-latest

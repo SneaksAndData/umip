@@ -26,12 +26,12 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_constraint(
         self,
-        lb: Optional[float],
-        ub: Optional[float],
         coeffs: Union[npt.NDArray[float], float],
         vars_:  Union[npt.NDArray[VT], VT],
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
         name: Optional[str] = None
-    ) -> CT:
+    ) -> Optional[CT]:
         """
         Add a single constraint:
         lb <= c_1x_1 + c_2x_2 + ... <= ub
@@ -59,10 +59,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_multiple_constraints(
         self,
-        lb: Optional[npt.NDArray[float]],
-        ub: Optional[npt.NDArray[float]],
         coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
         vars_: Union[npt.NDArray[npt.NDArray[VT]], npt.NDArray[VT]],
+        lb: Optional[npt.NDArray[float]] = None,
+        ub: Optional[npt.NDArray[float]] = None,
         name: Optional[str] = None
     ) -> None:
         """
@@ -89,7 +89,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_variable(self, lb: float, ub: float, name: str, dtype: VariableDataType) -> VT:
+    def add_variable(self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> VT:
         """
         Adds variable to the model.
 
@@ -101,7 +101,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> npt.NDArray[VT]:
+    def add_multiple_variables(self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
 

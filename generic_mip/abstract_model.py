@@ -1,15 +1,17 @@
 """Abstract definition of an optimization model."""
 from abc import ABC, abstractmethod
-import pandas as pd
+from typing import TypeVar, Generic
+
+T = TypeVar('T')
 
 
-class AbstractOptimizationModel(ABC):
+class AbstractOptimizationModel(ABC, Generic[T]):
     """A generic optimization model interface."""
     @abstractmethod
-    def build(self, **input_dfs: pd.DataFrame) -> None:
+    def build(self, **input_data: T) -> None:
         """
         Builds the model using the given variable, constraint and objective builders.
-        :param input_dfs: Input data to the variables, constraints and objectives.
+        :param input_data: Input data to the variables, constraints and objectives.
         :return:
         """
 

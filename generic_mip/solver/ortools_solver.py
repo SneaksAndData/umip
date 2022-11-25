@@ -34,15 +34,25 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
     def set_multiple_variable_hints(self, vars_: npt.NDArray[pywraplp.Variable], hints: npt.NDArray[float]) -> None:
         self._solver.SetHint(vars_, hints)
 
-    def add_multiple_variables(self, count: int, lb: float, ub: float, name: str, dtype: VariableDataType) -> npt.NDArray[pywraplp.Variable]:
-        return np.array([self.add_variable(lb, ub, f'{name}{i}', dtype) for i in range(count)])
+    def add_multiple_variables(self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> npt.NDArray[pywraplp.Variable]:
+        lb = lb if lb is not None else -self.infinity()
+        ub = ub if ub is not None else self.infinity()
+        return np.array([
+            self.add_variable(
+                lb=lb,
+                ub=ub,
+                name=f'{name}{i}',
+                dtype=dtype
+            )
+            for i in range(count)
+        ])
 
     def add_multiple_constraints(
         self,
-        lb: Optional[npt.NDArray[float]],
-        ub: Optional[npt.NDArray[float]],
         coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
         vars_: Union[npt.NDArray[npt.NDArray[pywraplp.Variable]], npt.NDArray[pywraplp.Variable]],
+        lb: Optional[npt.NDArray[float]] = None,
+        ub: Optional[npt.NDArray[float]] = None,
         name: Optional[str] = None
     ) -> None:
         if coeffs.size == 0:
@@ -62,12 +72,15 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
 
     def add_constraint(
         self,
-        lb: Optional[float],
-        ub: Optional[float],
         coeffs: Union[npt.NDArray[float], float],
         vars_: Union[npt.NDArray[pywraplp.Variable], pywraplp.Variable],
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
         name: Optional[str] = None
-    ) -> pywraplp.Constraint:
+    ) -> Optional[pywraplp.Constraint]:
+        if lb is None and ub is None:
+            return None
+
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -81,7 +94,9 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
 
         return constr
 
-    def add_variable(self, lb: float, ub: float, name: str, dtype: VariableDataType) -> pywraplp.Variable:
+    def add_variable(self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> pywraplp.Variable:
+        lb = lb if lb is not None else -self.infinity()
+        ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
             return self._solver.IntVar(lb, ub, name)
         if dtype == VariableDataType.FLOAT:
