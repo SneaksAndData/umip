@@ -3,7 +3,8 @@ import pytest
 from logging import StreamHandler
 from proteus.logs._base import ProteusLogger
 from proteus.logs.models import LogLevel
-from generic_mip.solver import GurobiSolver, OrToolsSolver, OrToolsSolverEngine
+from generic_mip.solver.gurobi import GurobiSolver
+from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 
 
 @pytest.fixture(scope="session")
