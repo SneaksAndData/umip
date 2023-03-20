@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.11"
-ortools = { version = "9.3.10497", optional = true }
+ortools = { version = "9.6.2534", optional = true }
 gurobipy = { version = "9.5.2", optional = true }
 numpy = "^1.23.2"
 scipy = "^1.9.0"
