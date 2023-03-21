@@ -1,7 +1,7 @@
 """Abstract definition of a data preparator."""
 from abc import ABC, abstractmethod
 from typing import Dict, TypeVar, Generic
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 
 T = TypeVar('T')
 U = TypeVar('U')
@@ -9,7 +9,7 @@ U = TypeVar('U')
 
 class AbstractDataPreparator(ABC, Generic[T, U]):
     """The responsibility of the data preparator is to prepare data for the model."""
-    def __init__(self, logger: ProteusLogger):
+    def __init__(self, logger: SemanticLogger):
         """
         Initialize the data preparator.
         :param logger: The logger to use.

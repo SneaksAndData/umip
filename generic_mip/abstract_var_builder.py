@@ -1,7 +1,7 @@
 """Abstract definition of a variable builder."""
 from abc import ABC, abstractmethod
 from typing import Dict, TypeVar, Generic
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 T = TypeVar('T')
@@ -9,7 +9,7 @@ T = TypeVar('T')
 
 class AbstractDecisionVariableBuilder(ABC, Generic[T]):
     """A variable builder has the responsibility of building one or more decision variables."""
-    def __init__(self, logger: ProteusLogger):
+    def __init__(self, logger: SemanticLogger):
         """
         Initialize the variable builder.
         :param logger: The logger to use.

@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import sys
 from logging import StreamHandler
-from proteus.logs import ProteusLogger
-from proteus.logs.models import LogLevel
+from adapta.logs import SemanticLogger
+from adapta.logs.models import LogLevel
 from generic_mip import AbstractDataPreparator, AbstractDecisionVariableBuilder, AbstractOptimizationSolver, VariableDataType, AbstractObjectiveBuilder, AbstractConstraintBuilder, AbstractMipModel, OrToolsSolver, GurobiSolver
 from generic_mip.solver.ortools_solver import OrToolsSolverEngine
 
@@ -27,7 +27,7 @@ For production grade models, use the generic_mip framework.
 
 SOLVER = 'ortools'
 
-logger = ProteusLogger().add_log_source(
+logger = SemanticLogger().add_log_source(
     log_source_name='MyModel',
     min_log_level=LogLevel.DEBUG,
     log_handlers=[StreamHandler(sys.stdout)],
@@ -107,7 +107,7 @@ class MyMipModel(AbstractMipModel[pd.DataFrame]):
         variable_builders: List[AbstractDecisionVariableBuilder[pd.DataFrame]],
         objective_builders: List[AbstractObjectiveBuilder[pd.DataFrame]],
         data_preparator: MyDataPreparator[[pd.DataFrame, pd.DataFrame]],
-        logger: ProteusLogger
+        logger: SemanticLogger
     ):
         super().__init__(
             solver=solver,

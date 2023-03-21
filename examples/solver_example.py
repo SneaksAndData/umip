@@ -1,8 +1,8 @@
 import numpy as np
 import sys
 from logging import StreamHandler
-from proteus.logs import ProteusLogger
-from proteus.logs.models import LogLevel
+from adapta.logs import SemanticLogger
+from adapta.logs.models import LogLevel
 from generic_mip import VariableDataType, OrToolsSolver, GurobiSolver
 from generic_mip.solver.ortools_solver import OrToolsSolverEngine
 
@@ -25,7 +25,7 @@ For production grade models, use the generic_mip framework (full_example.py).
 
 SOLVER = 'ortools'
 
-logger = ProteusLogger().add_log_source(
+logger = SemanticLogger().add_log_source(
     log_source_name='MyModel',
     min_log_level=LogLevel.DEBUG,
     log_handlers=[StreamHandler(sys.stdout)],

@@ -1,15 +1,15 @@
 import sys
 import pytest
 from logging import StreamHandler
-from proteus.logs._base import ProteusLogger
-from proteus.logs.models import LogLevel
+from adapta.logs._base import SemanticLogger
+from adapta.logs.models import LogLevel
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 
 
 @pytest.fixture(scope="session")
 def logger():
-    logger = ProteusLogger().add_log_source(
+    logger = SemanticLogger().add_log_source(
         log_source_name='auto-replenishment-crystal-orchestrator',
         min_log_level=LogLevel.INFO,
         log_handlers=[StreamHandler(sys.stdout)],

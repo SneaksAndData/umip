@@ -3,8 +3,8 @@ import time
 import sys
 from typing import List, TypeVar, Generic
 from logging import StreamHandler
-from proteus.logs import ProteusLogger
-from proteus.logs.models import LogLevel
+from adapta.logs import SemanticLogger
+from adapta.logs.models import LogLevel
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
 from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder
@@ -30,7 +30,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         constraint_builders: List[AbstractConstraintBuilder[U]],
         variable_builders: List[AbstractDecisionVariableBuilder[U]],
         objective_builders: List[AbstractObjectiveBuilder[U]],
-        logger: ProteusLogger = ProteusLogger().add_log_source(
+        logger: SemanticLogger = SemanticLogger().add_log_source(
             log_source_name='AbstractMipModel',
             min_log_level=LogLevel.INFO,
             log_handlers=[StreamHandler(sys.stdout)],

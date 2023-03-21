@@ -1,12 +1,12 @@
 """Abstract definition of an optimization model factory."""
 from abc import ABC, abstractmethod
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 from generic_mip.abstract_mip import AbstractOptimizationModel
 
 
 class AbstractOptimizationModelFactory(ABC):
     """A generic optimization model factory."""
-    def __init__(self, logger: ProteusLogger):
+    def __init__(self, logger: SemanticLogger):
         """
         Initialize the model factory.
         :param logger: The logger to use.

@@ -1,7 +1,7 @@
 """Abstract definition of a constraint builder."""
 from abc import ABC, abstractmethod
 from typing import Dict, TypeVar, Generic
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 T = TypeVar('T')
@@ -9,7 +9,7 @@ T = TypeVar('T')
 
 class AbstractConstraintBuilder(ABC, Generic[T]):
     """A constraint builder has the responsibility of building one or more constraints."""
-    def __init__(self, logger: ProteusLogger):
+    def __init__(self, logger: SemanticLogger):
         """
         Initialize the constraint builder.
         :param logger: The logger to use.

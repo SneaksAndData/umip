@@ -4,14 +4,14 @@ import gurobipy as gp
 import numpy.typing as npt
 import numpy as np
 from scipy.sparse import coo_matrix
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Gurobi library."""
-    def __init__(self, logger: ProteusLogger):
+    def __init__(self, logger: SemanticLogger):
         super().__init__(logger)
         self._solver = gp.Model()
         self._objective = gp.LinExpr()

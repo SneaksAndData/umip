@@ -3,7 +3,7 @@ from typing import Optional, Union, Iterable
 from ortools.linear_solver import pywraplp
 import numpy.typing as npt
 import numpy as np
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.or_tools._solver_engine import OrToolsSolverEngine
 from generic_mip.variable_data_type import VariableDataType
@@ -11,7 +11,7 @@ from generic_mip.variable_data_type import VariableDataType
 
 class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Google OR-Tools library."""
-    def __init__(self, solver_engine: OrToolsSolverEngine, logger: ProteusLogger):
+    def __init__(self, solver_engine: OrToolsSolverEngine, logger: SemanticLogger):
         super().__init__(logger)
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()

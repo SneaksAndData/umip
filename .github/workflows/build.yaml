@@ -20,11 +20,8 @@ jobs:
           python-version: '3.9.x'
           architecture: 'x64'
       - name: Install Poetry and dependencies
-        uses: SneaksAndData/github-actions/install_poetry@v0.0.19
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.21
         with:
-           pypi_repo_url: ${{ secrets.AZOPS_PYPI_REPO_URL }}
-           pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}
-           pypi_token: ${{ secrets.AZOPS_PAT }}
            install_extras: "all"
       - name: Lint code
         run: |
@@ -53,7 +50,7 @@ jobs:
       - uses: SneaksAndData/github-actions/semver_release@v0.0.19
         with:
           major_v: 0
-          minor_v: 2
+          minor_v: 3
   release_to_azure_artifacts:
     name: Release distribution to Azure Artifacts
     runs-on: ubuntu-latest

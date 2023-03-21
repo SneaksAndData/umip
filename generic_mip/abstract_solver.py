@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Union, TypeVar, Generic
 import numpy.typing as npt
-from proteus.logs import ProteusLogger
+from adapta.logs import SemanticLogger
 from generic_mip.variable_data_type import VariableDataType
 
 CT = TypeVar('CT')  # Constraint type
@@ -14,7 +14,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     The optimization solver contains all optimization related states, variables, constraints and objectives.
     This class serves as a generic API for various implementations through solver specific APIs.
     """
-    def __init__(self, logger: ProteusLogger):
+    def __init__(self, logger: SemanticLogger):
         """
         Initialize the solver.
         :param logger: The logger to use. Notice that most solvers call C-based libraries that do not use the logger.
