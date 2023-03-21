@@ -52,7 +52,7 @@ def test_build_abstract_mip(prepare, var_build, constr_build, obj_build, unpack,
         variable_builders=[MockDecisionVariableBuilder(logger)],
         objective_builders=[MockObjectiveBuilder(logger)],
         data_preparator=MockDataPreparator(logger),
-        logger=logger
+        logger=logger,
     )
     model.build(df=pd.DataFrame({"a": [1, 2, 3]}))
     prepare.assert_called_once()
@@ -74,7 +74,7 @@ def test_early_solve(logger):
         variable_builders=[MockDecisionVariableBuilder(logger)],
         objective_builders=[MockObjectiveBuilder(logger)],
         data_preparator=MockDataPreparator(logger),
-        logger=logger
+        logger=logger,
     )
     with pytest.raises(ValueError):
         model.solve()

@@ -2,11 +2,12 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class AbstractOptimizationModel(ABC, Generic[T]):
     """A generic optimization model interface."""
+
     @abstractmethod
     def build(self, **input_data: T) -> None:
         """

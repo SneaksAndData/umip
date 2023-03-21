@@ -6,6 +6,7 @@ from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 class AbstractOptimizationSolverFactory(ABC):
     """A generic definition of a solver factory."""
+
     def __init__(self, logger: SemanticLogger):
         """
         Initialize the solver factory.

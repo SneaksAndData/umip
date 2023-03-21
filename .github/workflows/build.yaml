@@ -23,6 +23,11 @@ jobs:
         uses: SneaksAndData/github-actions/install_poetry@v0.0.21
         with:
            install_extras: "all"
+      - name: Black
+        shell: bash
+        run: |
+          set -e
+          poetry run black . --check --diff
       - name: Lint code
         run: |
           set -e

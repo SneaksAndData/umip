@@ -11,6 +11,7 @@ from generic_mip.variable_data_type import VariableDataType
 
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Gurobi library."""
+
     def __init__(self, logger: SemanticLogger):
         super().__init__(logger)
         self._solver = gp.Model()
@@ -27,7 +28,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var]) -> None:
         self._objective += coeffs.dot(vars_)
 
-    def add_multiple_variables(self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> npt.NDArray[gp.Var]:
+    def add_multiple_variables(
+        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+    ) -> npt.NDArray[gp.Var]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -48,7 +51,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         vars_: Union[npt.NDArray[npt.NDArray[gp.Var]], npt.NDArray[gp.Var]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None
+        name: Optional[str] = None,
     ) -> None:
         if coeffs.ndim == 1 and not isinstance(coeffs[0], np.ndarray):
             coeffs = np.asarray([coeffs]).T
@@ -57,12 +60,12 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         coeff_list = np.concatenate([np.asarray(coeff) for coeff in coeffs])
         var_vector = np.concatenate([np.asarray(var) for var in vars_])
 
-        matrix_rows = [j for i, coeff in enumerate(coeffs) for j in [i]*len(coeff)]
+        matrix_rows = [j for i, coeff in enumerate(coeffs) for j in [i] * len(coeff)]
         matrix_cols = list(range(len(var_vector)))
         matrix_data = coeff_list
 
         # coeff_matrix = hstack([diags(coeff, 0) for coeff in coeffs])
-        coeff_matrix = coo_matrix((matrix_data, (matrix_rows, matrix_cols)), shape=(len(coeffs),len(var_vector)))
+        coeff_matrix = coo_matrix((matrix_data, (matrix_rows, matrix_cols)), shape=(len(coeffs), len(var_vector)))
         var_vector = var_vector.tolist()
 
         if lb is not None:
@@ -73,10 +76,10 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def add_constraint(
         self,
         coeffs: Union[npt.NDArray[float], float],
-        vars_:  Union[npt.NDArray[gp.Var], gp.Var],
+        vars_: Union[npt.NDArray[gp.Var], gp.Var],
         lb: Optional[float] = None,
         ub: Optional[float] = None,
-        name: Optional[str] = None
+        name: Optional[str] = None,
     ) -> Optional[gp.Constr]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -84,9 +87,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         constr_expr = gp.LinExpr()
         if isinstance(vars_, Iterable):
             for (coeff, var) in zip(coeffs, vars_):
-                constr_expr += coeff*var
+                constr_expr += coeff * var
         else:
-            constr_expr = coeffs*vars_
+            constr_expr = coeffs * vars_
 
         if lb == ub:
             return self._solver.addConstr(lb == constr_expr, name)
@@ -99,7 +102,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
         return constr_lb or constr_ub
 
-    def add_variable(self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> gp.Var:
+    def add_variable(
+        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+    ) -> gp.Var:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
@@ -116,7 +121,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         return var.x
 
     def add_objective_term(self, coeff: float, var: gp.Var) -> None:
-        self._objective += coeff*var
+        self._objective += coeff * var
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE)

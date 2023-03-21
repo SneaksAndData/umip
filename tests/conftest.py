@@ -10,7 +10,7 @@ from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 @pytest.fixture(scope="session")
 def logger():
     logger = SemanticLogger().add_log_source(
-        log_source_name='auto-replenishment-crystal-orchestrator',
+        log_source_name="auto-replenishment-crystal-orchestrator",
         min_log_level=LogLevel.INFO,
         log_handlers=[StreamHandler(sys.stdout)],
         is_default=True,

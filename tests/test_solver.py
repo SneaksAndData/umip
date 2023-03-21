@@ -9,9 +9,9 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding a variable, a constraint, and an objective term is reflected in the solver.
     """
-    var = solver.add_variable(lb=0, ub=1, name='x', dtype=VariableDataType.FLOAT)
+    var = solver.add_variable(lb=0, ub=1, name="x", dtype=VariableDataType.FLOAT)
     # Notice that setting both lb and ub may result in 2 constraints in some implementations
-    solver.add_constraint(lb=0, ub=None, coeffs=1, vars_=var, name='c1')
+    solver.add_constraint(lb=0, ub=None, coeffs=1, vars_=var, name="c1")
     solver.add_objective_term(coeff=1, var=var)
     solver.force_update()
 
@@ -25,14 +25,14 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding 3 variables, 3 constraints, and 3 objective terms is reflected in the solver.
     """
-    vars_ = solver.add_multiple_variables(count=3, lb=0, ub=1, name='x', dtype=VariableDataType.FLOAT)
+    vars_ = solver.add_multiple_variables(count=3, lb=0, ub=1, name="x", dtype=VariableDataType.FLOAT)
     # Notice that setting both lb and ub may result in 2 constraints in some implementations
     solver.add_multiple_constraints(
         lb=np.array([0.0, 0.0, 0.0]),
         ub=None,
         coeffs=np.array([[-1.0, 1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, -1.0]]),
-        vars_=np.array([vars_]*3),
-        name='c1'
+        vars_=np.array([vars_] * 3),
+        name="c1",
     )
     solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_)
     solver.force_update()
@@ -51,8 +51,8 @@ def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDat
     Testing that the solver returns the known optimal solution, and it is reflected in the optimisation status.
     """
     solver.set_optimization_direction(maximization=maximisation)
-    var = solver.add_variable(lb=0.0, ub=100.0, name='x', dtype=dtype)
-    solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name='c1')
+    var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=dtype)
+    solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
     solver.add_objective_term(coeff=1.0, var=var)
     solver.solve()
 
@@ -71,7 +71,7 @@ def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDa
     Testing that the solver recognises an unbounded solution, and it is reflected in the optimisation status.
     """
     solver.set_optimization_direction(maximization=True)
-    var = solver.add_variable(lb=0.0, ub=solver.infinity(), name='x', dtype=dtype)
+    var = solver.add_variable(lb=0.0, ub=solver.infinity(), name="x", dtype=dtype)
     solver.add_objective_term(coeff=1.0, var=var)
     solver.solve()
 
@@ -87,8 +87,8 @@ def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableD
     """
     Testing that the solver recognises an infeasible solution, and it is reflected in the optimisation status.
     """
-    var = solver.add_variable(lb=0.0, ub=1.0, name='x', dtype=dtype)
-    solver.add_constraint(lb=5.0, ub=6.0, coeffs=np.array([1.0]), vars_=np.array([var]), name='c1')
+    var = solver.add_variable(lb=0.0, ub=1.0, name="x", dtype=dtype)
+    solver.add_constraint(lb=5.0, ub=6.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
     solver.add_objective_term(coeff=1.0, var=var)
     solver.solve()
 
@@ -104,8 +104,8 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """
     Testing that the solver verbosity is set correctly.
     """
-    var = solver.add_variable(lb=0.0, ub=100.0, name='x', dtype=VariableDataType.FLOAT)
-    solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name='c1')
+    var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
+    solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
     solver.add_objective_term(coeff=1.0, var=var)
     solver.set_verbose(verbose=verbose)
     solver.solve()

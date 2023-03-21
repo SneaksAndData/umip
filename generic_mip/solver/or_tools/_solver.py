@@ -9,8 +9,11 @@ from generic_mip.solver.or_tools._solver_engine import OrToolsSolverEngine
 from generic_mip.variable_data_type import VariableDataType
 
 
-class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]):  # pylint: disable=too-many-public-methods
+class OrToolsSolver(
+    AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]
+):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Google OR-Tools library."""
+
     def __init__(self, solver_engine: OrToolsSolverEngine, logger: SemanticLogger):
         super().__init__(logger)
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
@@ -24,18 +27,12 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
     def set_multiple_variable_hints(self, vars_: npt.NDArray[pywraplp.Variable], hints: npt.NDArray[float]) -> None:
         self._solver.SetHint(vars_, hints)
 
-    def add_multiple_variables(self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> npt.NDArray[pywraplp.Variable]:
+    def add_multiple_variables(
+        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+    ) -> npt.NDArray[pywraplp.Variable]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
-        return np.array([
-            self.add_variable(
-                lb=lb,
-                ub=ub,
-                name=f'{name}{i}',
-                dtype=dtype
-            )
-            for i in range(count)
-        ])
+        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}{i}", dtype=dtype) for i in range(count)])
 
     def add_multiple_constraints(
         self,
@@ -43,7 +40,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         vars_: Union[npt.NDArray[npt.NDArray[pywraplp.Variable]], npt.NDArray[pywraplp.Variable]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None
+        name: Optional[str] = None,
     ) -> None:
         if coeffs.size == 0:
             return
@@ -52,7 +49,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         for i in range(num_constrs):
             constr: pywraplp.Constraint = self._solver.Constraint(
                 lb[i] if lb is not None else -self._solver.infinity(),
-                ub[i] if ub is not None else self._solver.infinity()
+                ub[i] if ub is not None else self._solver.infinity(),
             )
             if coeffs.ndim == 1 and not isinstance(coeffs[0], (np.ndarray, list, set)):
                 constr.SetCoefficient(vars_[i], coeffs[i])
@@ -66,7 +63,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         vars_: Union[npt.NDArray[pywraplp.Variable], pywraplp.Variable],
         lb: Optional[float] = None,
         ub: Optional[float] = None,
-        name: Optional[str] = None
+        name: Optional[str] = None,
     ) -> Optional[pywraplp.Constraint]:
         if lb is None and ub is None:
             return None
@@ -74,7 +71,9 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
-        constr: pywraplp.Constraint = self._solver.Constraint(lb, ub, name) if name is not None else self._solver.Constraint(lb, ub)
+        constr: pywraplp.Constraint = (
+            self._solver.Constraint(lb, ub, name) if name is not None else self._solver.Constraint(lb, ub)
+        )
 
         if isinstance(vars_, Iterable):
             for (coeff, var) in zip(coeffs, vars_):
@@ -84,7 +83,9 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
 
         return constr
 
-    def add_variable(self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None) -> pywraplp.Variable:
+    def add_variable(
+        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+    ) -> pywraplp.Variable:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
@@ -137,12 +138,12 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         self._solver.SetSolverSpecificParametersAsString(setting)
 
     def export_to_file(self, path: str) -> None:
-        if path.lower().endswith('.lp'):
+        if path.lower().endswith(".lp"):
             file_content = self._solver.ExportModelAsLpFormat(False)
         else:
             file_content = self._solver.ExportModelAsMpsFormat(False, False)
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(file_content)
 
     def set_verbose(self, verbose: bool) -> None:

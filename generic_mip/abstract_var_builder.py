@@ -4,11 +4,12 @@ from typing import Dict, TypeVar, Generic
 from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class AbstractDecisionVariableBuilder(ABC, Generic[T]):
     """A variable builder has the responsibility of building one or more decision variables."""
+
     def __init__(self, logger: SemanticLogger):
         """
         Initialize the variable builder.

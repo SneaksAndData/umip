@@ -4,11 +4,12 @@ from typing import Dict, TypeVar, Generic
 from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class AbstractObjectiveBuilder(ABC, Generic[T]):
     """An objective builder has the responsibility of building one or more objective terms."""
+
     def __init__(self, logger: SemanticLogger):
         """
         Initialize the objective builder.

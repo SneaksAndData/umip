@@ -11,11 +11,10 @@ from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder
 from generic_mip.abstract_obj_builder import AbstractObjectiveBuilder
 from generic_mip.abstract_data_prep import AbstractDataPreparator
 from generic_mip.abstract_model import AbstractOptimizationModel
-from generic_mip.exception import OptimizationException, AbnormalException, \
-    InfeasibleException, UnboundedException
+from generic_mip.exception import OptimizationException, AbnormalException, InfeasibleException, UnboundedException
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
@@ -23,6 +22,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
     The MIP model contains builders for variables, constraints and objectives as well as the data preparator.
     The model orchestrates the building and solving processes.
     """
+
     def __init__(
         self,
         solver: AbstractOptimizationSolver,
@@ -31,11 +31,11 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         variable_builders: List[AbstractDecisionVariableBuilder[U]],
         objective_builders: List[AbstractObjectiveBuilder[U]],
         logger: SemanticLogger = SemanticLogger().add_log_source(
-            log_source_name='AbstractMipModel',
+            log_source_name="AbstractMipModel",
             min_log_level=LogLevel.INFO,
             log_handlers=[StreamHandler(sys.stdout)],
-            is_default=True
-        )
+            is_default=True,
+        ),
     ):
         """
         Initialize the MIP model.
@@ -66,30 +66,21 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         with self._logger.redirect(log_level=LogLevel.INFO):
             for variable_builder in self._variable_builders:
-                self._data = variable_builder.build(
-                    solver=self._solver,
-                    data=self._data
-                )
+                self._data = variable_builder.build(solver=self._solver, data=self._data)
 
         self._logger.info(template="Spent {time}s building variables", time=time.time() - start_time)
         start_time = time.time()
 
         with self._logger.redirect(log_level=LogLevel.INFO):
             for constraint_builder in self._constraint_builders:
-                constraint_builder.build(
-                    solver=self._solver,
-                    data=self._data
-                )
+                constraint_builder.build(solver=self._solver, data=self._data)
 
         self._logger.info(template="Spent {time}s building constraints", time=time.time() - start_time)
         start_time = time.time()
 
         with self._logger.redirect(log_level=LogLevel.INFO):
             for objective_builder in self._objective_builders:
-                objective_builder.build(
-                    solver=self._solver,
-                    data=self._data
-                )
+                objective_builder.build(solver=self._solver, data=self._data)
 
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._built = True
@@ -108,10 +99,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         if self._solver.is_optimal():
             with self._logger.redirect(log_level=LogLevel.INFO):
                 for variable_builder in self._variable_builders:
-                    self._data = variable_builder.unpack(
-                        solver=self._solver,
-                        data=self._data
-                    )
+                    self._data = variable_builder.unpack(solver=self._solver, data=self._data)
             return None
         if self._solver.is_infeasible():
             raise InfeasibleException("The model is infeasible.")

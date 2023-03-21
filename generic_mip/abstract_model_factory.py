@@ -6,6 +6,7 @@ from generic_mip.abstract_mip import AbstractOptimizationModel
 
 class AbstractOptimizationModelFactory(ABC):
     """A generic optimization model factory."""
+
     def __init__(self, logger: SemanticLogger):
         """
         Initialize the model factory.

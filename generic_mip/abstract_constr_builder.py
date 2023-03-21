@@ -4,11 +4,12 @@ from typing import Dict, TypeVar, Generic
 from adapta.logs import SemanticLogger
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class AbstractConstraintBuilder(ABC, Generic[T]):
     """A constraint builder has the responsibility of building one or more constraints."""
+
     def __init__(self, logger: SemanticLogger):
         """
         Initialize the constraint builder.
