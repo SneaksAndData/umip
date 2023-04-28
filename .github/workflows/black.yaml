@@ -1,0 +1,32 @@
+name: Code style
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  codestyle:
+    name: Black and Pylint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9.x'
+          architecture: 'x64'
+      - name: Install Poetry and dependencies
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.21
+        with:
+           install_extras: "all"
+      - name: Black
+        shell: bash
+        run: |
+          set -e
+          poetry run black . --check --diff
+      - name: Lint code
+        run: |
+          set -e
+          
+          find ./generic_mip -type f -name "*.py" | xargs poetry run pylint

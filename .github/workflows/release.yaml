@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  create_release:
+    name: Create release
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: git fetch --prune --unshallow
+      - uses: SneaksAndData/github-actions/semver_release@v0.0.19
+        with:
+          major_v: 0
+          minor_v: 4
+  release_to_azure_artifacts:
+    name: Release distribution to Azure Artifacts
+    runs-on: ubuntu-latest
+    needs: [ create_release ]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.x'
+          architecture: 'x64'
+      - name: Install Poetry
+        uses: SneaksAndData/github-actions/install_poetry@v0.0.21
+        with:
+           pypi_repo_url: ${{ secrets.AZOPS_PYPI_REPO_URL }}
+           pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}
+           pypi_token: ${{ secrets.AZOPS_PAT }}
+           skip_dependencies: true
+      - name: Publish distribution to Azure Artifacts
+        env:
+          POETRY_HTTP_BASIC_AZOPS_USERNAME: ${{ secrets.AZOPS_PAT_USER }}
+          POETRY_HTTP_BASIC_AZOPS_PASSWORD: ${{ secrets.AZOPS_PAT }}
+          REPO_URL: ${{ secrets.AZOPS_PYPI_UPLOAD }}
+        run: |
+          set -e
+          poetry config repositories.azops $REPO_URL
+          version=$(git describe --tags --abbrev=7)
+          sed -i "s/version = \"0.0.0\"/version = \"${version:1}\"/" pyproject.toml
+          echo "__version__ = '${version:1}'" > ./generic_mip/_version.py
+          poetry build && poetry publish -r azops
