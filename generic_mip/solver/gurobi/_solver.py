@@ -25,8 +25,14 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def set_multiple_variable_hints(self, vars_: npt.NDArray[gp.Var], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
-    def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var]) -> None:
-        self._objective += coeffs.dot(vars_)
+    def add_multiple_objective_terms(
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var], overwrite: bool = True
+    ) -> None:
+        if overwrite:
+            for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
+                self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
+        else:
+            self._objective += coeffs.dot(vars_)
 
     def add_multiple_variables(
         self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
@@ -120,7 +126,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_variable_value(self, var: gp.Var) -> float:
         return var.x
 
-    def add_objective_term(self, coeff: float, var: gp.Var) -> None:
+    def add_objective_term(self, coeff: float, var: gp.Var, overwrite: bool = True) -> None:
+        if overwrite:
+            raise NotImplementedError("Overwrite objective is not supported using gurobi solver yet.")
         self._objective += coeff * var
 
     def set_optimization_direction(self, maximization: bool) -> None:

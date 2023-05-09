@@ -99,12 +99,17 @@ class OrToolsSolver(
     def get_variable_value(self, var: pywraplp.Variable) -> float:
         return var.SolutionValue()
 
-    def add_objective_term(self, coeff: float, var: pywraplp.Variable) -> None:
-        self._objective.SetCoefficient(var, coeff)
+    def add_objective_term(self, coeff: float, var: pywraplp.Variable, overwrite: bool = True) -> None:
+        if overwrite:
+            self._objective.SetCoefficient(var, coeff)
+        else:
+            self._objective.SetCoefficient(var, self._objective.GetCoefficient(var) + coeff)
 
-    def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[pywraplp.Variable]) -> None:
+    def add_multiple_objective_terms(
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[pywraplp.Variable], overwrite: bool = True
+    ) -> None:
         for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
-            self.add_objective_term(coeffs[i], vars_[i])
+            self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._objective.SetOptimizationDirection(maximization)

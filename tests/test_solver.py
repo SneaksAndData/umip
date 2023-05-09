@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from generic_mip.abstract_solver import AbstractOptimizationSolver
+from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
@@ -12,7 +13,7 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     var = solver.add_variable(lb=0, ub=1, name="x", dtype=VariableDataType.FLOAT)
     # Notice that setting both lb and ub may result in 2 constraints in some implementations
     solver.add_constraint(lb=0, ub=None, coeffs=1, vars_=var, name="c1")
-    solver.add_objective_term(coeff=1, var=var)
+    solver.add_objective_term(coeff=1, var=var, overwrite=False)
     solver.force_update()
 
     assert solver.get_constraint_count() == 1
@@ -34,7 +35,7 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
         vars_=np.array([vars_] * 3),
         name="c1",
     )
-    solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_)
+    solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_, overwrite=False)
     solver.force_update()
 
     assert len(vars_) == 3
@@ -53,7 +54,7 @@ def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDat
     solver.set_optimization_direction(maximization=maximisation)
     var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=dtype)
     solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
-    solver.add_objective_term(coeff=1.0, var=var)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.solve()
 
     assert solver.is_optimal()
@@ -72,7 +73,7 @@ def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDa
     """
     solver.set_optimization_direction(maximization=True)
     var = solver.add_variable(lb=0.0, ub=solver.infinity(), name="x", dtype=dtype)
-    solver.add_objective_term(coeff=1.0, var=var)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.solve()
 
     assert not solver.is_optimal()
@@ -89,7 +90,7 @@ def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableD
     """
     var = solver.add_variable(lb=0.0, ub=1.0, name="x", dtype=dtype)
     solver.add_constraint(lb=5.0, ub=6.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
-    solver.add_objective_term(coeff=1.0, var=var)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.solve()
 
     assert not solver.is_optimal()
@@ -106,7 +107,7 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """
     var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
     solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
-    solver.add_objective_term(coeff=1.0, var=var)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.set_verbose(verbose=verbose)
     solver.solve()
 
@@ -116,3 +117,35 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
         assert len(out) > 0
     else:
         assert len(out) == 0
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Gurobi"], indirect=True)
+@pytest.mark.parametrize("overwrite", [True, False])
+def test_add_objective_term(solver: AbstractOptimizationSolver, overwrite: bool):
+    """
+    Testing that the solver setting for OrTools overwrite in objective function is set correctly.
+    """
+    x = solver.add_variable(lb=0, ub=100, name="x", dtype=VariableDataType.INT)
+    y = solver.add_variable(lb=0, ub=100, name="y", dtype=VariableDataType.INT)
+
+    try:
+        solver.add_multiple_objective_terms(coeffs=np.array([1.0, 4.0]), vars_=np.array([x, y]), overwrite=overwrite)
+        solver.add_multiple_objective_terms(coeffs=np.array([0.0, 0.0]), vars_=np.array([x, y]), overwrite=overwrite)
+
+        solver.add_constraint(
+            lb=None, ub=100, coeffs=np.array([1.0, 1.0]), vars_=np.array([x, y]), name="my_constraint"
+        )
+        solver.add_constraint(lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([y]), name="my_constraint")
+        solver.set_optimization_direction(True)
+        solver.set_verbose(True)
+        solver.solve()
+
+        obj_value = solver.get_objective_value()
+
+        if overwrite:
+            assert obj_value == 0.0
+        else:
+            assert obj_value == 160.0
+
+    except NotImplementedError:
+        assert overwrite == True and isinstance(solver, GurobiSolver)

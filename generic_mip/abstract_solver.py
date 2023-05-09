@@ -139,7 +139,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_objective_term(self, coeff: float, var: VT) -> None:
+    def add_objective_term(self, coeff: float, var: VT, overwrite: bool = True) -> None:
         """
         Adds a single objective term.
 
@@ -149,7 +149,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_multiple_objective_terms(self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT]) -> None:
+    def add_multiple_objective_terms(
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT], overwrite: bool = True
+    ) -> None:
         """
         Adds multiple objective terms at once: c_1x_1 + c_2x_2 + ...
 
