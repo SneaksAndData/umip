@@ -63,6 +63,7 @@ def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDat
     assert not solver.is_infeasible()
     assert solver.get_objective_value() == int(maximisation)
     assert solver.get_variable_value(var) == int(maximisation)
+    assert solver.get_gap() == 0.0
 
 
 @pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
@@ -117,6 +118,64 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
         assert len(out) > 0
     else:
         assert len(out) == 0
+
+
+@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+def test_time_limit_gap(solver: AbstractOptimizationSolver):
+    """
+    Testing that solving a computationally difficult problem stops at the time limit and
+    provides a non-zero gap because it is not done solving.
+    """
+    number_of_cities = 100
+    cities = list(range(0, number_of_cities))
+
+    c = [[10.0 for _ in cities] for _ in cities]
+    x = [
+        [solver.add_variable(lb=0.0, ub=1.0, name=f"x{i},{j}", dtype=VariableDataType.BOOL) for j in cities]
+        for i in cities
+    ]
+    u = [None] + [
+        solver.add_variable(lb=1.0, ub=number_of_cities - 1, name=f"u{i}", dtype=VariableDataType.INT)
+        for i in cities[1:]
+    ]
+
+    for i in cities:
+        for j in cities:
+            if i != j:
+                solver.add_objective_term(coeff=c[i][j], var=x[i][j], overwrite=False)
+
+    for i in cities:
+        solver.add_constraint(
+            lb=1.0,
+            ub=1.0,
+            coeffs=np.array([1.0 for j in cities if i != j]),
+            vars_=np.array([x[i][j] for j in cities if i != j]),
+        )
+
+    for j in cities:
+        solver.add_constraint(
+            lb=1.0,
+            ub=1.0,
+            coeffs=np.array([1.0 for i in cities if i != j]),
+            vars_=np.array([x[i][j] for i in cities if i != j]),
+        )
+
+    for i in cities[1:]:
+        for j in cities[1:]:
+            if i != j:
+                solver.add_constraint(
+                    lb=None,
+                    ub=number_of_cities - 2,
+                    coeffs=np.array([1.0, -1.0, number_of_cities - 1]),
+                    vars_=np.array([u[i], u[j], x[i][j]]),
+                )
+
+    solver.set_solver_setting("presolving/maxrounds=0")
+    solver.set_verbose(verbose=True)
+    solver.solve(time_limit=2.0)
+    gap = solver.get_gap()
+
+    assert gap is not None and gap > 0
 
 
 @pytest.mark.parametrize("solver", ["OrTools", "Gurobi"], indirect=True)

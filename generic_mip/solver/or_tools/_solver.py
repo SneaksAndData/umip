@@ -117,7 +117,9 @@ class OrToolsSolver(
     def get_objective_value(self) -> float:
         return self._objective.Value()
 
-    def solve(self) -> int:
+    def solve(self, time_limit: Optional[float] = None) -> int:
+        if time_limit is not None:
+            self._solver.set_time_limit(round(time_limit * 1000))
         self.status = self._solver.Solve()
         return self.status
 
@@ -138,6 +140,9 @@ class OrToolsSolver(
 
     def is_abnormal(self) -> bool:
         return self.status == pywraplp.Solver.ABNORMAL
+
+    def is_not_solved(self) -> bool:
+        return self.status == pywraplp.Solver.NOT_SOLVED
 
     def set_solver_setting(self, setting: str) -> None:
         self._solver.SetSolverSpecificParametersAsString(setting)
@@ -169,6 +174,15 @@ class OrToolsSolver(
     def force_update(self):
         # OR Tools uses eager updates.
         pass
+
+    def get_gap(self) -> float:
+        bound = self._solver.Objective().BestBound()
+        objective_value = self._solver.Objective().Value()
+        if objective_value == 0 and self.is_not_solved():
+            return self.infinity()
+        if objective_value == 0 and bound == 0:
+            return 0
+        return abs(bound - objective_value) / abs(objective_value)
 
     def add_objective_offset(self, offset: float, overwrite: bool = True):
         if overwrite:

@@ -138,7 +138,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_objective_value(self) -> float:
         return self._solver.getObjective().getValue()
 
-    def solve(self) -> int:
+    def solve(self, time_limit: Optional[float] = None) -> int:
+        if time_limit is not None:
+            self._solver.setParam(gp.GRB.Param.TimeLimit, time_limit)
         self._solver.setObjective(self._objective)
         self._solver.optimize()
         self.status = self._solver.getAttr(gp.GRB.Attr.Status)
@@ -160,7 +162,18 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         return self.status == gp.GRB.UNBOUNDED
 
     def is_abnormal(self) -> bool:
-        return self.status not in (gp.GRB.OPTIMAL, gp.GRB.INFEASIBLE, gp.GRB.UNBOUNDED)
+        return self.status in [gp.GRB.NUMERIC, gp.GRB.INF_OR_UNBD, gp.GRB.CUTOFF]
+
+    def is_not_solved(self) -> bool:
+        return self.status in [
+            gp.GRB.TIME_LIMIT,
+            gp.GRB.NODE_LIMIT,
+            gp.GRB.ITERATION_LIMIT,
+            gp.GRB.INTERRUPTED,
+            gp.GRB.SUBOPTIMAL,
+            gp.GRB.USER_OBJ_LIMIT,
+            gp.GRB.WORK_LIMIT,
+        ]
 
     def set_solver_setting(self, setting: str) -> None:
         raise ValueError("Not supported in Gurobi solver")
@@ -185,6 +198,15 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def force_update(self):
         self._solver.update()
+
+    def get_gap(self) -> float:
+        bound = self._solver.getAttr(gp.GRB.Attr.ObjBound)
+        objective_value = self._solver.getAttr(gp.GRB.Attr.ObjVal)
+        if objective_value == 0 and self.is_not_solved():
+            return self.infinity()
+        if objective_value == 0 and bound == 0:
+            return 0
+        return abs(bound - objective_value) / abs(objective_value)
 
     def add_objective_offset(self, offset: float, overwrite: bool = True):
         if overwrite:

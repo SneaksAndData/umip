@@ -179,9 +179,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def solve(self) -> int:
+    def solve(self, time_limit: Optional[float] = None) -> int:
         """
         Solve the optimization problem.
+        :param time_limit: The time limit in seconds. None means no time limit.
         :return: The status of the optimization.
         """
 
@@ -218,6 +219,13 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
         Whether the model is unbounded. Only callable after calling solve().
         :return: Whether the model is unbounded.
+        """
+
+    @abstractmethod
+    def is_not_solved(self) -> bool:
+        """
+        Whether the model is not finished solving. Only callable after calling solve().
+        :return: Whether the model is not finished solving.
         """
 
     @abstractmethod
@@ -282,6 +290,12 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
+    def get_gap(self) -> float:
+        """
+        Returns the gap of the solution.
+        :return: The gap.
+        """
+
     def add_objective_offset(self, offset: float, overwrite: bool = True):
         """
         Set the objective offset.
