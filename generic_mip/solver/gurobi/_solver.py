@@ -128,7 +128,8 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def add_objective_term(self, coeff: float, var: gp.Var, overwrite: bool = True) -> None:
         if overwrite:
-            raise NotImplementedError("Overwrite objective is not supported using gurobi solver yet.")
+            # Might have bad performance?
+            self._objective.remove(var)
         self._objective += coeff * var
 
     def set_optimization_direction(self, maximization: bool) -> None:
@@ -184,3 +185,8 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def force_update(self):
         self._solver.update()
+
+    def add_objective_offset(self, offset: float, overwrite: bool = True):
+        if overwrite:
+            self._objective -= self._objective.getConstant()
+        self._objective += offset

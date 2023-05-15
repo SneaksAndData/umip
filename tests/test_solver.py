@@ -128,24 +128,36 @@ def test_add_objective_term(solver: AbstractOptimizationSolver, overwrite: bool)
     x = solver.add_variable(lb=0, ub=100, name="x", dtype=VariableDataType.INT)
     y = solver.add_variable(lb=0, ub=100, name="y", dtype=VariableDataType.INT)
 
-    try:
-        solver.add_multiple_objective_terms(coeffs=np.array([1.0, 4.0]), vars_=np.array([x, y]), overwrite=overwrite)
-        solver.add_multiple_objective_terms(coeffs=np.array([0.0, 0.0]), vars_=np.array([x, y]), overwrite=overwrite)
+    solver.add_multiple_objective_terms(coeffs=np.array([1.0, 4.0]), vars_=np.array([x, y]), overwrite=overwrite)
+    solver.add_multiple_objective_terms(coeffs=np.array([0.0, 0.0]), vars_=np.array([x, y]), overwrite=overwrite)
 
-        solver.add_constraint(
-            lb=None, ub=100, coeffs=np.array([1.0, 1.0]), vars_=np.array([x, y]), name="my_constraint"
-        )
-        solver.add_constraint(lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([y]), name="my_constraint")
-        solver.set_optimization_direction(True)
-        solver.set_verbose(True)
-        solver.solve()
+    solver.add_constraint(lb=None, ub=100, coeffs=np.array([1.0, 1.0]), vars_=np.array([x, y]), name="my_constraint")
+    solver.add_constraint(lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([y]), name="my_constraint")
+    solver.set_optimization_direction(True)
+    solver.set_verbose(True)
+    solver.solve()
 
-        obj_value = solver.get_objective_value()
+    obj_value = solver.get_objective_value()
 
-        if overwrite:
-            assert obj_value == 0.0
-        else:
-            assert obj_value == 160.0
+    if overwrite:
+        assert obj_value == 0.0
+    else:
+        assert obj_value == 160.0
 
-    except NotImplementedError:
-        assert overwrite == True and isinstance(solver, GurobiSolver)
+
+@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
+@pytest.mark.parametrize("offset", [0, 1])
+@pytest.mark.parametrize("overwrite", [False, True])
+def test_optimal_solution(solver: AbstractOptimizationSolver, offset: int, overwrite: bool):
+    """
+    Testing that the solver returns the known optimal solution, and it is reflected in the optimisation status.
+    """
+    solver.set_optimization_direction(maximization=False)
+    var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
+    solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=True)
+    solver.add_objective_offset(offset=offset, overwrite=overwrite)
+    solver.add_objective_offset(offset=offset, overwrite=overwrite)
+    solver.solve()
+
+    assert solver.get_objective_value() == offset + offset * (1 - overwrite)

@@ -252,21 +252,21 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def get_variable_count(self):
+    def get_variable_count(self) -> int:
         """
         Get number of variables in the model.
         :return: Number of variables.
         """
 
     @abstractmethod
-    def get_constraint_count(self):
+    def get_constraint_count(self) -> int:
         """
         Get number of constraints in the model.
         :return: Number of constraints.
         """
 
     @abstractmethod
-    def get_objective_terms_count(self):
+    def get_objective_terms_count(self) -> int:
         """
         Get number of objective terms in the model.
         :return: Number of objective terms.
@@ -279,4 +279,13 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         Use this method to force an update of the model, if the specific implementation uses lazy updates.
         E.g. Gurobi uses lazy updates.
         :return:
+        """
+
+    @abstractmethod
+    def add_objective_offset(self, offset: float, overwrite: bool = True):
+        """
+        Set the objective offset.
+        :param offset: The offset to set.
+        :param overwrite: Whether to overwrite the current offset or add to it.
+        :return
         """

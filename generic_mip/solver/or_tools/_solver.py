@@ -169,3 +169,9 @@ class OrToolsSolver(
     def force_update(self):
         # OR Tools uses eager updates.
         pass
+
+    def add_objective_offset(self, offset: float, overwrite: bool = True):
+        if overwrite:
+            self._objective.SetOffset(offset)
+        else:
+            self._objective.SetOffset(self._objective.Offset() + offset)
