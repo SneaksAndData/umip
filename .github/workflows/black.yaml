@@ -7,6 +7,12 @@ on:
 jobs:
   codestyle:
     name: Black and Pylint
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,10 +22,34 @@ jobs:
         with:
           python-version: '3.9.x'
           architecture: 'x64'
-      - name: Install Poetry and dependencies
-        uses: SneaksAndData/github-actions/install_poetry@v0.0.21
+
+      - name: Import Secrets
+        uses: hashicorp/vault-action@v2.4.2
         with:
-           install_extras: "all"
+          url: https://hashicorp-vault.production.sneaksanddata.com/
+          role: github
+          method: jwt
+          secrets: |
+            /secret/data/common/package-publishing/aws-ca/production/artifact-user access_key ;
+            /secret/data/common/package-publishing/aws-ca/production/artifact-user access_key_id ;
+      - name: Setup AWS CA
+        uses: SneaksAndData/github-actions/setup_aws_ca@v0.1.2
+        with:
+          aws_access_key: ${{ env.ACCESS_KEY }}
+          aws_access_key_id: ${{ env.ACCESS_KEY_ID }}
+          mode: read
+          aws_ca_domain: esd-code-artifact-production
+          aws_ca_domain_owner: 497010676583
+          aws_ca_repository: esd-artifacts
+        id: setup_aws_ca
+      - name: Install Poetry and dependencies
+        uses: SneaksAndData/github-actions/install_poetry@v0.1.1
+        with:
+          pypi_repo_url: ${{ steps.setup_aws_ca.outputs.url }}
+          pypi_token_username: ${{ steps.setup_aws_ca.outputs.user }}
+          pypi_token: ${{ steps.setup_aws_ca.outputs.token }}
+          install_extras: "all"
+
       - name: Black
         shell: bash
         run: |

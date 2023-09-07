@@ -17,7 +17,7 @@ scipy = "^1.9.0"
 adapta = "^2.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^6.2.0"
+pytest = "^7"
 pylint = "^2.14.0"
 pytest-cov = "^2.12.1"
 pandas = "~1.5"
@@ -38,3 +38,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 120
 extend-exclude = 'tests/data/.*'
+
+[[tool.poetry.source]]
+name = "custom_repo"
+url = "https://esd-code-artifact-production-497010676583.d.codeartifact.eu-central-1.amazonaws.com/pypi/esd-artifacts/simple/"
