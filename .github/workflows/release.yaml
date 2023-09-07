@@ -21,6 +21,12 @@ jobs:
           minor_v: 5
   release_to_aws_ca:
     name: Release distribution to AWS CA
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    
     runs-on: ubuntu-latest
     needs: [ create_release ]
 
