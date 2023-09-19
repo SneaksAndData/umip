@@ -4,6 +4,7 @@ from logging import StreamHandler
 from adapta.logs._base import SemanticLogger
 from adapta.logs.models import LogLevel
 from generic_mip.solver.gurobi import GurobiSolver
+from generic_mip.solver.highs import HighsSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 
 
@@ -24,3 +25,5 @@ def solver(logger, request):
         return OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
     elif request.param == "Gurobi":
         return GurobiSolver(logger=logger)
+    elif request.param == "Highs":
+        return HighsSolver(logger=logger)

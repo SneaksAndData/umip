@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 ortools = { version = "9.6.2534", optional = true }
+highspy = { version = "^1.5.3", optional = true }
 gurobipy = [
     { version = "9.5.2", python = ">=3.9,<3.11", optional = true },
     { version = "10.0.1", python = ">=3.11,<3.12", optional = true }
@@ -20,8 +21,8 @@ adapta = "^2.0"
 pytest = "^7"
 pylint = "^2.14.0"
 pytest-cov = "^2.12.1"
-pandas = "~1.5"
-black = "^22"
+pandas = "~2.0"
+black = "^23"
 
 [tool.poetry.extras]
 ortools = [
@@ -29,6 +30,9 @@ ortools = [
 ]
 gurobi = [
     'gurobipy'
+]
+highs = [
+    'highspy'
 ]
 
 [build-system]

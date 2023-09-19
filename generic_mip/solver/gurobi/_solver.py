@@ -12,9 +12,18 @@ from generic_mip.variable_data_type import VariableDataType
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Gurobi library."""
 
-    def __init__(self, logger: SemanticLogger):
+    def __init__(self, logger: SemanticLogger, model_path: Optional[str] = None):
+        """
+        Initialize the solver.
+
+        :param model_path: The path to the model file to read (mps or lp).
+        :param logger: The logger to use.
+        """
         super().__init__(logger)
-        self._solver = gp.Model()
+        if model_path is not None:
+            self._solver = gp.read(model_path)
+        else:
+            self._solver = gp.Model()
         self._objective = gp.LinExpr()
         self._solver.setParam(gp.GRB.Param.LogToConsole, 0)
         self.status = None
@@ -92,7 +101,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
         constr_expr = gp.LinExpr()
         if isinstance(vars_, Iterable):
-            for (coeff, var) in zip(coeffs, vars_):
+            for coeff, var in zip(coeffs, vars_):
                 constr_expr += coeff * var
         else:
             constr_expr = coeffs * vars_

@@ -13,10 +13,10 @@ from generic_mip import (
     AbstractObjectiveBuilder,
     AbstractConstraintBuilder,
     AbstractMipModel,
-    OrToolsSolver,
-    GurobiSolver,
 )
-from generic_mip.solver.ortools_solver import OrToolsSolverEngine
+from generic_mip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
+from generic_mip.solver.gurobi import GurobiSolver
+from generic_mip.solver.highs import HighsSolver
 
 """
 Model to implement:
@@ -45,6 +45,8 @@ if SOLVER == "ortools":
     solver = OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
 elif SOLVER == "gurobi":
     solver = GurobiSolver(logger=logger)
+elif SOLVER == "highs":
+    solver = HighsSolver(logger=logger)
 else:
     raise ValueError(f"Invalid solver: {SOLVER}")
 

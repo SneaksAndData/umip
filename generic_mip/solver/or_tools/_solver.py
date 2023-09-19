@@ -15,6 +15,12 @@ class OrToolsSolver(
     """A solver implemented in the Google OR-Tools library."""
 
     def __init__(self, solver_engine: OrToolsSolverEngine, logger: SemanticLogger):
+        """
+        Initialize the solver.
+
+        :param solver_engine: The solver engine to use.
+        :param logger: The logger to use.
+        """
         super().__init__(logger)
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()
@@ -76,7 +82,7 @@ class OrToolsSolver(
         )
 
         if isinstance(vars_, Iterable):
-            for (coeff, var) in zip(coeffs, vars_):
+            for coeff, var in zip(coeffs, vars_):
                 constr.SetCoefficient(var, coeff)
         else:
             constr.SetCoefficient(vars_, coeffs)
@@ -150,8 +156,10 @@ class OrToolsSolver(
     def export_to_file(self, path: str) -> None:
         if path.lower().endswith(".lp"):
             file_content = self._solver.ExportModelAsLpFormat(False)
-        else:
+        elif path.lower().endswith(".mps"):
             file_content = self._solver.ExportModelAsMpsFormat(False, False)
+        else:
+            raise ValueError("Unsupported file format")
 
         with open(path, "w", encoding="utf-8") as f:
             f.write(file_content)

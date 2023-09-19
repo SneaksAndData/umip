@@ -3,8 +3,11 @@ import sys
 from logging import StreamHandler
 from adapta.logs import SemanticLogger
 from adapta.logs.models import LogLevel
-from generic_mip import VariableDataType, OrToolsSolver, GurobiSolver
-from generic_mip.solver.ortools_solver import OrToolsSolverEngine
+from generic_mip import VariableDataType
+from generic_mip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
+from generic_mip.solver.gurobi import GurobiSolver
+from generic_mip.solver.highs import HighsSolver
+
 
 """
 Model to implement:
@@ -23,7 +26,7 @@ You can access the solver API directly for local experiments, prototyping, debug
 For production grade models, use the generic_mip framework (full_example.py).
 """
 
-SOLVER = "ortools"
+SOLVER = "highs"
 
 logger = SemanticLogger().add_log_source(
     log_source_name="MyModel", min_log_level=LogLevel.DEBUG, log_handlers=[StreamHandler(sys.stdout)], is_default=True
@@ -33,6 +36,8 @@ if SOLVER == "ortools":
     solver = OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
 elif SOLVER == "gurobi":
     solver = GurobiSolver(logger=logger)
+elif SOLVER == "highs":
+    solver = HighsSolver(logger=logger)
 else:
     raise ValueError(f"Invalid solver: {SOLVER}")
 
@@ -43,7 +48,7 @@ solver.add_multiple_objective_terms(
     vars_=np.array([x, y]),
 )
 solver.add_constraint(lb=None, ub=100, coeffs=np.array([1.0, 1.0]), vars_=np.array([x, y]), name="my_constraint")
-solver.add_constraint(lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([y]), name="my_constraint")
+solver.add_constraint(lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([y]), name="my_constraint2")
 solver.set_optimization_direction(True)
 solver.set_verbose(True)
 solver.solve()
