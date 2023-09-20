@@ -73,7 +73,7 @@ def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDa
     """
     solver.set_optimization_direction(maximization=True)
     var = solver.add_variable(lb=0.0, ub=solver.infinity(), name="x", dtype=dtype)
-    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
+    solver.add_objective_term(coeff=1.0, var=var)
     solver.solve()
 
     assert not solver.is_optimal()
@@ -108,7 +108,7 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """
     var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
     solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
-    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
+    solver.add_objective_term(coeff=1.0, var=var)
     solver.set_verbose(verbose=verbose)
     solver.solve()
 

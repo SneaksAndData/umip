@@ -949,6 +949,25 @@ url = "https://esd-code-artifact-production-497010676583.d.codeartifact.eu-centr
 reference = "custom_repo"
 
 [[package]]
+name = "localsolver"
+version = "11.5.20230530"
+description = "LocalSolver is the premier all-terrain & all-in-one optimization solver."
+optional = true
+python-versions = ">=2.7"
+files = [
+    {file = "localsolver-11.5.20230530-py2.py3.py27.py34.py35.py36.py37.py38.py39.py310.py311-none-linux_x86_64.whl", hash = "sha256:0c1f0574fa202ebb55ed4e3e5b700ce53f7ffc566fdfe223418fe34d41d87cf2"},
+    {file = "localsolver-11.5.20230530-py2.py3.py27.py34.py35.py36.py37.py38.py39.py310.py311-none-macosx_10_11_x86_64.whl", hash = "sha256:9250496e93c15c422e68ee6f7ec482f355ee4b89b0e03fc372c64da53b9e509e"},
+    {file = "localsolver-11.5.20230530-py2.py3.py27.py34.py35.py36.py37.py38.py39.py310.py311-none-macosx_11_0_arm64.whl", hash = "sha256:d48a7c56cf3548b277a665956d31d4cfab8bfaf1b314a6a8e68502fb56d94227"},
+    {file = "localsolver-11.5.20230530-py2.py3.py27.py34.py35.py36.py37.py38.py39.py310.py311-none-win32.whl", hash = "sha256:78be9d58e7585cf2a137429a2301265d671394e554a28b01461c931c8fcdcecf"},
+    {file = "localsolver-11.5.20230530-py2.py3.py27.py34.py35.py36.py37.py38.py39.py310.py311-none-win_amd64.whl", hash = "sha256:c5f0f56c08021ab82fe3637b01520000e81f94e657a2aa6e279548f4a3d2d90b"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pip.localsolver.com"
+reference = "localsolver"
+
+[[package]]
 name = "marshmallow"
 version = "3.20.1"
 description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
@@ -1668,13 +1687,13 @@ reference = "custom_repo"
 
 [[package]]
 name = "typing-extensions"
-version = "4.7.1"
-description = "Backported and Experimental Type Hints for Python 3.7+"
+version = "4.8.0"
+description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.7.1-py3-none-any.whl", hash = "sha256:440d5dd3af93b060174bf433bccd69b0babc3b15b1a8dca43789fd7f61514b36"},
-    {file = "typing_extensions-4.7.1.tar.gz", hash = "sha256:b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2"},
+    {file = "typing_extensions-4.8.0-py3-none-any.whl", hash = "sha256:8f92fc8806f9a6b641eaa5318da32b44d401efaac0f6678c9bc448ba3605faa0"},
+    {file = "typing_extensions-4.8.0.tar.gz", hash = "sha256:df8e4339e9cb77357558cbdbceca33c303714cf861d1eef15e1070055ae8b7ef"},
 ]
 
 [package.source]
@@ -1832,9 +1851,10 @@ reference = "custom_repo"
 [extras]
 gurobi = ["gurobipy", "gurobipy"]
 highs = ["highspy"]
+localsolver = ["localsolver"]
 ortools = ["ortools"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "565d1d8f3cc941ee6f8e4126bd354d117764846868983d8526896da35e4d7159"
+content-hash = "9100eefc6cfabfd6a60a4ce5a9b89c5a4abaa51d9fa908082aae60017842ecb9"

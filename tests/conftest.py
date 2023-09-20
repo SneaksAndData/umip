@@ -6,6 +6,7 @@ from adapta.logs.models import LogLevel
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
+from generic_mip.solver.local_solver import LocalSolver
 
 
 @pytest.fixture(scope="session")
@@ -25,5 +26,7 @@ def solver(logger, request):
         return OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
     elif request.param == "Gurobi":
         return GurobiSolver(logger=logger)
+    elif request.param == "LocalSolver":
+        return LocalSolver(logger=logger)
     elif request.param == "Highs":
         return HighsSolver(logger=logger)
