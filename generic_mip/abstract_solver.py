@@ -23,6 +23,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             Log redirect is not performed in this class due to the overhead it would add to each method call.
         """
         self._logger = logger
+        self._integer_problem = False
 
     @abstractmethod
     def add_constraint(
@@ -296,10 +297,19 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :return: The gap.
         """
 
+    @abstractmethod
     def add_objective_offset(self, offset: float, overwrite: bool = True):
         """
         Set the objective offset.
         :param offset: The offset to set.
         :param overwrite: Whether to overwrite the current offset or add to it.
         :return
+        """
+
+    @abstractmethod
+    def get_dual_value(self, constraint: CT) -> float:
+        """
+        Get dual value of a constraint.
+        :param constraint: Constraint to get dual value from.
+        :return: The dual value.
         """

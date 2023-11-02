@@ -95,10 +95,12 @@ class OrToolsSolver(
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
+            self._integer_problem = True
             return self._solver.IntVar(lb, ub, name)
         if dtype == VariableDataType.FLOAT:
             return self._solver.NumVar(lb, ub, name)
         if dtype == VariableDataType.BOOL:
+            self._integer_problem = True
             return self._solver.BoolVar(name)
         raise ValueError("Unsupported variable data type")
 
@@ -197,3 +199,8 @@ class OrToolsSolver(
             self._objective.SetOffset(offset)
         else:
             self._objective.SetOffset(self._objective.Offset() + offset)
+
+    def get_dual_value(self, constraint: pywraplp.Constraint) -> float:
+        # constraint.dual_value() only works if you specifically use an LP solver.
+        # SCIP is a MIP solver, thus it does not work.
+        raise NotImplementedError("Dual values are not supported by the MIP solvers in OR Tools")

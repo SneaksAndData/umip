@@ -51,10 +51,12 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
         if dtype == VariableDataType.INT:
             vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=name)
+            self._integer_problem = True
         elif dtype == VariableDataType.FLOAT:
             vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=name)
         elif dtype == VariableDataType.BOOL:
             vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.BINARY, name=name)
+            self._integer_problem = True
         else:
             raise ValueError("Unsupported variable data type")
 
@@ -124,10 +126,12 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
             var = self._solver.addVar(lb, ub, 0, gp.GRB.INTEGER, name, None)
+            self._integer_problem = True
         elif dtype == VariableDataType.FLOAT:
             var = self._solver.addVar(lb, ub, 0, gp.GRB.CONTINUOUS, name, None)
         elif dtype == VariableDataType.BOOL:
             var = self._solver.addVar(lb, ub, 0, gp.GRB.BINARY, name, None)
+            self._integer_problem = True
         else:
             raise ValueError("Unsupported variable data type")
         return var
@@ -221,3 +225,10 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         if overwrite:
             self._objective -= self._objective.getConstant()
         self._objective += offset
+
+    def get_dual_value(self, constraint: gp.Constr) -> float:
+        if self._integer_problem:
+            raise ValueError("Dual values are not available for integer problems")
+        if not self.is_optimal():
+            raise ValueError("Dual values are only available for optimal solutions")
+        return constraint.getAttr(gp.GRB.Attr.Pi)

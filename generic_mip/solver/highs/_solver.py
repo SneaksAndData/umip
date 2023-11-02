@@ -19,6 +19,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         :param logger: The logger to use.
         """
         super().__init__(logger)
+        self._dual_values: Optional[List[float]] = None
         self._var_count = 0
         self._constr_count = 0
         self._obj_count = 0
@@ -52,12 +53,14 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._solver.addVars(count, lb, ub)
 
         if dtype == VariableDataType.INT:
+            self._integer_problem = True
             for i in range(count):
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
         elif dtype == VariableDataType.FLOAT:
             for i in range(count):
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kContinuous)
         elif dtype == VariableDataType.BOOL:
+            self._integer_problem = True
             for i in range(count):
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
                 self._solver.changeColBounds(first_var_number + i, 0, 1)
@@ -149,11 +152,13 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
         if dtype == VariableDataType.INT:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kInteger)
+            self._integer_problem = True
         elif dtype == VariableDataType.FLOAT:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kContinuous)
         elif dtype == VariableDataType.BOOL:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kInteger)
             self._solver.changeColBounds(var_number, 0, 1)
+            self._integer_problem = True
         else:
             raise ValueError("Unsupported variable data type")
 
@@ -198,6 +203,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
         # This list conversion is necessary because of performance issues in the C implementation
         self._solution = list(self._solver.getSolution().col_value)
+        self._dual_values = list(self._solver.getSolution().row_dual)
 
         return self.status
 
@@ -272,3 +278,10 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         else:
             _, old_offset = self._solver.getObjectiveOffset()
             self._solver.changeObjectiveOffset(old_offset + offset)
+
+    def get_dual_value(self, constraint: int) -> float:
+        if self._integer_problem:
+            raise ValueError("Dual values are not available for integer problems")
+        if not self.is_optimal():
+            raise ValueError("Dual values are only available for optimal solutions")
+        return self._dual_values[constraint]

@@ -1,10 +1,14 @@
+"""
+Generally, Gurobi and LocalSolver are not tested because they are not open source and require a license to run.
+Open source implementations are tested below.
+"""
 import pytest
 import numpy as np
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding a variable, a constraint, and an objective term is reflected in the solver.
@@ -20,7 +24,7 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_objective_terms_count() == 1
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding 3 variables, 3 constraints, and 3 objective terms is reflected in the solver.
@@ -43,7 +47,7 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_objective_terms_count() == 3
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT, VariableDataType.BOOL])
 @pytest.mark.parametrize("maximisation", [True, False])
 def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDataType, maximisation: bool):
@@ -65,7 +69,7 @@ def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDat
     # assert solver.get_gap() == 0.0
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT])
 def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDataType):
     """
@@ -82,7 +86,7 @@ def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDa
     assert not solver.is_infeasible()
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT])
 def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableDataType):
     """
@@ -99,7 +103,7 @@ def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableD
     assert solver.is_infeasible()
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
 @pytest.mark.parametrize("verbose", [True, False])
 def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """
@@ -178,7 +182,7 @@ def test_time_limit_gap(solver: AbstractOptimizationSolver):
     assert gap is not None and gap > 0
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Gurobi", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("overwrite", [True, False])
 def test_add_objective_term(solver: AbstractOptimizationSolver, overwrite: bool):
     """
@@ -204,7 +208,7 @@ def test_add_objective_term(solver: AbstractOptimizationSolver, overwrite: bool)
         assert obj_value == 160.0
 
 
-@pytest.mark.parametrize("solver", ["Gurobi", "OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("offset", [0, 1])
 @pytest.mark.parametrize("overwrite", [False, True])
 def test_objective_offset(solver: AbstractOptimizationSolver, offset: int, overwrite: bool):
@@ -220,3 +224,36 @@ def test_objective_offset(solver: AbstractOptimizationSolver, offset: int, overw
     solver.solve()
 
     assert solver.get_objective_value() == offset + offset * (1 - overwrite)
+
+
+@pytest.mark.parametrize("solver", ["Highs"], indirect=True)
+def test_get_dual_value(solver: AbstractOptimizationSolver):
+    """
+    Testing that the dual value is retrieved correctly.
+    OR Tools does not support dual values, so it is not tested.
+    """
+    solver.set_optimization_direction(maximization=True)
+    var = solver.add_variable(lb=-solver.infinity(), ub=solver.infinity(), name="x", dtype=VariableDataType.FLOAT)
+    constr = solver.add_constraint(
+        lb=-solver.infinity(), ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1"
+    )
+    solver.add_objective_term(coeff=10, var=var, overwrite=True)
+    solver.solve()
+    assert solver.get_dual_value(constr) == 10
+
+
+@pytest.mark.parametrize("solver", ["Highs"], indirect=True)
+def test_integer_problem(solver: AbstractOptimizationSolver):
+    """
+    Testing that the dual value is retrieved correctly.
+    OR Tools does not support dual values, so it is not tested.
+    """
+    solver.set_optimization_direction(maximization=True)
+    var = solver.add_variable(lb=-solver.infinity(), ub=solver.infinity(), name="x", dtype=VariableDataType.INT)
+    constr = solver.add_constraint(
+        lb=-solver.infinity(), ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1"
+    )
+    solver.add_objective_term(coeff=10, var=var, overwrite=True)
+    solver.solve()
+    with pytest.raises(ValueError):
+        assert solver.get_dual_value(constr)

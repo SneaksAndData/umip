@@ -79,8 +79,10 @@ class LocalSolver(
         self.number_of_variables += 1
         if dtype == VariableDataType.INT:
             var = self._model.int(math.ceil(lb), math.floor(ub))
+            self._integer_problem = True
         elif dtype == VariableDataType.BOOL:
             var = self._model.bool()
+            self._integer_problem = True
         elif dtype == VariableDataType.FLOAT:
             var = self._model.float(lb, ub)
         else:
@@ -186,3 +188,6 @@ class LocalSolver(
 
     def get_gap(self) -> float:
         return self._solution.get_objective_gap(0)
+
+    def get_dual_value(self, constraint: ls.LSExpression) -> float:
+        raise NotImplementedError("LocalSolver does not support dual values")
