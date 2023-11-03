@@ -50,9 +50,9 @@ jobs:
           install_extras: "all"
 
       - name: Create package
-        uses: SneaksAndData/github-actions/create_package@v0.0.9
+        uses: SneaksAndData/github-actions/create_package@v0.1.2
         with:
-          pypi_repo_url: ${{ secrets.AZOPS_PYPI_UPLOAD }}
-          pypi_token_username: ${{ secrets.AZOPS_PAT_USER }}
-          pypi_token: ${{ secrets.AZOPS_PAT }}
+          repo_url: ${{ steps.setup_aws_ca.outputs.url }}
+          repo_token_username: ${{ steps.setup_aws_ca.outputs.user }}
+          repo_token: ${{ steps.setup_aws_ca.outputs.token }}
           package_name: generic_mip
