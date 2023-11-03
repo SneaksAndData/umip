@@ -1,7 +1,7 @@
 """Abstract definition of a MIP model."""
 import time
 import sys
-from typing import List, TypeVar, Generic
+from typing import List, TypeVar, Generic, Optional
 from logging import StreamHandler
 from adapta.logs import SemanticLogger
 from adapta.logs.models import LogLevel
@@ -85,13 +85,13 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._built = True
 
-    def solve(self, **kwargs: any) -> any:
+    def solve(self, time_limit: Optional[float] = None, **kwargs: any) -> any:
         if not self._built:
             raise ValueError("Model must be built before calling .solve()")
 
         start_time = time.time()
         with self._logger.redirect(log_level=LogLevel.INFO):
-            status = self._solver.solve()
+            status = self._solver.solve(time_limit=time_limit)
         exec_time = time.time() - start_time
         self._logger.info(template="Spent {time}s optimising.", time=exec_time)
         self._solved = True
@@ -122,3 +122,10 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         :return:
         """
         self._solver.export_to_file(path)
+
+    def get_gap(self) -> float:
+        """
+        Get the gap of the model.
+        :return: The gap of the model.
+        """
+        return self._solver.get_gap()
