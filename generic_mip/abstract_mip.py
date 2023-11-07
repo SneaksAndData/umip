@@ -96,7 +96,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         self._logger.info(template="Spent {time}s optimising.", time=exec_time)
         self._solved = True
 
-        if self._solver.is_optimal():
+        if self._solver.is_optimal() or self._solver.is_feasible():
             with self._logger.redirect(log_level=LogLevel.INFO):
                 for variable_builder in self._variable_builders:
                     self._data = variable_builder.unpack(solver=self._solver, data=self._data)

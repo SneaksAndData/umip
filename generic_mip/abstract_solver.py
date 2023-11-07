@@ -197,8 +197,15 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def is_optimal(self) -> bool:
         """
-        Whether the model is solved to optimality. Only callable after calling solve().
+        Whether the model is solved to optimality.
         :return: Whether the model is solved to optimality.
+        """
+
+    @abstractmethod
+    def is_feasible(self) -> bool:
+        """
+        Whether the model has found a feasible but not the optimal solution.
+        :return: Whether the model is solved to a feasible solution.
         """
 
     @abstractmethod

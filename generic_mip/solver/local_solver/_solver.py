@@ -148,6 +148,12 @@ class LocalSolver(
             self._solution.get_status() == ls.LSSolutionStatus.OPTIMAL and self.get_objective_value() <= self.infinity()
         )
 
+    def is_feasible(self) -> bool:
+        return (
+            self._solution.get_status() == ls.LSSolutionStatus.FEASIBLE
+            and self.get_objective_value() <= self.infinity()
+        )
+
     def is_infeasible(self) -> bool:
         return self._solution.get_status() in [ls.LSSolutionStatus.INFEASIBLE, ls.LSSolutionStatus.INCONSISTENT]
 

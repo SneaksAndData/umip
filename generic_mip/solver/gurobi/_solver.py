@@ -168,6 +168,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def is_optimal(self) -> bool:
         return self.status == gp.GRB.OPTIMAL
 
+    def is_feasible(self) -> bool:
+        return self.status == gp.GRB.OPTIMAL.SUBOPTIMAL
+
     def is_infeasible(self) -> bool:
         return self.status == gp.GRB.INFEASIBLE
 
