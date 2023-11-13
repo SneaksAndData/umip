@@ -99,12 +99,13 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             flat_vars = np.concatenate(vars_)
             starts = np.cumsum([0] + [len(c) for c in coeffs][:-1])
 
+        # In HiGHS, the number of non-zero coefficients is simply the number of coefficients
         # num_cons, lower, upper, num_new_nz, starts, indices, values
         self._solver.addRows(
             len(lb),
             lb,
             ub,
-            sum(1 for coeff in flat_coeffs if coeff != 0),
+            len(flat_coeffs),
             starts,
             flat_vars,
             flat_coeffs.astype(np.float64),
@@ -128,7 +129,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             coeffs = np.array([coeffs])
             vars_ = np.array([vars_])
 
-        number_of_non_zero_coefficients = sum(1 for coeff in coeffs if coeff != 0)
+        # In HiGHS, the number of non-zero coefficients is simply the number of coefficients
+        number_of_non_zero_coefficients = len(coeffs)
 
         # In some very specific cases, (completely) wrong coefficients are added to the model if not casted to float64
         # lower, upper, num_new_nz, index, value

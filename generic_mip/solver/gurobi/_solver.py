@@ -38,10 +38,10 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var], overwrite: bool = True
     ) -> None:
         if overwrite:
-            for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
-                self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
-        else:
-            self._objective += coeffs.dot(vars_)
+            for var in vars_:
+                self._objective.remove(var)
+
+        self._objective.addTerms(coeffs, vars_)
 
     def add_multiple_variables(
         self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
@@ -70,19 +70,23 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         ub: Optional[npt.NDArray[float]] = None,
         name: Optional[str] = None,
     ) -> None:
+        if coeffs.size == 0:
+            return
+
         if coeffs.ndim == 1 and not isinstance(coeffs[0], np.ndarray):
             coeffs = np.asarray([coeffs]).T
             vars_ = np.asarray([vars_]).T
 
-        coeff_list = np.concatenate([np.asarray(coeff) for coeff in coeffs])
-        var_vector = np.concatenate([np.asarray(var) for var in vars_])
+        coeff_list = np.concatenate(coeffs)
+        var_vector = np.concatenate(vars_)
 
         matrix_rows = [j for i, coeff in enumerate(coeffs) for j in [i] * len(coeff)]
         matrix_cols = list(range(len(var_vector)))
         matrix_data = coeff_list
 
-        # coeff_matrix = hstack([diags(coeff, 0) for coeff in coeffs])
-        coeff_matrix = coo_matrix((matrix_data, (matrix_rows, matrix_cols)), shape=(len(coeffs), len(var_vector)))
+        coeff_matrix = coo_matrix(
+            (matrix_data.astype(float), (matrix_rows, matrix_cols)), shape=(len(coeffs), len(var_vector))
+        )
         var_vector = var_vector.tolist()
 
         if lb is not None:
@@ -143,7 +147,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         if overwrite:
             # Might have bad performance?
             self._objective.remove(var)
-        self._objective += coeff * var
+        self._objective.addTerms([coeff], [var])
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE)
