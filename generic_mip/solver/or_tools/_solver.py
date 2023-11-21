@@ -125,10 +125,13 @@ class OrToolsSolver(
     def get_objective_value(self) -> float:
         return self._objective.Value()
 
-    def solve(self, time_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
+        solver_params = pywraplp.MPSolverParameters()
         if time_limit is not None:
             self._solver.set_time_limit(round(time_limit * 1000))
-        self.status = self._solver.Solve()
+        if mip_gap_limit is not None:
+            solver_params.SetDoubleParam(solver_params.RELATIVE_MIP_GAP, mip_gap_limit)
+        self.status = self._solver.Solve(solver_params)
         return self.status
 
     def get_constraint(self, name: str) -> pywraplp.Constraint:

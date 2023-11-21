@@ -195,10 +195,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         info: highspy.HighsInfo = self._solver.getInfo()
         return info.objective_function_value
 
-    def solve(self, time_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
         if time_limit is not None:
             self._solver.setOptionValue("time_limit", time_limit)
-
+        if mip_gap_limit is not None:
+            self._solver.setOptionValue("mip_rel_gap", mip_gap_limit)
         self._solver.run()
 
         self.status = self._solver.getModelStatus()

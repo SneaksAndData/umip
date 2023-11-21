@@ -128,9 +128,11 @@ class LocalSolver(
     def get_objective_value(self) -> float:
         return self._solution.get_value(self._objective)
 
-    def solve(self, time_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
         if time_limit is not None:
             self._solver.get_param().set_time_limit(time_limit)
+        if mip_gap_limit is not None:
+            raise NotImplementedError()
         self._model.add_objective(
             self._objective,
             ls.LSObjectiveDirection.MAXIMIZE if self._maximization else ls.LSObjectiveDirection.MINIMIZE,

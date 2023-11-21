@@ -155,9 +155,11 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_objective_value(self) -> float:
         return self._solver.getObjective().getValue()
 
-    def solve(self, time_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
         if time_limit is not None:
             self._solver.setParam(gp.GRB.Param.TimeLimit, time_limit)
+        if mip_gap_limit is not None:
+            self._solver.setParam(gp.GRB.Param.MIPGap, mip_gap_limit)
         self._solver.setObjective(self._objective)
         self._solver.optimize()
         self.status = self._solver.getAttr(gp.GRB.Attr.Status)

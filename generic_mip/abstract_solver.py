@@ -180,10 +180,12 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def solve(self, time_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
         """
-        Solve the optimization problem.
+        Solve the optimization problem. If both time_limit and mip_gap_limit are provided, the optimization would stop
+        when reach the tighter limit.
         :param time_limit: The time limit in seconds. None means no time limit.
+        :param mip_gap_limit: The optimality gap in percent, and in format of float. None means no mip gap limit.
         :return: The status of the optimization.
         """
 
