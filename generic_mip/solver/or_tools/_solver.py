@@ -3,7 +3,7 @@ from typing import Optional, Union, Iterable
 from ortools.linear_solver import pywraplp
 import numpy.typing as npt
 import numpy as np
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.or_tools._solver_engine import OrToolsSolverEngine
 from generic_mip.variable_data_type import VariableDataType
@@ -14,7 +14,7 @@ class OrToolsSolver(
 ):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Google OR-Tools library."""
 
-    def __init__(self, solver_engine: OrToolsSolverEngine, logger: SemanticLogger):
+    def __init__(self, solver_engine: OrToolsSolverEngine, logger: LoggerInterface):
         """
         Initialize the solver.
 

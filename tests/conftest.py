@@ -1,7 +1,7 @@
 import sys
 import pytest
 from logging import StreamHandler
-from adapta.logs._base import SemanticLogger
+from adapta.logs import SemanticLogger, LoggerInterface
 from adapta.logs.models import LogLevel
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
@@ -10,7 +10,7 @@ from generic_mip.solver.local_solver import LocalSolver
 
 
 @pytest.fixture(scope="session")
-def logger():
+def logger() -> LoggerInterface:
     logger = SemanticLogger().add_log_source(
         log_source_name="auto-replenishment-crystal-orchestrator",
         min_log_level=LogLevel.INFO,

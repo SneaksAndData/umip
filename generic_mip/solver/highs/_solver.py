@@ -3,7 +3,7 @@ from typing import Optional, Union, List
 import highspy
 import numpy.typing as npt
 import numpy as np
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
@@ -11,7 +11,7 @@ from generic_mip.variable_data_type import VariableDataType
 class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the HiGHS library."""
 
-    def __init__(self, logger: SemanticLogger, model_path: Optional[str] = None):
+    def __init__(self, logger: LoggerInterface, model_path: Optional[str] = None):
         """
         Initialize the solver.
 

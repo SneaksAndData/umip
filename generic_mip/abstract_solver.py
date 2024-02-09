@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Union, TypeVar, Generic
 import numpy.typing as npt
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface
 from generic_mip.variable_data_type import VariableDataType
 
 CT = TypeVar("CT")  # Constraint type
@@ -15,7 +15,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     This class serves as a generic API for various implementations through solver specific APIs.
     """
 
-    def __init__(self, logger: SemanticLogger):
+    def __init__(self, logger: LoggerInterface):
         """
         Initialize the solver.
         :param logger: The logger to use. Notice that most solvers call C-based libraries that do not use the logger.

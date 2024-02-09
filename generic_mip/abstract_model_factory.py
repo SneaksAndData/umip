@@ -1,13 +1,13 @@
 """Abstract definition of an optimization model factory."""
 from abc import ABC, abstractmethod
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface
 from generic_mip.abstract_mip import AbstractOptimizationModel
 
 
 class AbstractOptimizationModelFactory(ABC):
     """A generic optimization model factory."""
 
-    def __init__(self, logger: SemanticLogger):
+    def __init__(self, logger: LoggerInterface):
         """
         Initialize the model factory.
         :param logger: The logger to use.

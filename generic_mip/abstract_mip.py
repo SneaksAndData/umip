@@ -3,7 +3,7 @@ import time
 import sys
 from typing import List, TypeVar, Generic, Optional
 from logging import StreamHandler
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.models import LogLevel
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
@@ -30,7 +30,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         constraint_builders: List[AbstractConstraintBuilder[U]],
         variable_builders: List[AbstractDecisionVariableBuilder[U]],
         objective_builders: List[AbstractObjectiveBuilder[U]],
-        logger: SemanticLogger = SemanticLogger().add_log_source(
+        logger: LoggerInterface = SemanticLogger().add_log_source(
             log_source_name="AbstractMipModel",
             min_log_level=LogLevel.INFO,
             log_handlers=[StreamHandler(sys.stdout)],

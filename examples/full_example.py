@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import sys
 from logging import StreamHandler
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.models import LogLevel
 from generic_mip import (
     AbstractDataPreparator,
@@ -112,7 +112,7 @@ class MyMipModel(AbstractMipModel[pd.DataFrame]):
         variable_builders: List[AbstractDecisionVariableBuilder[pd.DataFrame]],
         objective_builders: List[AbstractObjectiveBuilder[pd.DataFrame]],
         data_preparator: MyDataPreparator[[pd.DataFrame, pd.DataFrame]],
-        logger: SemanticLogger,
+        logger: LoggerInterface,
     ):
         super().__init__(
             solver=solver,

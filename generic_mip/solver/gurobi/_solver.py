@@ -4,7 +4,7 @@ import gurobipy as gp
 import numpy.typing as npt
 import numpy as np
 from scipy.sparse import coo_matrix
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
@@ -12,7 +12,7 @@ from generic_mip.variable_data_type import VariableDataType
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Gurobi library."""
 
-    def __init__(self, logger: SemanticLogger, model_path: Optional[str] = None):
+    def __init__(self, logger: LoggerInterface, model_path: Optional[str] = None):
         """
         Initialize the solver.
 

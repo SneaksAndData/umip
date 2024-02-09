@@ -2,7 +2,7 @@ import math
 from typing import Optional, Union
 import numpy.typing as npt
 import numpy as np
-from adapta.logs import SemanticLogger
+from adapta.logs import LoggerInterface
 import localsolver as ls
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
@@ -13,7 +13,7 @@ class LocalSolver(
 ):  # pylint: disable=too-many-public-methods
     """A solver implemented in the LocalSolver library."""
 
-    def __init__(self, logger: SemanticLogger):
+    def __init__(self, logger: LoggerInterface):
         super().__init__(logger)
         self._solver = ls.LocalSolver()
         self._model = self._solver.get_model()
