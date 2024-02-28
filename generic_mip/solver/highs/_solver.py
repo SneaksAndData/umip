@@ -221,7 +221,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         return self.status in [highspy.HighsModelStatus.kOptimal, highspy.HighsModelStatus.kModelEmpty]
 
     def is_feasible(self) -> bool:
-        return self.status == highspy.HighsModelStatus.kFeasible
+        return not self.is_infeasible() and not self.is_abnormal() and not self.is_unbounded()
 
     def is_infeasible(self) -> bool:
         return self.status == highspy.HighsModelStatus.kInfeasible
