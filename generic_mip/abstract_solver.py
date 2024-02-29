@@ -65,7 +65,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         vars_: Union[npt.NDArray[npt.NDArray[VT]], npt.NDArray[VT]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None,
+        names: Optional[npt.NDArray[str]] = None,
     ) -> None:
         """
         Adds multiple constraints at once, such that:
@@ -87,7 +87,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             match those of the parameter coeffs. Example: The coefficient in index [1,2] must belong to the variable in
             index [1,2].
             Example input: [[x_11,x_12,...],[x_21,x_22,...],...] or [x_1, x_2, ...]
-        :param name: Name of the constraints
+        :param names: Names of the constraints
         """
 
     @abstractmethod
@@ -106,15 +106,18 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @abstractmethod
     def add_multiple_variables(
-        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self,
+        names: npt.NDArray[str],
+        dtype: VariableDataType,
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
     ) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
 
-        :param count: Number of variables to create.
+        :param names: Names of the variables.
         :param lb: Lower bound.
         :param ub: Upper bound.
-        :param name: Name of the variables.
         :param dtype: The type of variables.
         :return: The variables.
         """

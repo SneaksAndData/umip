@@ -8,7 +8,14 @@ from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.variable_data_type import VariableDataType
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize(
+    "solver",
+    [
+        "OrTools",
+        "Highs",
+    ],
+    indirect=True,
+)
 def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding a variable, a constraint, and an objective term is reflected in the solver.
@@ -29,14 +36,16 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding 3 variables, 3 constraints, and 3 objective terms is reflected in the solver.
     """
-    vars_ = solver.add_multiple_variables(count=3, lb=0, ub=1, name="x", dtype=VariableDataType.FLOAT)
+    vars_ = solver.add_multiple_variables(
+        lb=0, ub=1, names=np.array(["x_1", "x_2", "x_3"]), dtype=VariableDataType.FLOAT
+    )
     # Notice that setting both lb and ub may result in 2 constraints in some implementations
     solver.add_multiple_constraints(
         lb=np.array([0.0, 0.0, 0.0]),
         ub=None,
         coeffs=np.array([[-1.0, 1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, -1.0]]),
         vars_=np.array([vars_] * 3),
-        name="c1",
+        names=np.array(["c1", "c2", "c3"]),
     )
     solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_, overwrite=False)
     solver.force_update()

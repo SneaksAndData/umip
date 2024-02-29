@@ -44,18 +44,24 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self._objective.addTerms(coeffs, vars_)
 
     def add_multiple_variables(
-        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self,
+        names: npt.NDArray[str],
+        dtype: VariableDataType,
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
     ) -> npt.NDArray[gp.Var]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
         if dtype == VariableDataType.INT:
-            vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=name)
+            vars_ = self._solver.addMVar(shape=(len(names),), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=names)
             self._integer_problem = True
         elif dtype == VariableDataType.FLOAT:
-            vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=name)
+            vars_ = self._solver.addMVar(
+                shape=(len(names),), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=names
+            )
         elif dtype == VariableDataType.BOOL:
-            vars_ = self._solver.addMVar(shape=(count,), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.BINARY, name=name)
+            vars_ = self._solver.addMVar(shape=(len(names),), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.BINARY, name=names)
             self._integer_problem = True
         else:
             raise ValueError("Unsupported variable data type")
@@ -68,7 +74,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         vars_: Union[npt.NDArray[npt.NDArray[gp.Var]], npt.NDArray[gp.Var]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None,
+        names: Optional[npt.NDArray[str]] = None,
     ) -> None:
         if coeffs.size == 0:
             return

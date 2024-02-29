@@ -18,7 +18,7 @@ jobs:
       - uses: SneaksAndData/github-actions/semver_release@v0.1.2
         with:
           major_v: 0
-          minor_v: 6
+          minor_v: 7
   release_to_aws_ca:
     name: Release distribution to AWS CA
 

@@ -34,11 +34,16 @@ class OrToolsSolver(
         self._solver.SetHint(vars_, hints)
 
     def add_multiple_variables(
-        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self,
+        names: npt.NDArray[str],
+        dtype: VariableDataType,
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
     ) -> npt.NDArray[pywraplp.Variable]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
-        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}{i}", dtype=dtype) for i in range(count)])
+
+        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}", dtype=dtype) for name in names])
 
     def add_multiple_constraints(
         self,
@@ -46,16 +51,24 @@ class OrToolsSolver(
         vars_: Union[npt.NDArray[npt.NDArray[pywraplp.Variable]], npt.NDArray[pywraplp.Variable]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None,
+        names: Optional[npt.NDArray[str]] = None,
     ) -> None:
         if coeffs.size == 0:
             return
 
         num_constrs = len(coeffs)
         for i in range(num_constrs):
-            constr: pywraplp.Constraint = self._solver.Constraint(
-                lb[i] if lb is not None else -self._solver.infinity(),
-                ub[i] if ub is not None else self._solver.infinity(),
+            constr: pywraplp.Constraint = (
+                self._solver.Constraint(
+                    lb[i] if lb is not None else -self._solver.infinity(),
+                    ub[i] if ub is not None else self._solver.infinity(),
+                    names[i],
+                )
+                if names is not None
+                else self._solver.Constraint(
+                    lb[i] if lb is not None else -self._solver.infinity(),
+                    ub[i] if ub is not None else self._solver.infinity(),
+                )
             )
             if coeffs.ndim == 1 and not isinstance(coeffs[0], (np.ndarray, list, set)):
                 constr.SetCoefficient(vars_[i], coeffs[i])

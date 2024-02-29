@@ -56,10 +56,13 @@ class LocalSolver(
         vars_: Union[npt.NDArray[npt.NDArray[ls.LSExpression]], npt.NDArray[ls.LSExpression]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None,
+        names: Optional[npt.NDArray[str]] = None,
     ) -> None:
         if coeffs.size == 0:
             return
+
+        if names is not None and len(names) != len(coeffs):
+            raise ValueError("The number of names must match the number of constraints")
 
         num_constrs = len(coeffs)
         for i in range(num_constrs):
@@ -68,7 +71,7 @@ class LocalSolver(
                 vars_=vars_[i],
                 lb=lb[i] if lb is not None else None,
                 ub=ub[i] if ub is not None else None,
-                name=f"{name}{i}" if name is not None else None,
+                name=f"{names[i]}" if names is not None else None,
             )
 
     def add_variable(
@@ -94,11 +97,11 @@ class LocalSolver(
         return var
 
     def add_multiple_variables(
-        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self, names: npt.NDArray[str], dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
     ) -> npt.NDArray[ls.LSExpression]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
-        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}{i}", dtype=dtype) for i in range(count)])
+        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}", dtype=dtype) for name in names])
 
     def set_variable_hint(self, var: ls.LSExpression, hint: float) -> None:
         raise NotImplementedError()

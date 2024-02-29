@@ -29,53 +29,79 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self.status: Optional[highspy.HighsModelStatus] = None
         self._solution: Optional[List[float]] = None
 
-    def set_variable_hint(self, var: int, hint: float) -> None:
+    def set_variable_hint(self, var: str, hint: float) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[int], hints: npt.NDArray[float]) -> None:
+    def _get_var_by_name(self, name: str) -> int:
+        """
+        Get the variable index (int) by its name, as highs references variables by their index.
+
+        :param name: The name of the variable.
+        :return: The index of the variable.
+        """
+        return self._solver.getColByName(name)[1]
+
+    def _get_vars_by_names(self, names: Union[npt.NDArray[npt.NDArray[str]], npt.NDArray[str]]) -> npt.NDArray[int]:
+        """
+        Get the variable indices (int) by their names, as highs references variables by their index.
+
+        :param names: The names of the variables.
+        :return: The indices of the variables.
+        """
+        if names.ndim > 1 or isinstance(names[0], (np.ndarray, list, set)):
+            names = np.concatenate(names)
+        return np.array([self._solver.getColByName(name)[1] for name in names])
+
+    def _get_constraint_by_name(self, name: str) -> int:
+        return self._solver.getRowByName(name)[1]
+
+    def set_multiple_variable_hints(self, vars_: npt.NDArray[str], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[int], overwrite: bool = True
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[str], overwrite: bool = True
     ) -> None:
         for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
             self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
 
     def add_multiple_variables(
-        self, count: int, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
-    ) -> npt.NDArray[int]:
+        self,
+        names: npt.NDArray[str],
+        dtype: VariableDataType,
+        lb: Optional[float] = None,
+        ub: Optional[float] = None,
+    ) -> npt.NDArray[str]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
         first_var_number = self._var_count
-        self._var_count += count
+        self._var_count += len(names)
 
-        self._solver.addVars(count, lb, ub)
+        self._solver.addVars(len(names), lb, ub)
 
-        if dtype == VariableDataType.INT:
-            self._integer_problem = True
-            for i in range(count):
+        for i, name in enumerate(names):
+            if dtype == VariableDataType.INT:
+                self._integer_problem = True
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
-        elif dtype == VariableDataType.FLOAT:
-            for i in range(count):
+            elif dtype == VariableDataType.FLOAT:
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kContinuous)
-        elif dtype == VariableDataType.BOOL:
-            self._integer_problem = True
-            for i in range(count):
+            elif dtype == VariableDataType.BOOL:
+                self._integer_problem = True
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
                 self._solver.changeColBounds(first_var_number + i, 0, 1)
-        else:
-            raise ValueError("Unsupported variable data type")
+            else:
+                raise ValueError("Unsupported variable data type")
+            self._solver.passColName(first_var_number + i, name)
 
-        return np.arange(first_var_number, first_var_number + count)
+        return names
 
     def add_multiple_constraints(
         self,
         coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[int]], npt.NDArray[int]],
+        vars_: Union[npt.NDArray[npt.NDArray[str]], npt.NDArray[str]],
         lb: Optional[npt.NDArray[float]] = None,
         ub: Optional[npt.NDArray[float]] = None,
-        name: Optional[str] = None,
+        names: Optional[npt.NDArray[str]] = None,
     ) -> None:
         if lb is None and ub is None:
             raise ValueError("Either lb or ub must be specified")
@@ -92,11 +118,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
         if coeffs.ndim == 1 and not isinstance(coeffs[0], (np.ndarray, list, set)):
             flat_coeffs = coeffs
-            flat_vars = vars_
+            flat_vars = self._get_vars_by_names(vars_)
             starts = np.arange(0, len(flat_coeffs) + 1)
         else:
             flat_coeffs = np.concatenate(coeffs)
-            flat_vars = np.concatenate(vars_)
+            flat_vars = self._get_vars_by_names(vars_)
             starts = np.cumsum([0] + [len(c) for c in coeffs][:-1])
 
         # In HiGHS, the number of non-zero coefficients is simply the number of coefficients
@@ -114,20 +140,28 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def add_constraint(
         self,
         coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[int], int],
+        vars_: Union[npt.NDArray[str], str],
         lb: Optional[float] = None,
         ub: Optional[float] = None,
         name: Optional[str] = None,
-    ) -> Optional[int]:
+    ) -> Optional[str]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
         constr_number = self._constr_count
         self._constr_count += 1
 
-        if isinstance(coeffs, (float, int, bool)):
+        if isinstance(coeffs, np.ndarray) & isinstance(vars_, np.ndarray):
+            if coeffs.size != vars_.size:
+                raise ValueError("The number of coefficients must be equal to the number of variables")
+            coeffs = np.array(coeffs)
+            vars_ = np.array(self._get_vars_by_names(vars_))
+
+        elif isinstance(coeffs, (float, int, bool)) and isinstance(vars_, str):
             coeffs = np.array([coeffs])
-            vars_ = np.array([vars_])
+            vars_ = np.array([self._get_var_by_name(vars_)])
+        else:
+            raise ValueError("Coeffs and vars_ must be of the same type")
 
         # In HiGHS, the number of non-zero coefficients is simply the number of coefficients
         number_of_non_zero_coefficients = len(coeffs)
@@ -136,14 +170,14 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         # lower, upper, num_new_nz, index, value
         self._solver.addRow(lb, ub, number_of_non_zero_coefficients, vars_, coeffs.astype(np.float64))
 
-        if name is not None:
-            self._solver.passRowName(constr_number, name)
+        name = name if name is not None else str(constr_number)
+        self._solver.passRowName(constr_number, name)
 
-        return constr_number
+        return name
 
     def add_variable(
         self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
-    ) -> int:
+    ) -> str:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -164,16 +198,15 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         else:
             raise ValueError("Unsupported variable data type")
 
-        if name is not None:
-            self._solver.passColName(var_number, name)
+        self._solver.passColName(var_number, name)
 
-        return var_number
+        return name
 
-    def get_variable_value(self, var: int) -> float:
-        return self._solution[var]
+    def get_variable_value(self, var: str) -> float:
+        return self._solution[self._solver.getColByName(var)[1]]
 
-    def add_objective_term(self, coeff: float, var: int, overwrite: bool = True) -> None:
-        _, old_coeff, _, _, _ = self._solver.getCol(var)  # status, cost, lb, ub, index
+    def add_objective_term(self, coeff: float, var: str, overwrite: bool = True) -> None:
+        _, old_coeff, _, _, _ = self._solver.getCol(self._get_var_by_name(var))  # status, cost, lb, ub, index
 
         if old_coeff == 0 and coeff != 0:
             self._obj_count += 1
@@ -181,9 +214,9 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             self._obj_count -= 1
 
         if overwrite:
-            self._solver.changeColCost(var, coeff)
+            self._solver.changeColCost(self._get_var_by_name(var), coeff)
         else:
-            self._solver.changeColCost(var, coeff + old_coeff)
+            self._solver.changeColCost(self._get_var_by_name(var), coeff + old_coeff)
 
     def set_optimization_direction(self, maximization: bool) -> None:
         if maximization:
@@ -285,9 +318,9 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             _, old_offset = self._solver.getObjectiveOffset()
             self._solver.changeObjectiveOffset(old_offset + offset)
 
-    def get_dual_value(self, constraint: int) -> float:
+    def get_dual_value(self, constraint: str) -> float:
         if self._integer_problem:
             raise ValueError("Dual values are not available for integer problems")
         if not self.is_optimal():
             raise ValueError("Dual values are only available for optimal solutions")
-        return self._dual_values[constraint]
+        return self._dual_values[self._get_constraint_by_name(constraint)]
