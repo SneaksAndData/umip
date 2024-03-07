@@ -4,6 +4,7 @@ from logging import StreamHandler
 from adapta.logs import SemanticLogger
 from adapta.logs.models import LogLevel
 from generic_mip import VariableDataType
+from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
@@ -26,7 +27,7 @@ You can access the solver API directly for local experiments, prototyping, debug
 For production grade models, use the generic_mip framework (full_example.py).
 """
 
-SOLVER = "highs"
+SOLVER = "cplex"
 
 logger = SemanticLogger().add_log_source(
     log_source_name="MyModel", min_log_level=LogLevel.DEBUG, log_handlers=[StreamHandler(sys.stdout)], is_default=True
@@ -38,6 +39,8 @@ elif SOLVER == "gurobi":
     solver = GurobiSolver(logger=logger)
 elif SOLVER == "highs":
     solver = HighsSolver(logger=logger)
+elif SOLVER == "cplex":
+    solver = CplexSolver(logger=logger)
 else:
     raise ValueError(f"Invalid solver: {SOLVER}")
 

@@ -3,6 +3,8 @@ import pytest
 from logging import StreamHandler
 from adapta.logs import SemanticLogger, LoggerInterface
 from adapta.logs.models import LogLevel
+
+from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
@@ -30,3 +32,5 @@ def solver(logger, request):
         return LocalSolver(logger=logger)
     elif request.param == "Highs":
         return HighsSolver(logger=logger)
+    elif request.param == "Cplex":
+        return CplexSolver(logger=logger)

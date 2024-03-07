@@ -14,6 +14,7 @@ gurobipy = [
     { version = "10.0.1", python = ">=3.11,<3.12", optional = true }
 ]
 localsolver = { version = "^11.5.20221123", source = "localsolver", optional = true }
+docplex = { version = "^2.25", optional = true}
 numpy = "^1.23.2"
 scipy = "^1.9.0"
 adapta = "^2.6"
@@ -37,6 +38,9 @@ localsolver = [
 ]
 highs = [
     'highspy'
+]
+docplex = [
+    'docplex'
 ]
 
 [build-system]

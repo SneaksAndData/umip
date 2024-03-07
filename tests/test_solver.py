@@ -139,7 +139,7 @@ def test_time_limit_gap(solver: AbstractOptimizationSolver):
     Testing that solving a computationally difficult problem stops at the time limit and
     provides a non-zero gap because it is not done solving.
     """
-    number_of_cities = 100
+    number_of_cities = 200
     cities = list(range(0, number_of_cities))
 
     c = [[10.0 for _ in cities] for _ in cities]
@@ -153,9 +153,7 @@ def test_time_limit_gap(solver: AbstractOptimizationSolver):
     ]
 
     for i in cities:
-        for j in cities:
-            if i != j:
-                solver.add_objective_term(coeff=c[i][j], var=x[i][j], overwrite=False)
+        solver.add_multiple_objective_terms(coeffs=np.array(c[i]), vars_=np.array(x[i]), overwrite=False)
 
     for i in cities:
         solver.add_constraint(
@@ -182,10 +180,10 @@ def test_time_limit_gap(solver: AbstractOptimizationSolver):
                     coeffs=np.array([1.0, -1.0, number_of_cities - 1]),
                     vars_=np.array([u[i], u[j], x[i][j]]),
                 )
-
-    solver.set_solver_setting("presolving/maxrounds=0")
+    if type(solver).__name__ == "OrToolsSolver":
+        solver.set_solver_setting("presolving/maxrounds=0")
     solver.set_verbose(verbose=True)
-    solver.solve(time_limit=2.0)
+    solver.solve(time_limit=1)
     gap = solver.get_gap()
 
     assert gap is not None and gap > 0
@@ -243,9 +241,11 @@ def test_get_dual_value(solver: AbstractOptimizationSolver):
     """
     solver.set_optimization_direction(maximization=True)
     var = solver.add_variable(lb=-solver.infinity(), ub=solver.infinity(), name="x", dtype=VariableDataType.FLOAT)
+
     constr = solver.add_constraint(
         lb=-solver.infinity(), ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1"
     )
+
     solver.add_objective_term(coeff=10, var=var, overwrite=True)
     solver.solve()
     assert solver.get_dual_value(constr) == 10
