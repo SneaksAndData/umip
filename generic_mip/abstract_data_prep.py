@@ -1,6 +1,6 @@
 """Abstract definition of a data preparator."""
 from abc import ABC, abstractmethod
-from typing import Dict, TypeVar, Generic
+from typing import TypeVar, Generic
 from adapta.logs import LoggerInterface
 
 T = TypeVar("T")
@@ -18,7 +18,7 @@ class AbstractDataPreparator(ABC, Generic[T, U]):
         self._logger = logger
 
     @abstractmethod
-    def prepare(self, input_data: Dict[str, T]) -> Dict[str, U]:
+    def prepare(self, input_data: dict[str, T]) -> dict[str, U]:
         """
         Prepares the data for building variables, constraints and objectives.
         :param input_data: The data to prepare for the model.

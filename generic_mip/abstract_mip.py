@@ -1,7 +1,7 @@
 """Abstract definition of a MIP model."""
 import time
 import sys
-from typing import List, TypeVar, Generic, Optional
+from typing import TypeVar, Generic
 from logging import StreamHandler
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.models import LogLevel
@@ -27,9 +27,9 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         self,
         solver: AbstractOptimizationSolver,
         data_preparator: AbstractDataPreparator[T, U],
-        constraint_builders: List[AbstractConstraintBuilder[U]],
-        variable_builders: List[AbstractDecisionVariableBuilder[U]],
-        objective_builders: List[AbstractObjectiveBuilder[U]],
+        constraint_builders: list[AbstractConstraintBuilder[U]],
+        variable_builders: list[AbstractDecisionVariableBuilder[U]],
+        objective_builders: list[AbstractObjectiveBuilder[U]],
         logger: LoggerInterface = SemanticLogger().add_log_source(
             log_source_name="AbstractMipModel",
             min_log_level=LogLevel.INFO,
@@ -85,7 +85,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._built = True
 
-    def solve(self, time_limit: Optional[float] = None, **kwargs: any) -> any:
+    def solve(self, time_limit: float | None = None, **kwargs: any) -> any:
         if not self._built:
             raise ValueError("Model must be built before calling .solve()")
 

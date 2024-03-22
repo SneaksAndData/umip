@@ -5,62 +5,6 @@ on:
     branches: [ main ]
 
 jobs:
-  validate_code_py39:
-    name: Validate code on Python 3.9
-
-    permissions:
-      contents: read
-      id-token: write
-      pull-requests: write
-
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9.x'
-          architecture: 'x64'
-
-      - name: Import Secrets
-        uses: hashicorp/vault-action@v2.4.2
-        with:
-          url: https://hashicorp-vault.production.sneaksanddata.com/
-          role: github
-          method: jwt
-          secrets: |
-            /secret/data/common/package-publishing/aws-ca/production/artifact-user access_key ;
-            /secret/data/common/package-publishing/aws-ca/production/artifact-user access_key_id ;
-      - name: Setup AWS CA
-        uses: SneaksAndData/github-actions/setup_aws_ca@v0.1.2
-        with:
-          aws_access_key: ${{ env.ACCESS_KEY }}
-          aws_access_key_id: ${{ env.ACCESS_KEY_ID }}
-          mode: read
-          aws_ca_domain: esd-code-artifact-production
-          aws_ca_domain_owner: 497010676583
-          aws_ca_repository: esd-artifacts
-        id: setup_aws_ca
-      - name: Install Poetry and dependencies
-        uses: SneaksAndData/github-actions/install_poetry@v0.1.1
-        with:
-          pypi_repo_url: ${{ steps.setup_aws_ca.outputs.url }}
-          pypi_token_username: ${{ steps.setup_aws_ca.outputs.user }}
-          pypi_token: ${{ steps.setup_aws_ca.outputs.token }}
-          install_extras: "all"
-
-      - name: Unit test
-        shell: bash
-        run: |
-          set -euxo pipefail
-          
-          poetry run pytest ./tests --cov-config=.coveragerc --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
-      - name: Publish Code Coverage
-        uses: MishaKav/pytest-coverage-comment@main
-        with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./junit/test-results.xml
   validate_code_py311:
     name: Validate code on Python 3.11
 

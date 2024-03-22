@@ -1,7 +1,6 @@
 """
 Tests of the AbstractMipModel class. Tests do not cover the solver classes and simple wrappers.
 """
-from typing import Dict
 from unittest import mock
 import pandas as pd
 import pytest
@@ -15,25 +14,25 @@ from generic_mip.abstract_mip import AbstractMipModel
 
 
 class MockConstraintBuilder(AbstractConstraintBuilder):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> None:
         pass
 
 
 class MockDecisionVariableBuilder(AbstractDecisionVariableBuilder):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         return data
 
-    def unpack(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def unpack(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         return data
 
 
 class MockObjectiveBuilder(AbstractObjectiveBuilder):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> None:
         pass
 
 
 class MockDataPreparator(AbstractDataPreparator):
-    def prepare(self, input_data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def prepare(self, input_data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         return input_data
 
 

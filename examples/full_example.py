@@ -1,4 +1,3 @@
-from typing import Dict, Union, Tuple, List
 import pandas as pd
 import numpy as np
 import sys
@@ -52,26 +51,26 @@ else:
 
 
 class MyDataPreparator(AbstractDataPreparator[pd.DataFrame, pd.DataFrame]):
-    def prepare(self, input_data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def prepare(self, input_data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         return input_data
 
 
 class MyVariableBuilder(AbstractDecisionVariableBuilder[pd.DataFrame]):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         my_df = data["my_df"]
         x = solver.add_variable(lb=0, ub=100, name="x", dtype=VariableDataType.INT)
         y = solver.add_variable(lb=0, ub=100, name="y", dtype=VariableDataType.INT)
         my_df["vars"] = [x, y]
         return data
 
-    def unpack(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    def unpack(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
         my_df = data["my_df"]
         my_df["value"] = my_df["vars"].apply(lambda x: solver.get_variable_value(x))
         return data
 
 
 class MyObjectiveBuilder(AbstractObjectiveBuilder[pd.DataFrame]):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame], **kwargs: any) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame], **kwargs: any) -> None:
         my_df = data["my_df"]
 
         solver.add_objective_term(
@@ -85,7 +84,7 @@ class MyObjectiveBuilder(AbstractObjectiveBuilder[pd.DataFrame]):
 
 
 class MyConstraintBuilder(AbstractConstraintBuilder[pd.DataFrame]):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> None:
         my_df = data["my_df"]
         solver.add_constraint(
             lb=None,
@@ -97,7 +96,7 @@ class MyConstraintBuilder(AbstractConstraintBuilder[pd.DataFrame]):
 
 
 class MyOtherConstraintBuilder(AbstractConstraintBuilder[pd.DataFrame]):
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, pd.DataFrame]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> None:
         my_df = data["my_df"]
         solver.add_constraint(
             lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([my_df.iloc[1]["vars"]]), name="my_constraint_2"
@@ -108,10 +107,10 @@ class MyMipModel(AbstractMipModel[pd.DataFrame]):
     def __init__(
         self,
         solver: AbstractOptimizationSolver,
-        constraint_builders: List[AbstractConstraintBuilder[pd.DataFrame]],
-        variable_builders: List[AbstractDecisionVariableBuilder[pd.DataFrame]],
-        objective_builders: List[AbstractObjectiveBuilder[pd.DataFrame]],
-        data_preparator: MyDataPreparator[[pd.DataFrame, pd.DataFrame]],
+        constraint_builders: list[AbstractConstraintBuilder[pd.DataFrame]],
+        variable_builders: list[AbstractDecisionVariableBuilder[pd.DataFrame]],
+        objective_builders: list[AbstractObjectiveBuilder[pd.DataFrame]],
+        data_preparator: MyDataPreparator([pd.DataFrame, pd.DataFrame]),
         logger: LoggerInterface,
     ):
         super().__init__(
@@ -128,7 +127,7 @@ class MyMipModel(AbstractMipModel[pd.DataFrame]):
         super().build(**input_data)
         self._solver.set_optimization_direction(True)
 
-    def solve(self, **kwargs: any) -> Union[pd.DataFrame, Tuple[pd.DataFrame, ...]]:
+    def solve(self, **kwargs: any) -> pd.DataFrame | tuple[pd.DataFrame, ...]:
         super().solve(**kwargs)
         return self._data["my_df"]
 

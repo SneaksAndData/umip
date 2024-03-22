@@ -1,5 +1,4 @@
 import math
-from typing import Optional, Union
 import numpy.typing as npt
 import numpy as np
 from adapta.logs import LoggerInterface
@@ -28,12 +27,12 @@ class LocalSolver(
 
     def add_constraint(
         self,
-        coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[ls.LSExpression], ls.LSExpression],
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
-        name: Optional[str] = None,
-    ) -> Optional[ls.LSExpression]:
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[ls.LSExpression] | ls.LSExpression,
+        lb: float | None = None,
+        ub: float | None = None,
+        name: str | None = None,
+    ) -> ls.LSExpression | None:
         if lb is None and ub is None:
             return None
 
@@ -52,11 +51,11 @@ class LocalSolver(
 
     def add_multiple_constraints(
         self,
-        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[ls.LSExpression]], npt.NDArray[ls.LSExpression]],
-        lb: Optional[npt.NDArray[float]] = None,
-        ub: Optional[npt.NDArray[float]] = None,
-        names: Optional[npt.NDArray[str]] = None,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[ls.LSExpression]] | npt.NDArray[ls.LSExpression],
+        lb: npt.NDArray[float] | None = None,
+        ub: npt.NDArray[float] | None = None,
+        names: npt.NDArray[str] | None = None,
     ) -> None:
         if coeffs.size == 0:
             return
@@ -75,7 +74,7 @@ class LocalSolver(
             )
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
     ) -> ls.LSExpression:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -97,7 +96,7 @@ class LocalSolver(
         return var
 
     def add_multiple_variables(
-        self, names: npt.NDArray[str], dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self, names: npt.NDArray[str], dtype: VariableDataType, lb: float | None = None, ub: float | None = None
     ) -> npt.NDArray[ls.LSExpression]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -131,7 +130,7 @@ class LocalSolver(
     def get_objective_value(self) -> float:
         return self._solution.get_value(self._objective)
 
-    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         if time_limit is not None:
             self._solver.get_param().set_time_limit(time_limit)
         if mip_gap_limit is not None:

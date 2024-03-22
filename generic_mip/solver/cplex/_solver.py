@@ -1,5 +1,5 @@
 """A solver implemented in the Gurobi library."""
-from typing import Optional, Union, Iterable
+from typing import Iterable
 
 from docplex.mp.model import Model
 from docplex.mp.linear import Var, LinearExpr
@@ -18,7 +18,7 @@ from generic_mip.variable_data_type import VariableDataType
 class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Cplex library."""
 
-    def __init__(self, logger: LoggerInterface, model_path: Optional[str] = None):
+    def __init__(self, logger: LoggerInterface, model_path: str | None = None):
         """
         Initialize the solver.
 
@@ -49,7 +49,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
                 self._objective.add_term(var, coeff)
 
     def add_multiple_variables(
-        self, names: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self, names: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
     ) -> npt.NDArray[Var]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -69,11 +69,11 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
 
     def add_multiple_constraints(
         self,
-        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[Var]], npt.NDArray[Var]],
-        lb: Optional[npt.NDArray[float]] = None,
-        ub: Optional[npt.NDArray[float]] = None,
-        names: Optional[str] = None,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[Var]] | npt.NDArray[Var],
+        lb: npt.NDArray[float] | None = None,
+        ub: npt.NDArray[float] | None = None,
+        names: str | None = None,
     ) -> None:
         if coeffs.size == 0:
             return
@@ -87,12 +87,12 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
 
     def add_constraint(
         self,
-        coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[Var], Var],
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
-        name: Optional[str] = None,
-    ) -> Optional[int]:
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[Var] | Var,
+        lb: float | None = None,
+        ub: float | None = None,
+        name: str | None = None,
+    ) -> int | None:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -116,9 +116,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
             return constraint_lb
         return constraint_ub
 
-    def add_variable(
-        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
-    ) -> int:
+    def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> int:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
         if dtype == VariableDataType.INT:
@@ -151,7 +149,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
     def get_objective_value(self) -> float:
         return self.solution.get_objective_value()
 
-    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> str:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> str:
         if time_limit is not None:
             self._solver.set_time_limit(time_limit)
         if mip_gap_limit is not None:

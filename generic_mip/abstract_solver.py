@@ -1,6 +1,6 @@
 """Abstract definition of a solver."""
 from abc import ABC, abstractmethod
-from typing import Optional, Union, TypeVar, Generic
+from typing import TypeVar, Generic
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.variable_data_type import VariableDataType
@@ -28,12 +28,12 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_constraint(
         self,
-        coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[VT], VT],
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
-        name: Optional[str] = None,
-    ) -> Optional[CT]:
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[VT] | VT,
+        lb: float | None = None,
+        ub: float | None = None,
+        name: str | None = None,
+    ) -> CT | None:
         """
         Add a single constraint:
         lb <= c_1x_1 + c_2x_2 + ... <= ub
@@ -61,11 +61,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_multiple_constraints(
         self,
-        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[VT]], npt.NDArray[VT]],
-        lb: Optional[npt.NDArray[float]] = None,
-        ub: Optional[npt.NDArray[float]] = None,
-        names: Optional[npt.NDArray[str]] = None,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
+        lb: npt.NDArray[float] | None = None,
+        ub: npt.NDArray[float] | None = None,
+        names: npt.NDArray[str] | None = None,
     ) -> None:
         """
         Adds multiple constraints at once, such that:
@@ -91,9 +91,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_variable(
-        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
-    ) -> VT:
+    def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> VT:
         """
         Adds variable to the model.
 
@@ -109,8 +107,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         self,
         names: npt.NDArray[str],
         dtype: VariableDataType,
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
+        lb: float | None = None,
+        ub: float | None = None,
     ) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
@@ -183,7 +181,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         """
         Solve the optimization problem. If both time_limit and mip_gap_limit are provided, the optimization would stop
         when reach the tighter limit.

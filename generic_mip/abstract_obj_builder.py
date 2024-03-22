@@ -1,6 +1,6 @@
 """Abstract definition of an objective builder."""
 from abc import ABC, abstractmethod
-from typing import Dict, TypeVar, Generic
+from typing import TypeVar, Generic
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
@@ -18,7 +18,7 @@ class AbstractObjectiveBuilder(ABC, Generic[T]):
         self._logger = logger
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, T]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> None:
         """
         Builds the objective terms on the given model and the given data.
 

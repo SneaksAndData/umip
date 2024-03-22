@@ -1,6 +1,6 @@
 """Abstract definition of a variable builder."""
 from abc import ABC, abstractmethod
-from typing import Dict, TypeVar, Generic
+from typing import TypeVar, Generic
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
@@ -18,7 +18,7 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         self._logger = logger
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: Dict[str, T]) -> Dict[str, T]:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> dict[str, T]:
         """
         Builds the decision variables on the given model and the given data.
 
@@ -28,7 +28,7 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def unpack(self, solver: AbstractOptimizationSolver, data: Dict[str, T]) -> Dict[str, T]:
+    def unpack(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> dict[str, T]:
         """
         Unpacks the decision variables after optimization and inserts variable values in the dataframes.
 

@@ -1,5 +1,5 @@
 """A solver implemented in the Google OR-Tools library."""
-from typing import Optional, Union, Iterable
+from typing import Iterable
 from ortools.linear_solver import pywraplp
 import numpy.typing as npt
 import numpy as np
@@ -37,8 +37,8 @@ class OrToolsSolver(
         self,
         names: npt.NDArray[str],
         dtype: VariableDataType,
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
+        lb: float | None = None,
+        ub: float | None = None,
     ) -> npt.NDArray[pywraplp.Variable]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -47,11 +47,11 @@ class OrToolsSolver(
 
     def add_multiple_constraints(
         self,
-        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[pywraplp.Variable]], npt.NDArray[pywraplp.Variable]],
-        lb: Optional[npt.NDArray[float]] = None,
-        ub: Optional[npt.NDArray[float]] = None,
-        names: Optional[npt.NDArray[str]] = None,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[pywraplp.Variable]] | npt.NDArray[pywraplp.Variable],
+        lb: npt.NDArray[float] | None = None,
+        ub: npt.NDArray[float] | None = None,
+        names: npt.NDArray[str] | None = None,
     ) -> None:
         if coeffs.size == 0:
             return
@@ -78,12 +78,12 @@ class OrToolsSolver(
 
     def add_constraint(
         self,
-        coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[pywraplp.Variable], pywraplp.Variable],
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
-        name: Optional[str] = None,
-    ) -> Optional[pywraplp.Constraint]:
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[pywraplp.Variable] | pywraplp.Variable,
+        lb: float | None = None,
+        ub: float | None = None,
+        name: str | None = None,
+    ) -> pywraplp.Constraint | None:
         if lb is None and ub is None:
             return None
 
@@ -103,7 +103,7 @@ class OrToolsSolver(
         return constr
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
     ) -> pywraplp.Variable:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -138,7 +138,7 @@ class OrToolsSolver(
     def get_objective_value(self) -> float:
         return self._objective.Value()
 
-    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         solver_params = pywraplp.MPSolverParameters()
         if time_limit is not None:
             self._solver.set_time_limit(round(time_limit * 1000))

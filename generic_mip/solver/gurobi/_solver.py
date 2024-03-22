@@ -1,5 +1,5 @@
 """A solver implemented in the Gurobi library."""
-from typing import Optional, Union, Iterable
+from typing import Iterable
 import gurobipy as gp
 import numpy.typing as npt
 import numpy as np
@@ -12,7 +12,7 @@ from generic_mip.variable_data_type import VariableDataType
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the Gurobi library."""
 
-    def __init__(self, logger: LoggerInterface, model_path: Optional[str] = None):
+    def __init__(self, logger: LoggerInterface, model_path: str | None = None):
         """
         Initialize the solver.
 
@@ -47,8 +47,8 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self,
         names: npt.NDArray[str],
         dtype: VariableDataType,
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
+        lb: float | None = None,
+        ub: float | None = None,
     ) -> npt.NDArray[gp.Var]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -70,11 +70,11 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def add_multiple_constraints(
         self,
-        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[gp.Var]], npt.NDArray[gp.Var]],
-        lb: Optional[npt.NDArray[float]] = None,
-        ub: Optional[npt.NDArray[float]] = None,
-        names: Optional[npt.NDArray[str]] = None,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[gp.Var]] | npt.NDArray[gp.Var],
+        lb: npt.NDArray[float] | None = None,
+        ub: npt.NDArray[float] | None = None,
+        names: npt.NDArray[str] | None = None,
     ) -> None:
         if coeffs.size == 0:
             return
@@ -102,12 +102,12 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def add_constraint(
         self,
-        coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[gp.Var], gp.Var],
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
-        name: Optional[str] = None,
-    ) -> Optional[gp.Constr]:
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[gp.Var] | gp.Var,
+        lb: float | None = None,
+        ub: float | None = None,
+        name: str | None = None,
+    ) -> gp.Constr | None:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -130,7 +130,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         return constr_lb or constr_ub
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
+        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
     ) -> gp.Var:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -161,7 +161,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_objective_value(self) -> float:
         return self._solver.getObjective().getValue()
 
-    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         if time_limit is not None:
             self._solver.setParam(gp.GRB.Param.TimeLimit, time_limit)
         if mip_gap_limit is not None:

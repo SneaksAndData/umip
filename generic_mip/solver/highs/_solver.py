@@ -1,5 +1,4 @@
 """A solver implemented in the HiGHS library."""
-from typing import Optional, Union, List
 import highspy
 import numpy.typing as npt
 import numpy as np
@@ -11,7 +10,7 @@ from generic_mip.variable_data_type import VariableDataType
 class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the HiGHS library."""
 
-    def __init__(self, logger: LoggerInterface, model_path: Optional[str] = None):
+    def __init__(self, logger: LoggerInterface, model_path: str | None = None):
         """
         Initialize the solver.
 
@@ -19,15 +18,15 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         :param logger: The logger to use.
         """
         super().__init__(logger)
-        self._dual_values: Optional[List[float]] = None
+        self._dual_values: list[float] | None = None
         self._var_count = 0
         self._constr_count = 0
         self._obj_count = 0
         self._solver = highspy.Highs()
         if model_path is not None:
             self._solver.readModel(model_path)
-        self.status: Optional[highspy.HighsModelStatus] = None
-        self._solution: Optional[List[float]] = None
+        self.status: highspy.HighsModelStatus | None = None
+        self._solution: list[float] | None = None
 
     def set_variable_hint(self, var: str, hint: float) -> None:
         raise NotImplementedError()
@@ -41,7 +40,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         """
         return self._solver.getColByName(name)[1]
 
-    def _get_vars_by_names(self, names: Union[npt.NDArray[npt.NDArray[str]], npt.NDArray[str]]) -> npt.NDArray[int]:
+    def _get_vars_by_names(self, names: npt.NDArray[npt.NDArray[str]] | npt.NDArray[str]) -> npt.NDArray[int]:
         """
         Get the variable indices (int) by their names, as highs references variables by their index.
 
@@ -68,8 +67,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self,
         names: npt.NDArray[str],
         dtype: VariableDataType,
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
+        lb: float | None = None,
+        ub: float | None = None,
     ) -> npt.NDArray[str]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
@@ -97,11 +96,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_multiple_constraints(
         self,
-        coeffs: Union[npt.NDArray[npt.NDArray[float]], npt.NDArray[float]],
-        vars_: Union[npt.NDArray[npt.NDArray[str]], npt.NDArray[str]],
-        lb: Optional[npt.NDArray[float]] = None,
-        ub: Optional[npt.NDArray[float]] = None,
-        names: Optional[npt.NDArray[str]] = None,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[str]] | npt.NDArray[str],
+        lb: npt.NDArray[float] | None = None,
+        ub: npt.NDArray[float] | None = None,
+        names: npt.NDArray[str] | None = None,
     ) -> None:
         if lb is None and ub is None:
             raise ValueError("Either lb or ub must be specified")
@@ -139,12 +138,12 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_constraint(
         self,
-        coeffs: Union[npt.NDArray[float], float],
-        vars_: Union[npt.NDArray[str], str],
-        lb: Optional[float] = None,
-        ub: Optional[float] = None,
-        name: Optional[str] = None,
-    ) -> Optional[str]:
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[str] | str,
+        lb: float | None = None,
+        ub: float | None = None,
+        name: str | None = None,
+    ) -> str | None:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -175,9 +174,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
         return name
 
-    def add_variable(
-        self, name: str, dtype: VariableDataType, lb: Optional[float] = None, ub: Optional[float] = None
-    ) -> str:
+    def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> str:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
 
@@ -228,7 +225,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         info: highspy.HighsInfo = self._solver.getInfo()
         return info.objective_function_value
 
-    def solve(self, time_limit: Optional[float] = None, mip_gap_limit: Optional[float] = None) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         if time_limit is not None:
             self._solver.setOptionValue("time_limit", time_limit)
         if mip_gap_limit is not None:
