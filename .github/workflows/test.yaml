@@ -1,21 +1,22 @@
-name: Validate code
+name: Code unit tests
 
 on:
   pull_request:
     branches: [ main ]
 
 jobs:
-  validate_code_py311:
-    name: Validate code on Python 3.11
+  validate_code:
+    name: Code unit tests
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
       id-token: write
       pull-requests: write
 
-    runs-on: ubuntu-latest
+    if: ${{ github.ref != 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v4
@@ -24,16 +25,16 @@ jobs:
           architecture: 'x64'
 
       - name: Import Secrets
-        uses: hashicorp/vault-action@v2.4.2
+        uses: hashicorp/vault-action@v2.7.3
         with:
-          url: https://hashicorp-vault.production.sneaksanddata.com/
+          url: https://hashicorp-vault.awsp.sneaksanddata.com/
           role: github
           method: jwt
           secrets: |
             /secret/data/common/package-publishing/aws-ca/production/artifact-user access_key ;
             /secret/data/common/package-publishing/aws-ca/production/artifact-user access_key_id ;
       - name: Setup AWS CA
-        uses: SneaksAndData/github-actions/setup_aws_ca@v0.1.2
+        uses: SneaksAndData/github-actions/setup_aws_ca@v0.1.9
         with:
           aws_access_key: ${{ env.ACCESS_KEY }}
           aws_access_key_id: ${{ env.ACCESS_KEY_ID }}
@@ -43,22 +44,19 @@ jobs:
           aws_ca_repository: esd-artifacts
         id: setup_aws_ca
       - name: Install Poetry and dependencies
-        uses: SneaksAndData/github-actions/install_poetry@v0.1.1
+        uses: SneaksAndData/github-actions/install_poetry@v0.1.9
         with:
           pypi_repo_url: ${{ steps.setup_aws_ca.outputs.url }}
           pypi_token_username: ${{ steps.setup_aws_ca.outputs.user }}
           pypi_token: ${{ steps.setup_aws_ca.outputs.token }}
           install_extras: "all"
 
-      - name: Unit test
-        shell: bash
+      - name: Run test
         run: |
-          set -euxo pipefail
-          
+          set -euo pipefail
+
           poetry run pytest ./tests --cov-config=.coveragerc --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
       - name: Publish Code Coverage
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./junit/test-results.xml
-

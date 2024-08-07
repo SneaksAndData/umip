@@ -1,4 +1,4 @@
-name: Validate code format
+name: Validate code linting
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   validate_code:
-    name: Validate code format
+    name: Validate code linting
     runs-on: ubuntu-latest
 
     permissions:
@@ -50,8 +50,7 @@ jobs:
           pypi_token_username: ${{ steps.setup_aws_ca.outputs.user }}
           pypi_token: ${{ steps.setup_aws_ca.outputs.token }}
           install_extras: "all"
-      - name: Black
-        shell: bash
+      - name: Lint code
         run: |
           set -e
-          poetry run black . --check --diff
+          find ./generic_mip -type f -name "*.py" | xargs poetry run pylint

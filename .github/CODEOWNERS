@@ -4,8 +4,8 @@
 # These owners will be the default owners for everything in
 # the repo. Unless a later match takes precedence, these people will be requests a review
 # review when someone opens a pull request.
-generic_mip      @SneaksAndData/or-scientists
-examples         @SneaksAndData/or-scientists
-tests            @SneaksAndData/or-scientists
-.github          @SneaksAndData/platform-engineering
-.github/workflows/release.yaml @SneaksAndData/platform-engineering @SneaksAndData/or-scientists
+generic_mip                             @SneaksAndData/or-scientists
+examples                                @SneaksAndData/or-scientists
+tests                                   @SneaksAndData/or-scientists
+.github                                 @SneaksAndData/platform-engineering
+.github/workflows/release.yaml          @SneaksAndData/platform-engineering @SneaksAndData/or-scientists
