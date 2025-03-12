@@ -54,7 +54,7 @@ extend-exclude = 'tests/data/.*'
 [[tool.poetry.source]]
 name = "custom_repo"
 url = "https://esd-code-artifact-production-497010676583.d.codeartifact.eu-central-1.amazonaws.com/pypi/esd-artifacts/simple/"
-priority = "default"
+priority = "primary"
 
 [[tool.poetry.source]]
 name = "localsolver"

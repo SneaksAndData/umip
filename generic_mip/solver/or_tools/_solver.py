@@ -141,7 +141,7 @@ class OrToolsSolver(
     def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         solver_params = pywraplp.MPSolverParameters()
         if time_limit is not None:
-            self._solver.set_time_limit(round(time_limit * 1000))
+            self._solver.SetTimeLimit(round(time_limit * 1000))
         if mip_gap_limit is not None:
             solver_params.SetDoubleParam(solver_params.RELATIVE_MIP_GAP, mip_gap_limit)
         self.status = self._solver.Solve(solver_params)
