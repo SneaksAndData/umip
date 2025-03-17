@@ -5,6 +5,8 @@ from typing import TypeVar, Generic
 from logging import StreamHandler
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.models import LogLevel
+
+from generic_mip.variable_data_type import VariableDataType
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
 from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder
@@ -83,6 +85,26 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
                 objective_builder.build(solver=self._solver, data=self._data)
 
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
+        self._logger.info(
+            template="Number of constraints: {number_of_constraints}",
+            number_of_constraints=self._solver.get_constraint_count(),
+        )
+        self._logger.info(
+            template="Number of variables: {number_of_variables}", number_of_variables=self._solver.get_variable_count()
+        )
+        self._logger.info(
+            template="Number of continuous variables: {number_of_continuous_variables}",
+            number_of_continuous_variables=self._solver.get_variable_count_of_type(VariableDataType.FLOAT),
+        )
+        self._logger.info(
+            template="Number of binary variables: {number_of_binary_variables}",
+            number_of_binary_variables=self._solver.get_variable_count_of_type(VariableDataType.BOOL),
+        )
+        self._logger.info(
+            template="Number of integer variables: {number_of_integer_variables}",
+            number_of_integer_variables=self._solver.get_variable_count_of_type(VariableDataType.INT),
+        )
+
         self._built = True
 
     def solve(self, time_limit: float | None = None, **kwargs: any) -> any:

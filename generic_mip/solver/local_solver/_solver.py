@@ -19,6 +19,7 @@ class LocalSolver(
         self._objective = self._model.create_constant(0)
         self._maximization = True
         self.number_of_variables = 0
+        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType))))
         self.number_of_objective_terms = 0
         self._solution = None
 
@@ -79,6 +80,7 @@ class LocalSolver(
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
         self.number_of_variables += 1
+        self.number_of_variables_of_type[dtype] += 1
         if dtype == VariableDataType.INT:
             var = self._model.int(math.ceil(lb), math.floor(ub))
             self._integer_problem = True
@@ -183,6 +185,9 @@ class LocalSolver(
 
     def get_variable_count(self):
         return self.number_of_variables
+
+    def get_variable_count_of_type(self, var_type: VariableDataType):
+        return self.number_of_variables_of_type[var_type]
 
     def get_constraint_count(self):
         return self._model.get_nb_constraints()

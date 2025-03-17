@@ -269,6 +269,33 @@ def test_integer_problem(solver: AbstractOptimizationSolver):
 
 
 @pytest.mark.parametrize("solver", ["Highs", "OrTools"], indirect=True)
+def test_get_variable_count_of_type(solver: AbstractOptimizationSolver):
+    # Arrange
+    number_of_continuous_variables = 5
+    number_of_binary_variables = 7
+    number_of_integer_variables = 10
+    total_variables_count = number_of_continuous_variables + number_of_binary_variables + number_of_integer_variables
+    [
+        solver.add_variable(lb=0, ub=0, dtype=VariableDataType.FLOAT, name="C[" + str(i) + "]")
+        for i in range(number_of_continuous_variables)
+    ]
+    [
+        solver.add_variable(lb=0, ub=0, dtype=VariableDataType.BOOL, name="B[" + str(i) + "]")
+        for i in range(number_of_binary_variables)
+    ]
+    [
+        solver.add_variable(lb=0, ub=0, dtype=VariableDataType.INT, name="I[" + str(i) + "]")
+        for i in range(number_of_integer_variables)
+    ]
+
+    # Act & Assert
+    assert solver.get_variable_count_of_type(VariableDataType.FLOAT) == number_of_continuous_variables
+    assert solver.get_variable_count_of_type(VariableDataType.BOOL) == number_of_binary_variables
+    assert solver.get_variable_count_of_type(VariableDataType.INT) == number_of_integer_variables
+    assert solver.get_variable_count() == total_variables_count
+
+
+@pytest.mark.parametrize("solver", ["Highs", "OrTools"], indirect=True)
 def test_mip_gap_limit_gap(solver: AbstractOptimizationSolver):
     """
     The travelling salesman problem (TSP) is trying to find the most cost-efficient route for the salesman to visit

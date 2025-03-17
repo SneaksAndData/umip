@@ -23,6 +23,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._constr_count = 0
         self._obj_count = 0
         self._solver = highspy.Highs()
+        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType))))
         if model_path is not None:
             self._solver.readModel(model_path)
         self.status: highspy.HighsModelStatus | None = None
@@ -79,6 +80,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._solver.addVars(len(names), lb, ub)
 
         for i, name in enumerate(names):
+            self.number_of_variables_of_type[dtype] += 1
             if dtype == VariableDataType.INT:
                 self._integer_problem = True
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
@@ -182,6 +184,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._var_count += 1
 
         self._solver.addVar(lb, ub)
+        self.number_of_variables_of_type[dtype] += 1
 
         if dtype == VariableDataType.INT:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kInteger)
@@ -291,6 +294,9 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def get_variable_count(self):
         return self._solver.getNumCol()
+
+    def get_variable_count_of_type(self, var_type: VariableDataType):
+        return self.number_of_variables_of_type[var_type]
 
     def get_objective_terms_count(self):
         return self._obj_count

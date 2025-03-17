@@ -22,6 +22,7 @@ class OrToolsSolver(
         :param logger: The logger to use.
         """
         super().__init__(logger)
+        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType))))
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()
         self._objective: pywraplp.Objective = self._solver.Objective()
@@ -107,6 +108,7 @@ class OrToolsSolver(
     ) -> pywraplp.Variable:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
+        self.number_of_variables_of_type[dtype] += 1
         if dtype == VariableDataType.INT:
             self._integer_problem = True
             return self._solver.IntVar(lb, ub, name)
@@ -193,6 +195,9 @@ class OrToolsSolver(
 
     def get_variable_count(self):
         return self._solver.NumVariables()
+
+    def get_variable_count_of_type(self, var_type: VariableDataType):
+        return self.number_of_variables_of_type[var_type]
 
     def get_constraint_count(self):
         return self._solver.NumConstraints()

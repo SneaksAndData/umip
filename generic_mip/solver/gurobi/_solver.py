@@ -221,6 +221,16 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_variable_count(self):
         return len(self._solver.getVars())
 
+    def get_variable_count_of_type(self, var_type: VariableDataType):
+        if var_type == VariableDataType.FLOAT:
+            return self._solver.NumVars - self._solver.NumIntVars
+        if var_type == VariableDataType.INT:
+            return self._solver.NumIntVars - self._solver.NumBinVars
+        if var_type == VariableDataType.BOOL:
+            return self._solver.NumBinVars
+
+        raise ValueError(f"Unsupported variable data type: {var_type}")
+
     def get_objective_terms_count(self):
         return self._objective.size()
 

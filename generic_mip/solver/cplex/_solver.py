@@ -209,6 +209,16 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
     def get_variable_count(self):
         return self._solver.number_of_variables
 
+    def get_variable_count_of_type(self, var_type: VariableDataType):
+        if var_type == VariableDataType.FLOAT:
+            return self._solver.number_of_continuous_variables
+        if var_type == VariableDataType.INT:
+            return self._solver.number_of_integer_variables
+        if var_type == VariableDataType.BOOL:
+            return self._solver.number_of_binary_variables
+
+        raise ValueError(f"Unsupported variable data type: {var_type}")
+
     def get_objective_terms_count(self):
         return self._objective.number_of_terms()
 

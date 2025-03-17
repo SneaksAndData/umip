@@ -278,6 +278,14 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
+    def get_variable_count_of_type(self, var_type: VariableDataType) -> int:
+        """
+        Get number of variables of the specified type in the model.
+        :param var_type: The variable type.
+        :return: Number of variables of the provided type.
+        """
+
+    @abstractmethod
     def get_constraint_count(self) -> int:
         """
         Get number of constraints in the model.
