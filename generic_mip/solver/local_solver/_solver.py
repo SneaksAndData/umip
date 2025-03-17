@@ -110,7 +110,10 @@ class LocalSolver(
     def set_multiple_variable_hints(self, vars_: npt.NDArray[ls.LSExpression], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
-    def add_objective_term(self, coeff: float, var: ls.LSExpression, overwrite: bool = True) -> None:
+    def add_objective_term(self, coeff: float, var: ls.LSExpression, overwrite: bool = True, name: str = None) -> None:
+        if name is not None:
+            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+
         if overwrite:
             self._objective += coeff * var
             self.number_of_objective_terms += 1
@@ -118,8 +121,11 @@ class LocalSolver(
             raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[ls.LSExpression], overwrite: bool = True
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[ls.LSExpression], overwrite: bool = True, name: str = None
     ) -> None:
+        if name is not None:
+            self.add_named_objective(coeffs, vars_, overwrite, name)
+
         if overwrite:
             self._objective = self._model.sum(coeffs * vars_) + self._objective
             self.number_of_objective_terms += len(coeffs)

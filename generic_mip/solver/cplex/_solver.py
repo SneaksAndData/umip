@@ -7,6 +7,7 @@ from docplex.mp.constr import LinearConstraint
 from docplex.mp.constants import ObjectiveSense
 from docplex.mp.model_reader import ModelReader
 
+import numpy as np
 import numpy.typing as npt
 
 from adapta.logs import LoggerInterface
@@ -40,8 +41,11 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[Var], overwrite: bool = True
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[Var], overwrite: bool = True, name: str = None
     ) -> None:
+        if name is not None:
+            self.add_named_objective(coeffs, vars_, overwrite, name)
+
         for coeff, var in zip(coeffs, vars_):
             if overwrite:
                 self._objective.set_coefficient(var, coeff)
@@ -134,7 +138,10 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
     def get_variable_value(self, var: Var) -> float:
         return self.solution.get_value(var)
 
-    def add_objective_term(self, coeff: float, var: Var, overwrite: bool = True) -> None:
+    def add_objective_term(self, coeff: float, var: Var, overwrite: bool = True, name: str = None) -> None:
+        if name is not None:
+            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+
         if overwrite:
             self._objective.set_coefficient(var, coeff)
         else:

@@ -59,8 +59,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[str], overwrite: bool = True
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[str], overwrite: bool = True, name: str = None
     ) -> None:
+        if name is not None:
+            self.add_named_objective(coeffs, self._get_vars_by_names(vars_), overwrite, name)
+
         for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
             self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
 
@@ -205,8 +208,10 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def get_variable_value(self, var: str) -> float:
         return self._solution[self._solver.getColByName(var)[1]]
 
-    def add_objective_term(self, coeff: float, var: str, overwrite: bool = True) -> None:
+    def add_objective_term(self, coeff: float, var: str, overwrite: bool = True, name: str = None) -> None:
         _, old_coeff, _, _, _ = self._solver.getCol(self._get_var_by_name(var))  # status, cost, lb, ub, index
+        if name is not None:
+            self.add_named_objective(np.array([coeff]), np.array([self._get_var_by_name(var)]), overwrite, name)
 
         if old_coeff == 0 and coeff != 0:
             self._obj_count += 1
@@ -217,6 +222,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             self._solver.changeColCost(self._get_var_by_name(var), coeff)
         else:
             self._solver.changeColCost(self._get_var_by_name(var), coeff + old_coeff)
+
+    def get_named_objective(self, name: str) -> float:
+        return np.sum(
+            [(item.objective_coefficient * self._solution[item.variable]) for item in self._named_objectives[name]]
+        )
 
     def set_optimization_direction(self, maximization: bool) -> None:
         if maximization:

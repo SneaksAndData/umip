@@ -1,10 +1,13 @@
 """Abstract definition of a solver."""
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
+
+import numpy as np
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.constraint_type import ConstraintType
 from generic_mip.variable_data_type import VariableDataType
+from generic_mip.variable_with_objective_coefficient import VariableWithObjectiveCoefficient
 
 CT = TypeVar("CT")  # Constraint type
 VT = TypeVar("VT")  # Variable type
@@ -24,6 +27,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             Log redirect is not performed in this class due to the overhead it would add to each method call.
         """
         self._logger = logger
+        self._named_objectives = {}
         self._integer_problem = False
 
     @abstractmethod
@@ -209,7 +213,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_objective_term(self, coeff: float, var: VT, overwrite: bool = True) -> None:
+    def add_objective_term(self, coeff: float, var: VT, overwrite: bool = True, name: str = None) -> None:
         """
         Adds a single objective term.
 
@@ -220,7 +224,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @abstractmethod
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT], overwrite: bool = True
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT], overwrite: bool = True, name: str = None
     ) -> None:
         """
         Adds multiple objective terms at once: c_1x_1 + c_2x_2 + ...
@@ -231,6 +235,43 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             Each index must match an index in the coeffs list.
         :return:
         """
+
+    def add_named_objective(
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT], overwrite: bool, name: str
+    ) -> None:
+        """
+        Add/update the coefficients and variables of a named objective term
+
+        :param coeffs: The coefficients of the term. Example: [c_1, c_2, ...].
+            Each index must match an index in the vars_ list.
+        :param vars_: The variables of the term. Example: [x_1, x_2, ...].
+            Each index must match an index in the coeffs list.
+        :param overwrite: Whether to overwrite the coefficients or not.
+        :param name: The name of the objective
+        :return:
+        """
+        if overwrite:
+            raise ValueError("Add_named_objective is not supported with overwrite = true")
+
+        elements_to_add = [VariableWithObjectiveCoefficient(vars_[i], coeffs[i]) for i in range(len(coeffs))]
+        if name in self._named_objectives:
+            self._named_objectives[name].extend(elements_to_add)
+        else:
+            self._named_objectives[name] = elements_to_add
+
+    def get_named_objective(self, name: str) -> float:
+        """
+        Get the value of a named objective term
+
+        :param name: The name of the objective
+        :return: objective value for the named objective.
+        """
+        return np.sum(
+            [
+                (item.objective_coefficient * self.get_variable_value(item.variable))
+                for item in self._named_objectives[name]
+            ]
+        )
 
     @abstractmethod
     def set_optimization_direction(self, maximization: bool) -> None:

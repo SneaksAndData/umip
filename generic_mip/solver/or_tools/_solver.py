@@ -122,17 +122,29 @@ class OrToolsSolver(
     def get_variable_value(self, var: pywraplp.Variable) -> float:
         return var.SolutionValue()
 
-    def add_objective_term(self, coeff: float, var: pywraplp.Variable, overwrite: bool = True) -> None:
+    def add_objective_term(
+        self, coeff: float, var: pywraplp.Variable, overwrite: bool = True, name: str = None
+    ) -> None:
+        if name is not None:
+            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+
         if overwrite:
             self._objective.SetCoefficient(var, coeff)
         else:
             self._objective.SetCoefficient(var, self._objective.GetCoefficient(var) + coeff)
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[pywraplp.Variable], overwrite: bool = True
+        self,
+        coeffs: npt.NDArray[float],
+        vars_: npt.NDArray[pywraplp.Variable],
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
+        if name is not None:
+            self.add_named_objective(coeffs, vars_, overwrite, name)
+
         for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
-            self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
+            self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite, name=None)
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._objective.SetOptimizationDirection(maximization)

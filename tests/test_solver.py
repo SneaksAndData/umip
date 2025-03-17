@@ -75,6 +75,64 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
 
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+def test_add_multiple_objectives_with_names__named_objectives_is_as_expected(solver: AbstractOptimizationSolver):
+    # Arrange
+    vars_ = solver.add_multiple_variables(
+        lb=0, ub=1, names=np.array(["x_1", "x_2", "x_3"]), dtype=VariableDataType.BOOL
+    )
+
+    objective1 = "Objective1"
+    objective2 = "Objective2"
+
+    solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_, overwrite=False, name=objective1)
+    solver.add_multiple_objective_terms(coeffs=np.array([2.0, 2.0, 2.0]), vars_=vars_, overwrite=False, name=objective2)
+    solver.force_update()
+    solver.set_optimization_direction(True)
+    solver.solve()
+
+    # Act & Assert
+    assert solver.get_named_objective(objective1) == 3.0
+    assert solver.get_named_objective(objective2) == 6.0
+    assert solver.get_objective_value() == 9.0
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+def test_add_objectives_with_names__named_objectives_is_as_expected(solver: AbstractOptimizationSolver):
+    # Arrange
+    vars_ = solver.add_multiple_variables(
+        lb=0, ub=1, names=np.array(["x_1", "x_2", "x_3"]), dtype=VariableDataType.BOOL
+    )
+
+    objective1 = "Objective1"
+    objective2 = "Objective2"
+
+    for var in vars_:
+        solver.add_objective_term(coeff=1, var=var, overwrite=False, name=objective1)
+        solver.add_objective_term(coeff=2, var=var, overwrite=False, name=objective2)
+
+    solver.force_update()
+    solver.set_optimization_direction(True)
+    solver.solve()
+
+    # Act & Assert
+    assert solver.get_named_objective(objective1) == 3.0
+    assert solver.get_named_objective(objective2) == 6.0
+    assert solver.get_objective_value() == 9.0
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+def test_add_objectives_with_names__raises_error_when_overwrite(solver: AbstractOptimizationSolver):
+    # Arrange
+    vars_ = solver.add_multiple_variables(
+        lb=0, ub=1, names=np.array(["x_1", "x_2", "x_3"]), dtype=VariableDataType.BOOL
+    )
+
+    # Act & Assert
+    with pytest.raises(ValueError) as valueError:
+        solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_, overwrite=True, name="Test")
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT, VariableDataType.BOOL])
 @pytest.mark.parametrize("maximisation", [True, False])
 def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDataType, maximisation: bool):

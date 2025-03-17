@@ -35,12 +35,14 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var], overwrite: bool = True
+        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var], overwrite: bool = True, name: str = None
     ) -> None:
         if overwrite:
             for var in vars_:
                 self._objective.remove(var)
 
+        if name is not None:
+            self.add_named_objective(coeffs, vars_, overwrite, name)
         self._objective.addTerms(coeffs, vars_)
 
     def add_multiple_variables(
@@ -149,10 +151,14 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_variable_value(self, var: gp.Var) -> float:
         return var.x
 
-    def add_objective_term(self, coeff: float, var: gp.Var, overwrite: bool = True) -> None:
+    def add_objective_term(self, coeff: float, var: gp.Var, overwrite: bool = True, name: str = None) -> None:
         if overwrite:
             # Might have bad performance?
             self._objective.remove(var)
+
+        if name is not None:
+            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+
         self._objective.addTerms([coeff], [var])
 
     def set_optimization_direction(self, maximization: bool) -> None:
