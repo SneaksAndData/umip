@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
+from generic_mip.constraint_type import ConstraintType
 from generic_mip.variable_data_type import VariableDataType
 
 CT = TypeVar("CT")  # Constraint type
@@ -89,6 +90,73 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             Example input: [[x_11,x_12,...],[x_21,x_22,...],...] or [x_1, x_2, ...]
         :param names: Names of the constraints
         """
+
+    def add_constraint_of_type(
+        self,
+        constraint_type: ConstraintType,
+        coeffs: npt.NDArray[float] | float,
+        vars_: npt.NDArray[VT] | VT,
+        right_hand_side: float | None = None,
+        name: str | None = None,
+    ) -> CT | None:
+        """
+        Add a single constraint of the form
+            cx ? ub
+
+        :param constraint_type: The relation to be used in the constraint. (Either >=, = or <=)
+        :param right_hand_side: The right hand side of the constraint.
+        :param coeffs: List of coefficients: [c_1, c_2, ...] or a single coefficient: c.
+            Each index in the list must correspond to the same index in the vars_ list.
+        :param vars_: List of variables: [x_1, x_2, ...] or a single variable: x.
+            Each index in the list must correspond to the same index in the coeffs list.
+        :param name: Name of constraint.
+        :return: The constraint.
+        """
+        if ConstraintType.LESS_THAN_OR_EQUAL:
+            return self.add_constraint(coeffs=coeffs, vars_=vars_, ub=right_hand_side, name=name)
+        if ConstraintType.EQUAL:
+            return self.add_constraint(coeffs=coeffs, vars_=vars_, lb=right_hand_side, ub=right_hand_side, name=name)
+        if ConstraintType.GREATER_THAN_OR_EQUAL:
+            return self.add_constraint(coeffs=coeffs, vars_=vars_, lb=right_hand_side, name=name)
+
+        raise ValueError(f"Unsupported constraint type: {constraint_type}")
+
+    def add_multiple_constraints_of_type(
+        self,
+        constraint_type: ConstraintType,
+        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        vars_: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
+        right_hand_sides: npt.NDArray[float] | None = None,
+        names: npt.NDArray[str] | None = None,
+    ) -> None:
+        """
+        Adds multiple constraints of the form
+            c_1x_1 ? ub_1
+            c_2x_2 ? ub_2
+            ...
+
+        :param constraint_type: The relation to be used in the constraint. (Either >=, = or <=)
+        :param right_hand_sides: The right hand side sof the constraints.
+        :param coeffs: A list of lists of constraint coefficients. Each inner list represent a constraint,
+            and each element of the inner list is a coefficient of a variable in the constraint.
+            Example input: [[c_11,c_12,...],[c_21,c_22,...],...] or [c_1, c_2, ...]
+        :param vars_: A list of lists of constraint coefficients. Each inner list represent a constraint,
+            and each element of the inner list is a variable in the constraint. The dimensions must exactly
+            match those of the parameter coeffs. Example: The coefficient in index [1,2] must belong to the variable in
+            index [1,2].
+            Example input: [[x_11,x_12,...],[x_21,x_22,...],...] or [x_1, x_2, ...]
+        :param names: Names of the constraints
+        """
+        if ConstraintType.LESS_THAN_OR_EQUAL:
+            return self.add_multiple_constraints(coeffs=coeffs, vars_=vars_, ub=right_hand_sides, names=names)
+        if ConstraintType.EQUAL:
+            return self.add_multiple_constraints(
+                coeffs=coeffs, vars_=vars_, lb=right_hand_sides, ub=right_hand_sides, names=names
+            )
+        if ConstraintType.GREATER_THAN_OR_EQUAL:
+            return self.add_multiple_constraints(coeffs=coeffs, vars_=vars_, lb=right_hand_sides, names=names)
+
+        raise ValueError(f"Unsupported constraint type: {constraint_type}")
 
     @abstractmethod
     def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> VT:

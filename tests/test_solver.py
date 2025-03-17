@@ -5,6 +5,7 @@ Open source implementations are tested below.
 import pytest
 import numpy as np
 from generic_mip.abstract_solver import AbstractOptimizationSolver
+from generic_mip.constraint_type import ConstraintType
 from generic_mip.variable_data_type import VariableDataType
 
 
@@ -29,6 +30,23 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_constraint_count() == 1
     assert solver.get_variable_count() == 1
     assert solver.get_objective_terms_count() == 1
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize(
+    "ctype", [ConstraintType.LESS_THAN_OR_EQUAL, ConstraintType.EQUAL, ConstraintType.GREATER_THAN_OR_EQUAL]
+)
+def test_add_constraint_of_type(solver: AbstractOptimizationSolver, ctype: ConstraintType):
+    """
+    Testing that adding a constraint of a constraint type is reflected in the solver.
+    """
+    # Arrange
+    var = solver.add_variable(lb=0, ub=1, name="x", dtype=VariableDataType.FLOAT)
+    solver.add_constraint_of_type(constraint_type=ctype, right_hand_side=1, coeffs=1, vars_=var, name="c1")
+    solver.force_update()
+
+    # Act & Assert
+    assert solver.get_constraint_count() == 1
 
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
