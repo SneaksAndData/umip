@@ -53,7 +53,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
                 self._objective.add_term(var, coeff)
 
     def add_multiple_variables(
-        self, names: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self, names: npt.NDArray[str], dtype: VariableDataType, lb: float | None = None, ub: float | None = None
     ) -> npt.NDArray[Var]:
         lb = lb if lb is not None else -self.infinity()
         ub = ub if ub is not None else self.infinity()
