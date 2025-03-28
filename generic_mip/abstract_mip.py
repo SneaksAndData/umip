@@ -6,7 +6,7 @@ from logging import StreamHandler
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.models import LogLevel
 
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.variable_data_type import VariableDataType
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
 from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder

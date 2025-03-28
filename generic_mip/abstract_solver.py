@@ -5,8 +5,8 @@ from typing import TypeVar, Generic
 import numpy as np
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
-from generic_mip.constraint_type import ConstraintType
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.constraint_type import ConstraintType
+from generic_mip.enums.variable_data_type import VariableDataType
 from generic_mip.variable_with_objective_coefficient import VariableWithObjectiveCoefficient
 
 CT = TypeVar("CT")  # Constraint type

@@ -5,8 +5,8 @@ Open source implementations are tested below.
 import pytest
 import numpy as np
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.constraint_type import ConstraintType
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.constraint_type import ConstraintType
+from generic_mip.enums.variable_data_type import VariableDataType
 
 
 @pytest.mark.parametrize(

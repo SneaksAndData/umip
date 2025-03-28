@@ -1,0 +1,48 @@
+import pytest
+
+from generic_mip import AbstractOptimizationSolver
+from generic_mip.enums.solver_type import SolverType
+from generic_mip.solver.cplex import CplexSolver
+from generic_mip.solver.highs import HighsSolver
+from generic_mip.solver.or_tools import OrToolsSolver
+from generic_mip.solver_factory.solver_factory import SolverFactory
+
+
+@pytest.mark.parametrize(
+    "solver_type",
+    [
+        SolverType.ORTOOLS_SCIP,
+        SolverType.ORTOOLS_CBC,
+        SolverType.CPLEX,
+        SolverType.HIGHS,
+    ],
+)
+def test_construct_solver_is_correct_type(solver_type, logger):
+    # Arrange
+    sut = SolverFactory(logger)
+
+    # Act
+    solver = sut.construct(solver_type)
+
+    # Assert
+    assert solver is not None
+    assert __isinstance_of_solver(solver, solver_type)
+
+
+def test_construct_unknown_solver_type_throws_exception(logger):
+    # Arrange
+    sut = SolverFactory(logger)
+
+    # Act & Assert
+    with pytest.raises(ValueError):
+        sut.construct(100)
+
+
+def __isinstance_of_solver(solver: AbstractOptimizationSolver, solver_type: SolverType):
+    if solver_type == SolverType.CPLEX:
+        return isinstance(solver, CplexSolver)
+
+    if solver_type == SolverType.HIGHS:
+        return isinstance(solver, HighsSolver)
+
+    return isinstance(solver, OrToolsSolver)

@@ -13,7 +13,7 @@ import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.cplex.enum import CplexStatus
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.variable_data_type import VariableDataType
 
 
 class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint: disable=too-many-public-methods

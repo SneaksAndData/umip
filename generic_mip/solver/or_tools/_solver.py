@@ -6,7 +6,7 @@ import numpy as np
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.or_tools._solver_engine import OrToolsSolverEngine
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.variable_data_type import VariableDataType
 
 
 class OrToolsSolver(

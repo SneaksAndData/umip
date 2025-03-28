@@ -23,7 +23,7 @@ The classes are:
 * [`AbstractObjectiveBuilder`](./generic_mip/abstract_obj_builder.py) - A class used to construct objective terms - this is used by the `AbstractMipModel`.
 * [`AbstractOptimizationModelFactory`](./generic_mip/abstract_model_factory.py) - A class used to construct a model and injects the necessary builders based on given context or settings.
 * [`AbstractOptimisationSolverFactory`](./generic_mip/abstract_solver_factory.py) - A class used to construct a solver based on given context or settings.
-* [`VariableDataType`](./generic_mip/variable_data_type.py) - An enum used to represent the data type of a decision variable.
+* [`VariableDataType`](generic_mip/enums/variable_data_type.py) - An enum used to represent the data type of a decision variable.
 
 Above classes is visualised ín the below UML class diagram. For an explanation of UML diagrams, please go to [https://www.uml-diagrams.org](https://www.uml-diagrams.org).
 

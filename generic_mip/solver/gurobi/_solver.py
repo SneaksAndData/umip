@@ -6,7 +6,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.variable_data_type import VariableDataType
 
 
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods

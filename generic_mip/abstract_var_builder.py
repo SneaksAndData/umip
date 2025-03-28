@@ -5,7 +5,7 @@ from adapta.logs import LoggerInterface
 import pandas as pd
 import polars as pl
 import numpy as np
-from generic_mip.variable_data_type import VariableDataType
+from generic_mip.enums.variable_data_type import VariableDataType
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 T = TypeVar("T")
