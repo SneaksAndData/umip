@@ -23,7 +23,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._constr_count = 0
         self._obj_count = 0
         self._solver = highspy.Highs()
-        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType))))
+        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType), dtype=int)))
         if model_path is not None:
             self._solver.readModel(model_path)
         self.status: highspy.HighsModelStatus | None = None

@@ -19,7 +19,7 @@ class LocalSolver(
         self._objective = self._model.create_constant(0)
         self._maximization = True
         self.number_of_variables = 0
-        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType))))
+        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType), dtype=int)))
         self.number_of_objective_terms = 0
         self._solution = None
 
