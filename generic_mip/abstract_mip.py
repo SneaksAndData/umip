@@ -107,12 +107,15 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         self._built = True
 
-    def solve(self, time_limit: float | None = None, **kwargs: any) -> any:
+    def solve(self, time_limit: float | None = None, redirect_solver_log: bool = True, **kwargs: any) -> any:
         if not self._built:
             raise ValueError("Model must be built before calling .solve()")
 
         start_time = time.time()
-        with self._logger.redirect(log_level=LogLevel.INFO):
+        if redirect_solver_log:
+            with self._logger.redirect(log_level=LogLevel.INFO):
+                status = self._solver.solve(time_limit=time_limit)
+        else:
             status = self._solver.solve(time_limit=time_limit)
         exec_time = time.time() - start_time
         self._logger.info(template="Spent {time}s optimising.", time=exec_time)
