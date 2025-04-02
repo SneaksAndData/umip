@@ -7,5 +7,5 @@
 generic_mip                             @SneaksAndData/or-scientists
 examples                                @SneaksAndData/or-scientists
 tests                                   @SneaksAndData/or-scientists
-.github                                 @SneaksAndData/platform-engineering
+.github                                 @SneaksAndData/platform-engineering @SneaksAndData/or-scientists
 .github/workflows/release.yaml          @SneaksAndData/platform-engineering @SneaksAndData/or-scientists
