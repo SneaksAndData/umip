@@ -116,11 +116,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :param name: Name of constraint.
         :return: The constraint.
         """
-        if ConstraintType.LESS_THAN_OR_EQUAL:
+        if constraint_type == ConstraintType.LESS_THAN_OR_EQUAL:
             return self.add_constraint(coeffs=coeffs, vars_=vars_, ub=right_hand_side, name=name)
-        if ConstraintType.EQUAL:
+        if constraint_type == ConstraintType.EQUAL:
             return self.add_constraint(coeffs=coeffs, vars_=vars_, lb=right_hand_side, ub=right_hand_side, name=name)
-        if ConstraintType.GREATER_THAN_OR_EQUAL:
+        if constraint_type == ConstraintType.GREATER_THAN_OR_EQUAL:
             return self.add_constraint(coeffs=coeffs, vars_=vars_, lb=right_hand_side, name=name)
 
         raise ValueError(f"Unsupported constraint type: {constraint_type}")
@@ -151,13 +151,13 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             Example input: [[x_11,x_12,...],[x_21,x_22,...],...] or [x_1, x_2, ...]
         :param names: Names of the constraints
         """
-        if ConstraintType.LESS_THAN_OR_EQUAL:
+        if constraint_type == ConstraintType.LESS_THAN_OR_EQUAL:
             return self.add_multiple_constraints(coeffs=coeffs, vars_=vars_, ub=right_hand_sides, names=names)
-        if ConstraintType.EQUAL:
+        if constraint_type == ConstraintType.EQUAL:
             return self.add_multiple_constraints(
                 coeffs=coeffs, vars_=vars_, lb=right_hand_sides, ub=right_hand_sides, names=names
             )
-        if ConstraintType.GREATER_THAN_OR_EQUAL:
+        if constraint_type == ConstraintType.GREATER_THAN_OR_EQUAL:
             return self.add_multiple_constraints(coeffs=coeffs, vars_=vars_, lb=right_hand_sides, names=names)
 
         raise ValueError(f"Unsupported constraint type: {constraint_type}")
