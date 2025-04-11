@@ -171,7 +171,7 @@ class OrToolsSolver(
         return self.status == pywraplp.Solver.OPTIMAL
 
     def is_feasible(self) -> bool:
-        return self.status == pywraplp.Solver.FEASIBLE
+        return self.status in (pywraplp.Solver.FEASIBLE, pywraplp.Solver.OPTIMAL)
 
     def is_infeasible(self) -> bool:
         return self.status == pywraplp.Solver.INFEASIBLE

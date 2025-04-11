@@ -146,6 +146,7 @@ def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDat
     solver.solve()
 
     assert solver.is_optimal()
+    assert solver.is_feasible()
     assert not solver.is_abnormal()
     assert not solver.is_unbounded()
     assert not solver.is_infeasible()
