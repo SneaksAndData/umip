@@ -7,6 +7,7 @@ from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
+from generic_mip.solver.scip import ScipSolver
 
 
 class AbstractOptimizationSolverFactory(ABC):
@@ -35,6 +36,9 @@ class AbstractOptimizationSolverFactory(ABC):
 
         if solver_type == SolverType.HIGHS:
             return HighsSolver(logger=self._logger)
+
+        if solver_type == SolverType.SCIP:
+            return ScipSolver(logger=self._logger)
 
         return OrToolsSolver(solver_engine=self.__to_ortools_solver_engine(solver_type), logger=self._logger)
 

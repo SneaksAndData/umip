@@ -4,6 +4,7 @@ Open source implementations are tested below.
 """
 import pytest
 import numpy as np
+
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.enums.constraint_type import ConstraintType
 from generic_mip.enums.variable_data_type import VariableDataType
@@ -32,7 +33,7 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_objective_terms_count() == 1
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 @pytest.mark.parametrize(
     "ctype", [ConstraintType.LESS_THAN_OR_EQUAL, ConstraintType.EQUAL, ConstraintType.GREATER_THAN_OR_EQUAL]
 )
@@ -49,7 +50,7 @@ def test_add_constraint_of_type(solver: AbstractOptimizationSolver, ctype: Const
     assert solver.get_constraint_count() == 1
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     """
     Testing that adding 3 variables, 3 constraints, and 3 objective terms is reflected in the solver.
@@ -74,7 +75,7 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     assert solver.get_objective_terms_count() == 3
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 def test_add_multiple_objectives_with_names__named_objectives_is_as_expected(solver: AbstractOptimizationSolver):
     # Arrange
     vars_ = solver.add_multiple_variables(
@@ -96,7 +97,7 @@ def test_add_multiple_objectives_with_names__named_objectives_is_as_expected(sol
     assert solver.get_objective_value() == 9.0
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 def test_add_objectives_with_names__named_objectives_is_as_expected(solver: AbstractOptimizationSolver):
     # Arrange
     vars_ = solver.add_multiple_variables(
@@ -120,7 +121,7 @@ def test_add_objectives_with_names__named_objectives_is_as_expected(solver: Abst
     assert solver.get_objective_value() == 9.0
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 def test_add_objectives_with_names__raises_error_when_overwrite(solver: AbstractOptimizationSolver):
     # Arrange
     vars_ = solver.add_multiple_variables(
@@ -132,7 +133,7 @@ def test_add_objectives_with_names__raises_error_when_overwrite(solver: Abstract
         solver.add_multiple_objective_terms(coeffs=np.array([1.0, 1.0, 1.0]), vars_=vars_, overwrite=True, name="Test")
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT, VariableDataType.BOOL])
 @pytest.mark.parametrize("maximisation", [True, False])
 def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDataType, maximisation: bool):
@@ -155,7 +156,7 @@ def test_optimal_solution(solver: AbstractOptimizationSolver, dtype: VariableDat
     # assert solver.get_gap() == 0.0
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT])
 def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDataType):
     """
@@ -163,7 +164,7 @@ def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDa
     """
     solver.set_optimization_direction(maximization=True)
     var = solver.add_variable(lb=0.0, ub=solver.infinity(), name="x", dtype=dtype)
-    solver.add_objective_term(coeff=1.0, var=var)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.solve()
 
     assert not solver.is_optimal()
@@ -172,7 +173,7 @@ def test_unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDa
     assert not solver.is_infeasible()
 
 
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDataType.FLOAT, VariableDataType.INT])
 def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableDataType):
     """
@@ -189,7 +190,7 @@ def test_infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableD
     assert solver.is_infeasible()
 
 
-@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Scip"], indirect=True)
 @pytest.mark.parametrize("verbose", [True, False])
 def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """
@@ -198,7 +199,7 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     """
     var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
     solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
-    solver.add_objective_term(coeff=1.0, var=var)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.set_verbose(verbose=verbose)
     solver.solve()
 
@@ -210,7 +211,7 @@ def test_set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
         assert len(out) == 0
 
 
-@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+@pytest.mark.parametrize("solver", ["OrTools", "Scip"], indirect=True)
 def test_time_limit_gap(solver: AbstractOptimizationSolver):
     """
     Testing that solving a computationally difficult problem stops at the time limit and
@@ -259,6 +260,8 @@ def test_time_limit_gap(solver: AbstractOptimizationSolver):
                 )
     if type(solver).__name__ == "OrToolsSolver":
         solver.set_solver_setting("presolving/maxrounds=0")
+    if type(solver).__name__ == "ScipSolver":
+        solver.set_param("presolving/maxrounds", 0)
     solver.set_verbose(verbose=True)
     solver.solve(time_limit=1)
     gap = solver.get_gap()
@@ -302,12 +305,29 @@ def test_objective_offset(solver: AbstractOptimizationSolver, offset: int, overw
     solver.set_optimization_direction(maximization=False)
     var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
     solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
-    solver.add_objective_term(coeff=1.0, var=var, overwrite=True)
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
     solver.add_objective_offset(offset=offset, overwrite=overwrite)
     solver.add_objective_offset(offset=offset, overwrite=overwrite)
     solver.solve()
 
     assert solver.get_objective_value() == offset + offset * (1 - overwrite)
+
+
+@pytest.mark.parametrize("solver", ["Scip"], indirect=True)
+@pytest.mark.parametrize("offset", [1])
+def test_objective_offset_for_scip(solver: AbstractOptimizationSolver, offset: int):
+    """
+    Testing that offset in objective function is set correctly both when overwriting and adding.
+    """
+    solver.set_optimization_direction(maximization=False)
+    var = solver.add_variable(lb=0.0, ub=100.0, name="x", dtype=VariableDataType.FLOAT)
+    solver.add_constraint(lb=0.0, ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1")
+    solver.add_objective_term(coeff=1.0, var=var, overwrite=False)
+    solver.add_objective_offset(offset=offset, overwrite=False)
+    solver.add_objective_offset(offset=offset, overwrite=False)
+    solver.solve()
+
+    assert solver.get_objective_value() == offset + offset
 
 
 @pytest.mark.parametrize("solver", ["Highs"], indirect=True)
@@ -323,12 +343,12 @@ def test_get_dual_value(solver: AbstractOptimizationSolver):
         lb=-solver.infinity(), ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1"
     )
 
-    solver.add_objective_term(coeff=10, var=var, overwrite=True)
+    solver.add_objective_term(coeff=10, var=var, overwrite=False)
     solver.solve()
     assert solver.get_dual_value(constr) == 10
 
 
-@pytest.mark.parametrize("solver", ["Highs"], indirect=True)
+@pytest.mark.parametrize("solver", ["Highs", "Scip"], indirect=True)
 def test_integer_problem(solver: AbstractOptimizationSolver):
     """
     Testing that the dual value is retrieved correctly.
@@ -339,13 +359,13 @@ def test_integer_problem(solver: AbstractOptimizationSolver):
     constr = solver.add_constraint(
         lb=-solver.infinity(), ub=1.0, coeffs=np.array([1.0]), vars_=np.array([var]), name="c1"
     )
-    solver.add_objective_term(coeff=10, var=var, overwrite=True)
+    solver.add_objective_term(coeff=10, var=var, overwrite=False)
     solver.solve()
     with pytest.raises(ValueError):
         assert solver.get_dual_value(constr)
 
 
-@pytest.mark.parametrize("solver", ["Highs", "OrTools"], indirect=True)
+@pytest.mark.parametrize("solver", ["Highs", "OrTools", "Scip"], indirect=True)
 def test_get_variable_count_of_type(solver: AbstractOptimizationSolver):
     # Arrange
     number_of_continuous_variables = 5
@@ -372,7 +392,7 @@ def test_get_variable_count_of_type(solver: AbstractOptimizationSolver):
     assert solver.get_variable_count() == total_variables_count
 
 
-@pytest.mark.parametrize("solver", ["Highs", "OrTools"], indirect=True)
+@pytest.mark.parametrize("solver", ["Highs", "OrTools", "Scip"], indirect=True)
 def test_mip_gap_limit_gap(solver: AbstractOptimizationSolver):
     """
     The travelling salesman problem (TSP) is trying to find the most cost-efficient route for the salesman to visit

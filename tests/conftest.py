@@ -7,6 +7,7 @@ from adapta.logs.models import LogLevel
 from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
+from generic_mip.solver.scip import ScipSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 from generic_mip.solver.local_solver import LocalSolver
 
@@ -34,3 +35,5 @@ def solver(logger, request):
         return HighsSolver(logger=logger)
     elif request.param == "Cplex":
         return CplexSolver(logger=logger)
+    elif request.param == "Scip":
+        return ScipSolver(logger=logger)
