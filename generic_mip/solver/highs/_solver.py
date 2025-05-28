@@ -23,7 +23,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._constr_count = 0
         self._obj_count = 0
         self._solver = highspy.Highs()
-        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType), dtype=int)))
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
         if model_path is not None:
             self._solver.readModel(model_path)
         self.status: highspy.HighsModelStatus | None = None
@@ -224,8 +224,10 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             self._solver.changeColCost(self._get_var_by_name(var), coeff + old_coeff)
 
     def get_named_objective(self, name: str) -> float:
-        return np.sum(
-            [(item.objective_coefficient * self._solution[item.variable]) for item in self._named_objectives[name]]
+        return float(
+            np.sum(
+                [(item.objective_coefficient * self._solution[item.variable]) for item in self._named_objectives[name]]
+            )
         )
 
     def set_optimization_direction(self, maximization: bool) -> None:

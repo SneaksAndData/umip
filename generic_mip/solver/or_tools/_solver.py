@@ -22,7 +22,7 @@ class OrToolsSolver(
         :param logger: The logger to use.
         """
         super().__init__(logger)
-        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType), dtype=int)))
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()
         self._objective: pywraplp.Objective = self._solver.Objective()

@@ -19,7 +19,7 @@ class ScipSolver(
         self._solver = Model()
         if model_path is not None:
             self._solver = self._solver.readProblem(model_path)
-        self.number_of_variables_of_type = dict(zip(list(VariableDataType), np.zeros(len(VariableDataType), dtype=int)))
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
         self._objective = 0
         self._objective_term_count = 0
 
