@@ -266,14 +266,16 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :param name: The name of the objective
         :return: objective value for the named objective.
         """
-        return float(
-            np.sum(
-                [
-                    (item.objective_coefficient * self.get_variable_value(item.variable))
-                    for item in self._named_objectives[name]
-                ]
+        if name in self._named_objectives:
+            return float(
+                np.sum(
+                    [
+                        (item.objective_coefficient * self.get_variable_value(item.variable))
+                        for item in self._named_objectives[name]
+                    ]
+                )
             )
-        )
+        return 0.0
 
     @abstractmethod
     def set_optimization_direction(self, maximization: bool) -> None:

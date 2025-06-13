@@ -224,11 +224,16 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             self._solver.changeColCost(self._get_var_by_name(var), coeff + old_coeff)
 
     def get_named_objective(self, name: str) -> float:
-        return float(
-            np.sum(
-                [(item.objective_coefficient * self._solution[item.variable]) for item in self._named_objectives[name]]
+        if name in self._named_objectives:
+            return float(
+                np.sum(
+                    [
+                        (item.objective_coefficient * self._solution[item.variable])
+                        for item in self._named_objectives[name]
+                    ]
+                )
             )
-        )
+        return 0.0
 
     def set_optimization_direction(self, maximization: bool) -> None:
         if maximization:
