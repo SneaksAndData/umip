@@ -93,7 +93,10 @@ def test_add_multiple_objectives_with_names__named_objectives_is_as_expected(sol
 
     # Act & Assert
     assert solver.get_named_objective(objective1) == 3.0
+    assert solver.get_named_objectives()[objective1] == 3.0
     assert solver.get_named_objective(objective2) == 6.0
+    assert solver.get_named_objectives()[objective2] == 6.0
+    assert sum(list(solver.get_named_objectives().values())) == solver.get_objective_value()
     assert solver.get_objective_value() == 9.0
 
 

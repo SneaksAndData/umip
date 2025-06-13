@@ -259,6 +259,16 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         else:
             self._named_objectives[name] = elements_to_add
 
+    def get_named_objectives(self) -> dict[str, float]:
+        """
+        Get a dictionary of all named objectives in the model.
+        :return: A dictionary of named objectives, where the key is the name of the objective and the value is the
+        aggregated value of the objective terms belonging to that objective.
+        """
+        return {
+            named_objective: self.get_named_objective(named_objective) for named_objective in self._named_objectives
+        }
+
     def get_named_objective(self, name: str) -> float:
         """
         Get the value of a named objective term
