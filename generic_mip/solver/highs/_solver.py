@@ -48,6 +48,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         :param names: The names of the variables.
         :return: The indices of the variables.
         """
+        if len(names) == 0:
+            return np.array([], dtype=int)
         if names.ndim > 1 or isinstance(names[0], (np.ndarray, list, set)):
             names = np.concatenate(names)
         return np.array([self._solver.getColByName(name)[1] for name in names])

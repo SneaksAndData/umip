@@ -101,6 +101,23 @@ def test_add_multiple_objectives_with_names__named_objectives_is_as_expected(sol
 
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
+def test_add_multiple_objectives_with_names__named_objectives_with_no_term_added(solver: AbstractOptimizationSolver):
+    # Arrange
+    objective1 = "Objective1"
+
+    solver.add_multiple_objective_terms(coeffs=np.array([]), vars_=np.array([]), overwrite=False, name=objective1)
+    solver.force_update()
+    solver.set_optimization_direction(True)
+    solver.solve()
+
+    # Act & Assert
+    assert solver.get_named_objective(objective1) == 0.0
+    assert solver.get_named_objectives()[objective1] == 0.0
+    assert sum(list(solver.get_named_objectives().values())) == solver.get_objective_value()
+    assert solver.get_objective_value() == 0.0
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 def test_add_objectives_with_names__named_objectives_is_as_expected(solver: AbstractOptimizationSolver):
     # Arrange
     vars_ = solver.add_multiple_variables(
