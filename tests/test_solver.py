@@ -471,3 +471,23 @@ def test_mip_gap_limit_gap(solver: AbstractOptimizationSolver):
     gap = solver.get_gap()
 
     assert gap is not None and gap <= 0.7
+
+
+@pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
+def test_objective_terms_with_low_coefficient__expected_objective_analytics_to_be_equal(
+    solver: AbstractOptimizationSolver,
+):
+    # Arrange
+    vars_ = solver.add_multiple_variables(lb=1, names=np.array(["x_1", "x_2", "x_3"]), dtype=VariableDataType.INT)
+
+    objective_name = "Objective1"
+
+    solver.add_multiple_objective_terms(
+        coeffs=np.array([1.0, 1e-6, 1e-9]), vars_=vars_, overwrite=False, name=objective_name
+    )
+    solver.force_update()
+    solver.set_optimization_direction(False)
+    solver.solve()
+
+    # Act & Assert
+    assert sum(list(solver.get_named_objectives().values())) == solver.get_objective_value()

@@ -212,3 +212,16 @@ class LocalSolver(
 
     def get_dual_value(self, constraint: ls.LSExpression) -> float:
         raise NotImplementedError("LocalSolver does not support dual values")
+
+    def get_named_objective(self, name: str) -> float:
+        if name in self._named_objectives:
+            return float(
+                np.sum(
+                    [
+                        (item.objective_coefficient * self.get_variable_value(item.variable))
+                        for item in self._named_objectives[name]
+                        if item.objective_coefficient
+                    ]
+                )
+            )
+        return 0.0

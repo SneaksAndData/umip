@@ -246,3 +246,20 @@ class ScipSolver(
 
     def get_dual_value(self, constraint: pyscipopt.Constraint) -> float:
         raise ValueError("Cannot get dual variables from the SCIP solver")
+
+    def get_named_objective(self, name: str) -> float:
+        if name in self._named_objectives:
+            return float(
+                np.sum(
+                    [
+                        (
+                            0.0
+                            if item.objective_coefficient <= 1e-9
+                            else item.objective_coefficient * self.get_variable_value(item.variable)
+                        )
+                        for item in self._named_objectives[name]
+                        if item.objective_coefficient
+                    ]
+                )
+            )
+        return 0.0
