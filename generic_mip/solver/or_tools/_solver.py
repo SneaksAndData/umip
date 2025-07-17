@@ -249,7 +249,7 @@ class OrToolsSolver(
                     [
                         (
                             0.0
-                            if item.objective_coefficient <= 1e-9
+                            if abs(item.objective_coefficient) <= 1e-9
                             else item.objective_coefficient * self.get_variable_value(item.variable)
                         )
                         for item in self._named_objectives[name]
