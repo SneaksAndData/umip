@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
+from adapta.logs import LoggerInterface
+from unittest.mock import call, MagicMock
 
 from generic_mip import VariableDataType
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
@@ -271,3 +273,126 @@ def test_var_builder(logger, solver: AbstractOptimizationSolver, df: pd.DataFram
         assert sum(model_data["var_test_float_value"] >= -4.0) == 3
         assert sum(model_data["var_test_float_value"] <= 4.0) == 3
         assert np.isnan(model_data["var_test_float_indicator_value"].values[1])
+
+
+@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+def test__abstract_mip__get_analytics__functional(solver: AbstractOptimizationSolver, logger):
+    class ObjectiveBuilder1(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+            self.objective_name = "builder_1"
+            self.add_analytics_granularity("sku", self._sku_analytics)
+            self.add_analytics_granularity("sku_location", self._sku_location_analytics)
+            self.add_analytics_granularity("aggregated", self._aggregated_analytics)
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+        def _sku_analytics(self, output_data: dict[str, any]) -> any:
+            return output_data["sku"]
+
+        def _sku_location_analytics(self, output_data: dict[str, any]) -> any:
+            return "something_else"
+
+        def _aggregated_analytics(self, output_data: dict[str, any]) -> any:
+            return sum(output_data["sku"])
+
+    class ObjectiveBuilder2(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+            self.add_analytics_granularity("aggregated", self.aggregated_analytics)
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+        def aggregated_analytics(self, output_data: dict[str, any]) -> any:
+            return sum(output_data["location"])
+
+    model = AbstractMipModel(
+        solver=solver,
+        constraint_builders=[],
+        variable_builders=[],
+        objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
+        data_preparator=MockDataPreparator(logger),
+        logger=logger,
+    )
+    # we don't want to test optimization here, so we are simply overriding the _solved attribute
+    model._solved = True
+    # we need to set the _data attribute manually, as we are not calling the build method
+    model._data = {
+        "location": [10, 5, 20],
+        "sku": [1000, 500, 100],
+    }
+
+    assert model.get_analytics(granularity="sku") == {"builder_1": [1000, 500, 100]}
+    assert model.get_analytics(granularity="sku_location") == {"builder_1": "something_else"}
+    assert model.get_analytics(granularity="aggregated") == {"builder_1": 1600, "ObjectiveBuilder2": 35}
+    assert model.get_analytics(granularity="unknown") == {}
+
+
+@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+def test__abstract_mip__get_analytics__logs_warning(solver: AbstractOptimizationSolver):
+    class ObjectiveBuilder1(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+    class ObjectiveBuilder2(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+    logger = MagicMock()
+    model = AbstractMipModel(
+        solver=solver,
+        constraint_builders=[],
+        variable_builders=[],
+        objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
+        data_preparator=MockDataPreparator(logger),
+        logger=logger,
+    )
+    # we don't want to test optimization here, so we are simply overriding the _solved attribute
+    model._solved = True
+
+    model.get_analytics(granularity="aggregated")
+
+    expected_warning_call = call(
+        "No analytics found for granularity 'aggregated' in objective builders: ['ObjectiveBuilder1', 'ObjectiveBuilder2']"
+    )
+
+    assert model._logger.warning.call_args_list[0] == expected_warning_call
+
+
+@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+def test__abstract_mip__duplicate_objective_builder_names(solver: AbstractOptimizationSolver, logger):
+    class ObjectiveBuilder1(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+            self.objective_name = "same_as_other"
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+    class ObjectiveBuilder2(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+            self.objective_name = "same_as_other"
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+    model = AbstractMipModel(
+        solver=solver,
+        constraint_builders=[],
+        variable_builders=[],
+        objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
+        data_preparator=MockDataPreparator(logger),
+        logger=logger,
+    )
+
+    with pytest.raises(ValueError, match="Duplicate objective builder name found: same_as_other"):
+        model.build()

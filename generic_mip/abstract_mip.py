@@ -57,6 +57,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         self._built = False
         self._solved = False
         self._logger = logger
+        self._objective_builder_names = []
 
     def build(self, **input_data: T) -> None:
         start_time = time.time()
@@ -83,6 +84,9 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         with self._logger.redirect(log_level=LogLevel.INFO):
             for objective_builder in self._objective_builders:
                 objective_builder.build(solver=self._solver, data=self._data)
+                if objective_builder.objective_name in self._objective_builder_names:
+                    raise ValueError(f"Duplicate objective builder name found: {objective_builder.objective_name}")
+                self._objective_builder_names.append(objective_builder.objective_name)
 
         self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._logger.info(
@@ -153,4 +157,30 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         Get the gap of the model.
         :return: The gap of the model.
         """
+        if not self._solved:
+            raise ValueError("Model must be solved before calling .get_gap()")
         return self._solver.get_gap()
+
+    def get_analytics(self, granularity: str) -> dict[str, any]:
+        """
+        Get analytics for the specified granularity from the objective builders.
+
+        Returns a dictionary where each key is an objective builder name and the value is its analytics.
+        """
+        if not self._solved:
+            raise ValueError("Model must be solved before calling .get_analytics()")
+
+        analytics_results = {}
+
+        for objective_builder in self._objective_builders:
+            if granularity in objective_builder.get_supported_analytics_granularities():
+                objective_analytics = objective_builder.get_analytics(granularity=granularity, output_data=self._data)
+                analytics_results[objective_builder.objective_name] = objective_analytics
+
+        if not analytics_results:
+            self._logger.warning(
+                f"No analytics found for granularity '{granularity}' in objective builders: "
+                f"{[builder.objective_name for builder in self._objective_builders]}"
+            )
+
+        return analytics_results
