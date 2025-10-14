@@ -131,6 +131,16 @@ class TestBuildVarFunction(AbstractDecisionVariableBuilder):
             filter_column="indicator_test",
         )
 
+        data["df"] = self.build_column_variables(
+            solver=solver,
+            data=data["df"],
+            destination_column="var_test_float_all_removed_indicator",
+            variable_dtype=VariableDataType.FLOAT,
+            lower_bound=1.0,
+            upper_bound=4.0,
+            filter_column="all_removed_indicator_test",
+        )
+
         return data
 
     def unpack(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
@@ -174,6 +184,15 @@ class TestBuildVarFunction(AbstractDecisionVariableBuilder):
             default_unpack_value=np.NAN,
         )
 
+        data["df"] = self.unpack_column_variables(
+            solver=solver,
+            data=data["df"],
+            decision_variable_column="var_test_float_all_removed_indicator",
+            decision_variable_value_column="var_test_float_all_removed_indicator_value",
+            filter_column="all_removed_indicator_test",
+            default_unpack_value=np.NAN,
+        )
+
         return data
 
 
@@ -181,10 +200,14 @@ class TestBuildVarFunction(AbstractDecisionVariableBuilder):
 @pytest.mark.parametrize(
     "df",
     [
-        pd.DataFrame({"a": [1, 2, 3], "indicator_test": [True, False, True]}),
-        pl.DataFrame({"a": [1, 2, 3], "indicator_test": [True, False, True]}),
-        pd.DataFrame({"a": [], "indicator_test": []}),
-        pl.DataFrame({"a": [], "indicator_test": []}),
+        pd.DataFrame(
+            {"a": [1, 2, 3], "indicator_test": [True, False, True], "all_removed_indicator_test": [False, False, False]}
+        ),
+        pl.DataFrame(
+            {"a": [1, 2, 3], "indicator_test": [True, False, True], "all_removed_indicator_test": [False, False, False]}
+        ),
+        pd.DataFrame({"a": [], "indicator_test": [], "all_removed_indicator_test": []}),
+        pl.DataFrame({"a": [], "indicator_test": [], "all_removed_indicator_test": []}),
     ],
 )
 def test_var_builder(logger, solver: AbstractOptimizationSolver, df: pd.DataFrame | pl.DataFrame):

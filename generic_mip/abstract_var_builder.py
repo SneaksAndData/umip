@@ -333,12 +333,15 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
             }
         )
 
-        data = data.with_columns(
-            pl.when(pl.col("indicators"))
-            .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value))
-            .otherwise(default_unpack_value)
-            .alias(decision_variable_value_column)
-        )
+        if data.filter(pl.col("indicators")).is_empty():
+            data = data.with_columns(pl.lit(default_unpack_value).alias(decision_variable_value_column))
+        else:
+            data = data.with_columns(
+                pl.when(pl.col("indicators"))
+                .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value))
+                .otherwise(default_unpack_value)
+                .alias(decision_variable_value_column)
+            )
 
         data = data.drop([decision_variable_column, "indicators"])
 
