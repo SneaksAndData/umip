@@ -1,6 +1,6 @@
 """Abstract definition of an optimization model."""
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Any
 
 T = TypeVar("T")
 
@@ -17,7 +17,7 @@ class AbstractOptimizationModel(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def solve(self, time_limit: float | None = None, **kwargs: any) -> any:
+    def solve(self, time_limit: float | None = None, **kwargs: Any) -> Any:
         """
         Solves the model and returns the result of the optimization.
         :param time_limit: The time limit of the optimization in seconds.

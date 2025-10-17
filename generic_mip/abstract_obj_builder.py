@@ -1,6 +1,6 @@
 """Abstract definition of an objective builder."""
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Any
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
@@ -45,12 +45,12 @@ class AbstractObjectiveBuilder(ABC, Generic[T]):
         """Returns the list of supported granularity names for implementation of builder."""
         return list(self._analytics_granularity_functions.keys())
 
-    def get_analytics(self, granularity: str, output_data: any) -> any:
+    def get_analytics(self, granularity: str, analytics_data: Any) -> Any:
         """
         Retrieve analytics for the specified granularity.
 
         :param granularity: The granularity level to compute analytics for
-        :param output_data: The output data needed for calculation (e.g., model output data)
+        :param analytics_data: The output data needed for calculation (e.g., model output data)
         :return: The computed analytics
         """
         if granularity not in self._analytics_granularity_functions:
@@ -59,4 +59,4 @@ class AbstractObjectiveBuilder(ABC, Generic[T]):
                 f"Supported: {self.get_supported_analytics_granularities()}"
             )
 
-        return self._analytics_granularity_functions[granularity](output_data)
+        return self._analytics_granularity_functions[granularity](analytics_data)

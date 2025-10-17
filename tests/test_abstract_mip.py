@@ -1,6 +1,7 @@
 """
 Tests of the AbstractMipModel class. Tests do not cover the solver classes and simple wrappers.
 """
+from typing import Any
 from unittest import mock
 
 import numpy as np
@@ -311,14 +312,14 @@ def test__abstract_mip__get_analytics__functional(solver: AbstractOptimizationSo
         def build(self, solver: AbstractOptimizationSolver, data) -> None:
             pass
 
-        def _sku_analytics(self, output_data: dict[str, any]) -> any:
-            return output_data["sku"]
+        def _sku_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return analytics_data["sku"]
 
-        def _sku_location_analytics(self, output_data: dict[str, any]) -> any:
+        def _sku_location_analytics(self, analytics_data: dict[str, Any]) -> Any:
             return "something_else"
 
-        def _aggregated_analytics(self, output_data: dict[str, any]) -> any:
-            return sum(output_data["sku"])
+        def _aggregated_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return sum(analytics_data["sku"])
 
     class ObjectiveBuilder2(AbstractObjectiveBuilder):
         def __init__(self, logger: LoggerInterface):
@@ -328,8 +329,8 @@ def test__abstract_mip__get_analytics__functional(solver: AbstractOptimizationSo
         def build(self, solver: AbstractOptimizationSolver, data) -> None:
             pass
 
-        def aggregated_analytics(self, output_data: dict[str, any]) -> any:
-            return sum(output_data["location"])
+        def aggregated_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return sum(analytics_data["location"])
 
     model = AbstractMipModel(
         solver=solver,
@@ -351,6 +352,64 @@ def test__abstract_mip__get_analytics__functional(solver: AbstractOptimizationSo
     assert model.get_analytics(granularity="sku_location") == {"builder_1": "something_else"}
     assert model.get_analytics(granularity="aggregated") == {"builder_1": 1600, "ObjectiveBuilder2": 35}
     assert model.get_analytics(granularity="unknown") == {}
+
+
+@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
+def test__abstract_mip__get_analytics__analytics_data_provided(solver: AbstractOptimizationSolver, logger):
+    class ObjectiveBuilder1(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+            self.objective_name = "builder_1"
+            self.add_analytics_granularity("sku", self._sku_analytics)
+            self.add_analytics_granularity("sku_location", self._sku_location_analytics)
+            self.add_analytics_granularity("aggregated", self._aggregated_analytics)
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+        def _sku_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return analytics_data["sku"]
+
+        def _sku_location_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return "something_else"
+
+        def _aggregated_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return sum(analytics_data["sku"])
+
+    class ObjectiveBuilder2(AbstractObjectiveBuilder):
+        def __init__(self, logger: LoggerInterface):
+            super().__init__(logger)
+            self.add_analytics_granularity("aggregated", self.aggregated_analytics)
+
+        def build(self, solver: AbstractOptimizationSolver, data) -> None:
+            pass
+
+        def aggregated_analytics(self, analytics_data: dict[str, Any]) -> Any:
+            return sum(analytics_data["location"])
+
+    model = AbstractMipModel(
+        solver=solver,
+        constraint_builders=[],
+        variable_builders=[],
+        objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
+        data_preparator=MockDataPreparator(logger),
+        logger=logger,
+    )
+    # we need to set the _data attribute manually, as we are not calling the build method
+    analytics_data = {
+        "location": [10, 5, 20],
+        "sku": [1000, 500, 100],
+    }
+
+    assert model.get_analytics(granularity="sku", analytics_data=analytics_data) == {"builder_1": [1000, 500, 100]}
+    assert model.get_analytics(granularity="sku_location", analytics_data=analytics_data) == {
+        "builder_1": "something_else"
+    }
+    assert model.get_analytics(granularity="aggregated", analytics_data=analytics_data) == {
+        "builder_1": 1600,
+        "ObjectiveBuilder2": 35,
+    }
+    assert model.get_analytics(granularity="unknown", analytics_data=analytics_data) == {}
 
 
 @pytest.mark.parametrize("solver", ["OrTools"], indirect=True)

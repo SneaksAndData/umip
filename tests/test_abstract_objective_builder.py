@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock
 
 from adapta.logs import LoggerInterface
@@ -18,15 +19,15 @@ def test__abstract_objective_builder__add_analytics(logger):
         def build(self, solver: AbstractOptimizationSolver, data) -> None:
             pass
 
-        def _location_analytics(self, output_data) -> any:
+        def _location_analytics(self, analytics_data) -> Any:
             return [1, 2, 3]
 
-        def _sku_location_analytics(self, output_data) -> any:
+        def _sku_location_analytics(self, analytics_data) -> Any:
             return "something_else"
 
     # setup
     builder = ObjectiveBuilder1(logger=logger)
 
     # act & assert
-    assert builder.get_analytics("location", output_data="whatever") == [1, 2, 3]
-    assert builder.get_analytics("sku_location", output_data="whatever") == "something_else"
+    assert builder.get_analytics("location", analytics_data="whatever") == [1, 2, 3]
+    assert builder.get_analytics("sku_location", analytics_data="whatever") == "something_else"

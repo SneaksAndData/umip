@@ -1,3 +1,5 @@
+from typing import Any
+
 import pandas as pd
 import numpy as np
 import sys
@@ -70,7 +72,7 @@ class MyVariableBuilder(AbstractDecisionVariableBuilder[pd.DataFrame]):
 
 
 class MyObjectiveBuilder(AbstractObjectiveBuilder[pd.DataFrame]):
-    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame], **kwargs: any) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: dict[str, pd.DataFrame], **kwargs: Any) -> None:
         my_df = data["my_df"]
 
         solver.add_objective_term(
@@ -127,7 +129,7 @@ class MyMipModel(AbstractMipModel[pd.DataFrame]):
         super().build(**input_data)
         self._solver.set_optimization_direction(True)
 
-    def solve(self, **kwargs: any) -> pd.DataFrame | tuple[pd.DataFrame, ...]:
+    def solve(self, **kwargs: Any) -> pd.DataFrame | tuple[pd.DataFrame, ...]:
         super().solve(**kwargs)
         return self._data["my_df"]
 

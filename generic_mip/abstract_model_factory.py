@@ -1,5 +1,7 @@
 """Abstract definition of an optimization model factory."""
 from abc import ABC, abstractmethod
+from typing import Any
+
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_mip import AbstractOptimizationModel
 
@@ -17,7 +19,7 @@ class AbstractOptimizationModelFactory(ABC):
     @abstractmethod
     def construct(
         self,
-        **kwargs: any,
+        **kwargs: Any,
     ) -> AbstractOptimizationModel:
         """
         Given the arguments, construct an optimization model.

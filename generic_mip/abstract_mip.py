@@ -1,7 +1,7 @@
 """Abstract definition of a MIP model."""
 import time
 import sys
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Any
 from logging import StreamHandler
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.models import LogLevel
@@ -111,7 +111,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         self._built = True
 
-    def solve(self, time_limit: float | None = None, redirect_solver_log: bool = True, **kwargs: any) -> any:
+    def solve(self, time_limit: float | None = None, redirect_solver_log: bool = True, **kwargs: Any) -> Any:
         if not self._built:
             raise ValueError("Model must be built before calling .solve()")
 
@@ -161,20 +161,25 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             raise ValueError("Model must be solved before calling .get_gap()")
         return self._solver.get_gap()
 
-    def get_analytics(self, granularity: str) -> dict[str, any]:
+    def get_analytics(self, granularity: str, analytics_data: Any | None = None) -> dict[str, Any]:
         """
-        Get analytics for the specified granularity from the objective builders.
+        Get analytics for the specified granularity from the objective builders. if analytics_data is not provided,
+        the model must have been solved already and must contain the necessary data in self._data.
 
         Returns a dictionary where each key is an objective builder name and the value is its analytics.
         """
-        if not self._solved:
-            raise ValueError("Model must be solved before calling .get_analytics()")
+        if not self._solved and not analytics_data:
+            raise ValueError("Model must be solved or analytics data must be provided before calling .get_analytics()")
 
         analytics_results = {}
 
+        analytics_data = analytics_data if analytics_data is not None else self._data
+
         for objective_builder in self._objective_builders:
             if granularity in objective_builder.get_supported_analytics_granularities():
-                objective_analytics = objective_builder.get_analytics(granularity=granularity, output_data=self._data)
+                objective_analytics = objective_builder.get_analytics(
+                    granularity=granularity, analytics_data=analytics_data
+                )
                 analytics_results[objective_builder.objective_name] = objective_analytics
 
         if not analytics_results:
@@ -184,3 +189,17 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             )
 
         return analytics_results
+
+    def get_objective_analytics_granularities(self) -> dict[str, list[str]]:
+        """
+        Get supported analytics granularities for each objective builder.
+
+        Returns a dictionary where each key is an objective builder name and the value is a list of its supported
+        granularities.
+        """
+        granularities = {}
+
+        for objective_builder in self._objective_builders:
+            granularities[objective_builder.objective_name] = objective_builder.get_supported_analytics_granularities()
+
+        return granularities
