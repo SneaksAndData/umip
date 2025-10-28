@@ -19,7 +19,7 @@ max-line-length=121
 
 [DESIGN]
 max-args=10
-max-attributes=10
+max-attributes=15
 max-positional-arguments=10
 
 [TYPECHECK]

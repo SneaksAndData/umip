@@ -17,9 +17,26 @@ class AbstractOptimizationModel(ABC, Generic[T]):
         """
 
     @abstractmethod
+    async def build_async(self, **input_data: T) -> None:
+        """
+        Async version of self.build.
+        :param input_data: Input data to the variables, constraints and objectives.
+        :return:
+        """
+
+    @abstractmethod
     def solve(self, time_limit: float | None = None, **kwargs: Any) -> Any:
         """
         Solves the model and returns the result of the optimization.
+        :param time_limit: The time limit of the optimization in seconds.
+        :param kwargs: Optional arguments to the optimization.
+        :return: The result.
+        """
+
+    @abstractmethod
+    async def solve_async(self, time_limit: float | None = None, **kwargs: Any) -> Any:
+        """
+        Async version of self.solve.
         :param time_limit: The time limit of the optimization in seconds.
         :param kwargs: Optional arguments to the optimization.
         :return: The result.

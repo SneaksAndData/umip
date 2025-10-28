@@ -338,7 +338,7 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         else:
             data = data.with_columns(
                 pl.when(pl.col("indicators"))
-                .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value))
+                .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value, return_dtype=pl.Float64))
                 .otherwise(default_unpack_value)
                 .alias(decision_variable_value_column)
             )
