@@ -1,7 +1,7 @@
 import sys
 import pytest
-from logging import StreamHandler
 from adapta.logs import SemanticLogger, LoggerInterface
+from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
 from generic_mip.solver.cplex import CplexSolver
@@ -17,7 +17,7 @@ def logger() -> LoggerInterface:
     logger = SemanticLogger().add_log_source(
         log_source_name="auto-replenishment-crystal-orchestrator",
         min_log_level=LogLevel.INFO,
-        log_handlers=[StreamHandler(sys.stdout)],
+        log_handlers=[SafeStreamHandler(sys.stdout)],
         is_default=True,
     )
     return logger

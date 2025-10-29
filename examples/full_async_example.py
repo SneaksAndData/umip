@@ -2,8 +2,8 @@ import asyncio
 
 import pandas as pd
 import sys
-from logging import StreamHandler
 from adapta.logs import create_async_logger
+from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
 from examples.example_model import (
@@ -38,7 +38,7 @@ For production grade models, use the generic_mip framework.
 # asyncio example
 async def run_async():
     with create_async_logger(
-        MyMipModel, log_handlers=[StreamHandler(sys.stdout)], min_log_level=LogLevel.INFO
+        MyMipModel, log_handlers=[SafeStreamHandler(sys.stdout)], min_log_level=LogLevel.INFO
     ) as async_logger:
         my_async_model = MyMipModel(
             solver=SolverFactory(logger=async_logger).construct(solver_type=SolverType.ORTOOLS_SCIP),

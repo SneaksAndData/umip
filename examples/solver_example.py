@@ -1,7 +1,7 @@
 import numpy as np
 import sys
-from logging import StreamHandler
 from adapta.logs import SemanticLogger
+from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from generic_mip import VariableDataType
 from generic_mip.solver.cplex import CplexSolver
@@ -30,7 +30,10 @@ For production grade models, use the generic_mip framework (full_example.py).
 SOLVER = "cplex"
 
 logger = SemanticLogger().add_log_source(
-    log_source_name="MyModel", min_log_level=LogLevel.DEBUG, log_handlers=[StreamHandler(sys.stdout)], is_default=True
+    log_source_name="MyModel",
+    min_log_level=LogLevel.DEBUG,
+    log_handlers=[SafeStreamHandler(sys.stdout)],
+    is_default=True,
 )
 
 if SOLVER == "ortools":

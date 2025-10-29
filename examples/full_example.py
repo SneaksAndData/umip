@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
-from logging import StreamHandler
 from adapta.logs import SemanticLogger
+from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
 from examples.example_model import (
@@ -32,7 +32,10 @@ You can access the solver API directly (as in solver_example.py) for local exper
 For production grade models, use the generic_mip framework.
 """
 logger = SemanticLogger().add_log_source(
-    log_source_name="MyModel", min_log_level=LogLevel.DEBUG, log_handlers=[StreamHandler(sys.stdout)], is_default=True
+    log_source_name="MyModel",
+    min_log_level=LogLevel.DEBUG,
+    log_handlers=[SafeStreamHandler(sys.stdout)],
+    is_default=True,
 )
 
 

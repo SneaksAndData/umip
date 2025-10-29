@@ -2,8 +2,8 @@
 import time
 import sys
 from typing import TypeVar, Generic, Any
-from logging import StreamHandler
 from adapta.logs import LoggerInterface, SemanticLogger
+from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from adapta.metrics import MetricsProvider
 from adapta.metrics.providers.void_provider import VoidMetricsProvider
@@ -38,7 +38,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         logger: LoggerInterface = SemanticLogger().add_log_source(
             log_source_name="AbstractMipModel",
             min_log_level=LogLevel.INFO,
-            log_handlers=[StreamHandler(sys.stdout)],
+            log_handlers=[SafeStreamHandler(sys.stdout)],
             is_default=True,
         ),
         metrics_provider: MetricsProvider = VoidMetricsProvider(),
@@ -133,7 +133,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
     async def build_async(self, **input_data: T) -> None:
         @run_time_metrics_async(
             metric_name="mip_data_preparation",
-            on_finish_message_template="Finished preparing data for {model} in {elapsed:.2f}s seconds",
+            on_finish_message_template="Finished preparing data for {model} in {elapsed:.4f}s seconds",
             template_args={
                 "model": self.__class__.__name__,
             },
@@ -143,28 +143,24 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         @run_time_metrics_async(
             metric_name="mip_build_variables",
-            on_finish_message_template="Finished building variables for {model} in {elapsed:.2f}s seconds",
+            on_finish_message_template="Finished building variables for {model} in {elapsed:.4f}s seconds",
             template_args={
                 "model": self.__class__.__name__,
             },
         )
         async def _build_variables_async(**_):
-            async with self._logger.redirect_async(log_level=LogLevel.INFO):
-                self._build_variables()
-
+            self._build_variables()
             self._log_variables()
 
         @run_time_metrics_async(
             metric_name="mip_build_constraints",
-            on_finish_message_template="Finished building constraints for {model} in {elapsed:.2f}s seconds",
+            on_finish_message_template="Finished building constraints for {model} in {elapsed:.4f}s seconds",
             template_args={
-                "model": self._solver.__class__.__name__,
+                "model": self.__class__.__name__,
             },
         )
         async def _build_constraints_async(**_):
-            async with self._logger.redirect_async(log_level=LogLevel.INFO):
-                self._build_constraints()
-
+            self._build_constraints()
             self._logger.info(
                 template="Number of constraints: {number_of_constraints}",
                 number_of_constraints=self._solver.get_constraint_count(),
@@ -172,22 +168,22 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         @run_time_metrics_async(
             metric_name="mip_build_objectives",
-            on_finish_message_template="Finished building objectives for {model} in {elapsed:.2f}s seconds",
+            on_finish_message_template="Finished building objectives for {model} in {elapsed:.4f}s seconds",
             template_args={
-                "model": self._solver.__class__.__name__,
+                "model": self.__class__.__name__,
             },
         )
         async def _build_objectives_async(**_):
-            async with self._logger.redirect_async(log_level=LogLevel.INFO):
-                self._build_objectives()
+            self._build_objectives()
 
-        for _step in [
-            _prepare_async(logger=self._logger, metrics_provider=self._metrics_provider),
-            _build_variables_async(logger=self._logger, metrics_provider=self._metrics_provider),
-            _build_constraints_async(logger=self._logger, metrics_provider=self._metrics_provider),
-            _build_objectives_async(logger=self._logger, metrics_provider=self._metrics_provider),
-        ]:
-            await _step
+        async with self._logger.redirect_async(log_level=LogLevel.INFO):
+            for _step in [
+                _prepare_async(logger=self._logger, metrics_provider=self._metrics_provider),
+                _build_variables_async(logger=self._logger, metrics_provider=self._metrics_provider),
+                _build_constraints_async(logger=self._logger, metrics_provider=self._metrics_provider),
+                _build_objectives_async(logger=self._logger, metrics_provider=self._metrics_provider),
+            ]:
+                await _step
 
         self._built = True
 
@@ -223,7 +219,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
     ) -> any:
         @run_time_metrics_async(
             metric_name="mip_solve",
-            on_finish_message_template="Finished solving {model} in {elapsed:.2f}s seconds",
+            on_finish_message_template="Finished solving {model} in {elapsed:.4f}s seconds",
             template_args={
                 "model": self.__class__.__name__,
             },
