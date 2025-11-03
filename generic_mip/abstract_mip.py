@@ -321,3 +321,10 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             granularities[objective_builder.objective_name] = objective_builder.get_supported_analytics_granularities()
 
         return granularities
+
+    def get_objective_builder_names(self) -> list[str]:
+        """
+        Get the names of all objective builders in the model.
+        :return: List of objective builder names.
+        """
+        return self._objective_builder_names
