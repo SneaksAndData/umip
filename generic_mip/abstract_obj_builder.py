@@ -1,4 +1,6 @@
 """Abstract definition of an objective builder."""
+import base64
+import os
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Any
 from adapta.logs import LoggerInterface
@@ -18,6 +20,7 @@ class AbstractObjectiveBuilder(ABC, Generic[T]):
         self.objective_name = self.__class__.__name__
         self._logger = logger
         self._analytics_granularity_functions: dict[str, callable] = {}
+        self._cached__analytics_granularity_results: dict[str, Any] = {}
 
     @abstractmethod
     def build(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> None:
@@ -59,4 +62,14 @@ class AbstractObjectiveBuilder(ABC, Generic[T]):
                 f"Supported: {self.get_supported_analytics_granularities()}"
             )
 
-        return self._analytics_granularity_functions[granularity](analytics_data)
+        cache_key = (
+            f"{base64.b64encode(hex(id(analytics_data)).encode('utf-8')).decode('utf-8')}_{os.getpid()}"
+            f"_{self.__class__.__name__}_{granularity}"
+        )
+
+        if not cache_key in self._cached__analytics_granularity_results:
+            self._cached__analytics_granularity_results[cache_key] = self._analytics_granularity_functions[granularity](
+                analytics_data
+            )
+
+        return self._cached__analytics_granularity_results[cache_key]
