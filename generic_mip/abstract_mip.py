@@ -328,3 +328,18 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         :return: List of objective builder names.
         """
         return self._objective_builder_names
+
+    def is_solved(self) -> bool:
+        """
+        Check if the model has been solved.
+        :return: True if the model has been solved, False otherwise.
+        """
+        return self._solved
+
+    def get_solved_data(self) -> dict[str, U]:
+        """
+        Get the data after solving the model.
+        """
+        if not self._solved:
+            raise ValueError("Model must be solved before calling .get_solved_data()")
+        return self._data
