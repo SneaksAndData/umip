@@ -265,24 +265,26 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         """
 
         if data.empty:
-            # if dataframe is empty, we should not create any variables
-            return data.assign(**{decision_variable_value_column: None}).drop(columns=[decision_variable_column])
+            # if dataframe is empty, we should not unpack any variables
+            data = data.assign(**{decision_variable_value_column: np.array(None, dtype="float")}).drop(
+                columns=[decision_variable_column]
+            )
+        else:
+            data = data.assign(
+                **{
+                    "indicators": indicators,
+                }
+            )
 
-        data = data.assign(
-            **{
-                "indicators": indicators,
-            }
-        )
+            data["var_information"] = data[[decision_variable_column, "indicators"]].values.tolist()
 
-        data["var_information"] = data[[decision_variable_column, "indicators"]].values.tolist()
-
-        data = data.assign(
-            **{
-                decision_variable_value_column: lambda x: x["var_information"].apply(
-                    lambda y: solver.get_variable_value(y[0]) if y[1] else default_unpack_value
-                )
-            }
-        ).drop(columns=[decision_variable_column, "indicators", "var_information"])
+            data = data.assign(
+                **{
+                    decision_variable_value_column: lambda x: x["var_information"].apply(
+                        lambda y: solver.get_variable_value(y[0]) if y[1] else default_unpack_value
+                    )
+                }
+            ).drop(columns=[decision_variable_column, "indicators", "var_information"])
 
         if return_dtype == VariableDataType.FLOAT:
             return data
@@ -324,26 +326,32 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         """
 
         if data.is_empty():
-            # if dataframe is empty, we should not create any variables
-            return data.with_columns(pl.lit(None).alias(decision_variable_value_column)).drop(decision_variable_column)
-
-        data = data.with_columns(
-            **{
-                "indicators": indicators,
-            }
-        )
-
-        if data.filter(pl.col("indicators")).is_empty():
-            data = data.with_columns(pl.lit(default_unpack_value).alias(decision_variable_value_column))
+            # if dataframe is empty, we should not unpack any variables
+            data = data.with_columns(pl.lit(None).cast(pl.Float64).alias(decision_variable_value_column)).drop(
+                decision_variable_column
+            )
         else:
             data = data.with_columns(
-                pl.when(pl.col("indicators"))
-                .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value, return_dtype=pl.Float64))
-                .otherwise(default_unpack_value)
-                .alias(decision_variable_value_column)
+                **{
+                    "indicators": indicators,
+                }
             )
 
-        data = data.drop([decision_variable_column, "indicators"])
+            if data.filter(pl.col("indicators")).is_empty():
+                data = data.with_columns(pl.lit(default_unpack_value).alias(decision_variable_value_column))
+            else:
+                data = data.with_columns(
+                    pl.when(pl.col("indicators"))
+                    .then(
+                        pl.col(decision_variable_column).map_elements(
+                            solver.get_variable_value, return_dtype=pl.Float64
+                        )
+                    )
+                    .otherwise(default_unpack_value)
+                    .alias(decision_variable_value_column)
+                )
+
+            data = data.drop([decision_variable_column, "indicators"])
 
         if return_dtype == VariableDataType.FLOAT:
             return data

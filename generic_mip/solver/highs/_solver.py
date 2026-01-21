@@ -231,6 +231,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
                 np.sum(
                     [
                         (item.objective_coefficient * self._solution[item.variable])
+                        if item.variable + 1 <= len(self._solution)
+                        else 0.0
                         for item in self._named_objectives[name]
                     ]
                 )
