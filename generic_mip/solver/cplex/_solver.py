@@ -13,7 +13,7 @@ import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.cplex.enum import CplexStatus
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 
 
 class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint: disable=too-many-public-methods
@@ -34,38 +34,42 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self.status = None
         self.solution = None
 
-    def set_variable_hint(self, var: Var, hint: float) -> None:
+    def set_variable_hint(self, variable: Var, hint: float) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[Var], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(self, variables: npt.NDArray[Var], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[Var], overwrite: bool = True, name: str = None
+        self, coefficients: npt.NDArray[float], variables: npt.NDArray[Var], overwrite: bool = True, name: str = None
     ) -> None:
         if name is not None:
-            self.add_named_objective(coeffs, vars_, overwrite, name)
+            self.add_named_objective(coefficients, variables, overwrite, name)
 
-        for coeff, var in zip(coeffs, vars_):
+        for coeff, var in zip(coefficients, variables):
             if overwrite:
                 self._objective.set_coefficient(var, coeff)
             else:
                 self._objective.add_term(var, coeff)
 
     def add_multiple_variables(
-        self, names: npt.NDArray[str], dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self,
+        names: npt.NDArray[str],
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[Var]:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
         count = len(names)
 
-        if dtype == VariableDataType.INT:
-            vars_ = self._solver.integer_var_list(keys=count, lb=lb, ub=ub)
+        if variable_domain == VariableDomain.INTEGER:
+            vars_ = self._solver.integer_var_list(keys=count, lb=lower_bound, ub=upper_bound)
             self._integer_problem = True
-        elif dtype == VariableDataType.FLOAT:
-            vars_ = self._solver.continuous_var_list(keys=count, lb=lb, ub=ub)
-        elif dtype == VariableDataType.BOOL:
-            vars_ = self._solver.binary_var_list(keys=count, lb=lb, ub=ub)
+        elif variable_domain == VariableDomain.CONTINUOUS:
+            vars_ = self._solver.continuous_var_list(keys=count, lb=lower_bound, ub=upper_bound)
+        elif variable_domain == VariableDomain.BINARY:
+            vars_ = self._solver.binary_var_list(keys=count, lb=lower_bound, ub=upper_bound)
             self._integer_problem = True
         else:
             raise ValueError("Unsupported variable data type")
@@ -73,62 +77,68 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
 
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[Var]] | npt.NDArray[Var],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[Var]] | npt.NDArray[Var],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: str | None = None,
     ) -> None:
-        if coeffs.size == 0:
+        if coefficients.size == 0:
             return
 
-        if lb is not None:
-            for i, coeff in enumerate(coeffs):
-                self._solver.add_constraint(self._solver.dot(vars_[i], coeff) >= lb[i])
-        if ub is not None:
-            for i, coeff in enumerate(coeffs):
-                self._solver.add_constraint(self._solver.dot(vars_[i], coeff) <= ub[i])
+        if lower_bounds is not None:
+            for i, coeff in enumerate(coefficients):
+                self._solver.add_constraint(self._solver.dot(variables[i], coeff) >= lower_bounds[i])
+        if upper_bounds is not None:
+            for i, coeff in enumerate(coefficients):
+                self._solver.add_constraint(self._solver.dot(variables[i], coeff) <= upper_bounds[i])
 
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[Var] | Var,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[Var] | Var,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> int | None:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
         constr_expr = self._solver.linear_expr()
-        if isinstance(vars_, Iterable):
-            for coeff, var in zip(coeffs, vars_):
+        if isinstance(variables, Iterable):
+            for coeff, var in zip(coefficients, variables):
                 constr_expr += coeff * var
         else:
-            constr_expr = coeffs * vars_
+            constr_expr = coefficients * variables
 
         constraint_lb = None
         constraint_ub = None
-        if lb == ub:
-            return self._solver.add_constraint(lb == constr_expr, name)
+        if lower_bound == upper_bound:
+            return self._solver.add_constraint(lower_bound == constr_expr, name)
 
-        if lb != -self.infinity():
-            constraint_lb = self._solver.add_constraint(lb <= constr_expr, name)
-        if ub != self.infinity():
-            constraint_ub = self._solver.add_constraint(constr_expr <= ub, name)
+        if lower_bound != -self.infinity():
+            constraint_lb = self._solver.add_constraint(lower_bound <= constr_expr, name)
+        if upper_bound != self.infinity():
+            constraint_ub = self._solver.add_constraint(constr_expr <= upper_bound, name)
         if constraint_lb is not None:
             return constraint_lb
         return constraint_ub
 
-    def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> int:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
-        if dtype == VariableDataType.INT:
-            var = self._solver.integer_var(lb, ub, name)
+    def add_variable(
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+    ) -> int:
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        if variable_domain == VariableDomain.INTEGER:
+            var = self._solver.integer_var(lower_bound, upper_bound, name)
             self._integer_problem = True
-        elif dtype == VariableDataType.FLOAT:
-            var = self._solver.continuous_var(lb, ub, name)
-        elif dtype == VariableDataType.BOOL:
+        elif variable_domain == VariableDomain.CONTINUOUS:
+            var = self._solver.continuous_var(lower_bound, upper_bound, name)
+        elif variable_domain == VariableDomain.BINARY:
             var = self._solver.binary_var(name)
             self._integer_problem = True
         else:
@@ -138,14 +148,14 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
     def get_variable_value(self, var: Var) -> float:
         return self.solution.get_value(var)
 
-    def add_objective_term(self, coeff: float, var: Var, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(self, coefficient: float, variable: Var, overwrite: bool = True, name: str = None) -> None:
         if name is not None:
-            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
         if overwrite:
-            self._objective.set_coefficient(var, coeff)
+            self._objective.set_coefficient(variable, coefficient)
         else:
-            self._objective.add_term(var, coeff)
+            self._objective.add_term(variable, coefficient)
 
     def set_optimization_direction(self, maximization: bool) -> None:
         if maximization:
@@ -216,15 +226,15 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
     def get_variable_count(self):
         return self._solver.number_of_variables
 
-    def get_variable_count_of_type(self, var_type: VariableDataType):
-        if var_type == VariableDataType.FLOAT:
+    def get_variable_count_of_type(self, variable_domain: VariableDomain):
+        if variable_domain == VariableDomain.CONTINUOUS:
             return self._solver.number_of_continuous_variables
-        if var_type == VariableDataType.INT:
+        if variable_domain == VariableDomain.INTEGER:
             return self._solver.number_of_integer_variables
-        if var_type == VariableDataType.BOOL:
+        if variable_domain == VariableDomain.BINARY:
             return self._solver.number_of_binary_variables
 
-        raise ValueError(f"Unsupported variable data type: {var_type}")
+        raise ValueError(f"Unsupported variable data type: {variable_domain}")
 
     def get_objective_terms_count(self):
         return self._objective.number_of_terms()

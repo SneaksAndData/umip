@@ -11,6 +11,7 @@ from examples.example_model import (
     MyVariableBuilder,
     MyObjectiveBuilder,
     MyDataPreparator,
+    ExampleInputData,
 )
 from generic_mip.enums import SolverType
 from generic_mip.solver_factory import SolverFactory
@@ -31,6 +32,7 @@ This model is equivalent to the example in solver_example.py.
 You can access the solver API directly (as in solver_example.py) for local experiments, prototyping, debugging and project initialization.
 For production grade models, use the generic_mip framework.
 """
+
 logger = SemanticLogger().add_log_source(
     log_source_name="MyModel",
     min_log_level=LogLevel.DEBUG,
@@ -50,14 +52,18 @@ my_model = MyMipModel(
 )
 
 my_model.build(
-    my_df=pd.DataFrame(
-        data={
-            "row_number": [1, 2],
-        }
+    input_data=ExampleInputData(
+        my_data=pd.DataFrame(
+            {
+                "row_number": [1, 2],
+            }
+        )
     )
 )
 
-result = my_model.solve()
+my_model.solve()
 
-print(result.iloc[0]["value"])
-print(result.iloc[1]["value"])
+result = my_model.get_output_data()
+
+print(result.my_data.iloc[0]["value"])
+print(result.my_data.iloc[1]["value"])

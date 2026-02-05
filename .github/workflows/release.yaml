@@ -17,5 +17,5 @@ jobs:
           fetch-depth: 0
       - uses: SneaksAndData/github-actions/semver_release@v0.1.9
         with:
-          major_v: 0
-          minor_v: 10
+          major_v: 1
+          minor_v: 0

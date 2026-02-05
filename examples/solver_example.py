@@ -3,7 +3,7 @@ import sys
 from adapta.logs import SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
-from generic_mip import VariableDataType
+from generic_mip import VariableDomain
 from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
 from generic_mip.solver.gurobi import GurobiSolver
@@ -27,7 +27,7 @@ You can access the solver API directly for local experiments, prototyping, debug
 For production grade models, use the generic_mip framework (full_example.py).
 """
 
-SOLVER = "cplex"
+SOLVER = "ortools"
 
 logger = SemanticLogger().add_log_source(
     log_source_name="MyModel",
@@ -47,14 +47,22 @@ elif SOLVER == "cplex":
 else:
     raise ValueError(f"Invalid solver: {SOLVER}")
 
-x = solver.add_variable(lb=0, ub=100, name="x", dtype=VariableDataType.INT)
-y = solver.add_variable(lb=0, ub=100, name="y", dtype=VariableDataType.INT)
+x = solver.add_variable(lower_bound=0, upper_bound=100, name="x", variable_domain=VariableDomain.INTEGER)
+y = solver.add_variable(lower_bound=0, upper_bound=100, name="y", variable_domain=VariableDomain.INTEGER)
 solver.add_multiple_objective_terms(
-    coeffs=np.array([1.0, 4.0]),
-    vars_=np.array([x, y]),
+    coefficients=np.array([1.0, 4.0]),
+    variables=np.array([x, y]),
 )
-solver.add_constraint(lb=None, ub=100, coeffs=np.array([1.0, 1.0]), vars_=np.array([x, y]), name="my_constraint")
-solver.add_constraint(lb=None, ub=20, coeffs=np.array([1.0]), vars_=np.array([y]), name="my_constraint2")
+solver.add_constraint(
+    lower_bound=None,
+    upper_bound=100,
+    coefficients=np.array([1.0, 1.0]),
+    variables=np.array([x, y]),
+    name="my_constraint",
+)
+solver.add_constraint(
+    lower_bound=None, upper_bound=20, coefficients=np.array([1.0]), variables=np.array([y]), name="my_constraint2"
+)
 solver.set_optimization_direction(True)
 solver.set_verbose(True)
 solver.solve()

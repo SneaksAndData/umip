@@ -1,19 +1,39 @@
 """Abstract definition of a variable builder."""
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
 from adapta.logs import LoggerInterface
 import pandas as pd
 import polars as pl
 import numpy as np
-from generic_mip.enums.variable_data_type import VariableDataType
+
+from generic_mip.enums import (
+    VariableDomain,
+    BoundType,
+    DataFrameArgumentType,
+    BoundArgumentType,
+    FilterColumnArgumentType,
+    IndexColumnsArgumentType,
+)
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-
-T = TypeVar("T")
-VT = TypeVar("VT")  # Variable type
+from generic_mip.abstract_dataclasses import AbstractInternalData
 
 
-class AbstractDecisionVariableBuilder(ABC, Generic[T]):
+class AbstractDecisionVariableBuilder(ABC):
     """A variable builder has the responsibility of building one or more decision variables."""
+
+    lower_bound_column_name = "lb"
+    upper_bound_column_name = "ub"
+    variable_name_column_name = "var_name"
+    indicator_column_name = "indicators"
+    variable_information_column_name = "var_information"
+
+    invalid_column_names_build = [
+        lower_bound_column_name,
+        upper_bound_column_name,
+        variable_name_column_name,
+        indicator_column_name,
+        variable_information_column_name,
+    ]
+    invalid_column_names_unpack = [indicator_column_name, variable_information_column_name]
 
     def __init__(self, logger: LoggerInterface):
         """
@@ -23,7 +43,7 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         self._logger = logger
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> dict[str, T]:
+    def build(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> AbstractInternalData:
         """
         Builds the decision variables on the given model and the given data.
 
@@ -33,7 +53,7 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def unpack(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> dict[str, T]:
+    def unpack(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> AbstractInternalData:
         """
         Unpacks the decision variables after optimization and inserts variable values in the dataframes.
 
@@ -42,16 +62,102 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :return: The dataframes decorated with the values of the decision variables.
         """
 
+    @staticmethod
+    def _get_dataframe_argument_type(data: pd.DataFrame | pl.DataFrame) -> DataFrameArgumentType:
+        """
+        Determines the type of dataframe provided as input.
+        """
+        if isinstance(data, pd.DataFrame):
+            return DataFrameArgumentType.PANDAS
+
+        if isinstance(data, pl.DataFrame):
+            return DataFrameArgumentType.POLARS
+
+        raise ValueError(f"Unsupported dataframe type {type(data)}")
+
+    @staticmethod
+    def _get_bound_argument_type(bound: float | str | None) -> BoundArgumentType:
+        """
+        Gets the type of the bound argument.
+        """
+        if isinstance(bound, float):
+            return BoundArgumentType.FLOAT
+        if isinstance(bound, str):
+            return BoundArgumentType.STRING
+        if bound is None:
+            return BoundArgumentType.NONE
+
+        raise ValueError(f"Unsupported bound argument type {type(bound)}")
+
+    @staticmethod
+    def _get_filter_column_argument_type(filter_column: str | None) -> FilterColumnArgumentType:
+        """
+        Gets the type of the filter column argument.
+        """
+        if filter_column is None:
+            return FilterColumnArgumentType.NONE
+        if isinstance(filter_column, str):
+            return FilterColumnArgumentType.STRING
+
+        raise ValueError(f"Unsupported filter column argument type {type(filter_column)}")
+
+    @staticmethod
+    def _get_index_columns_argument_type(index_name_columns: list[str] | None) -> IndexColumnsArgumentType:
+        """
+        Gets the type of the index columns argument.
+        """
+        if index_name_columns is None:
+            return IndexColumnsArgumentType.NONE
+        if isinstance(index_name_columns, list) and all(isinstance(item, str) for item in index_name_columns):
+            return IndexColumnsArgumentType.LIST_OF_STRINGS
+
+        raise ValueError(f"Unsupported index columns argument type {type(index_name_columns)}")
+
+    def _get_row_count(self, data: pd.DataFrame | pl.DataFrame) -> int:
+        """Returns the number of rows in the DataFrame."""
+        dataframe_type = self._get_dataframe_argument_type(data=data)
+        if dataframe_type == DataFrameArgumentType.PANDAS:
+            return len(data)
+        if dataframe_type == DataFrameArgumentType.POLARS:
+            return data.height
+        raise ValueError(f"Cannot get row count for unsupported data type: {type(data)}")
+
+    def _dataframe_has_column(self, data: pd.DataFrame | pl.DataFrame, column_name: str) -> bool:
+        """Returns whether the DataFrame contains the specified column."""
+        dataframe_type = self._get_dataframe_argument_type(data=data)
+        if dataframe_type == DataFrameArgumentType.PANDAS:
+            if not column_name in data.columns:
+                raise ValueError(f"DataFrame does not contain column {column_name}.")
+            return True
+        if dataframe_type == DataFrameArgumentType.POLARS:
+            if not column_name in data.columns:
+                raise ValueError(f"DataFrame does not contain column {column_name}.")
+            return True
+        raise ValueError(f"Cannot check for column existence for unsupported dataframe type: {dataframe_type}")
+
+    def _dataframe_has_invalid_columns(
+        self, data: pd.DataFrame | pl.DataFrame, invalid_column_names: list[str]
+    ) -> bool:
+        """
+        Returns whether the dataframe contains any columns from the list of invalid column names.
+        """
+        dataframe_type = self._get_dataframe_argument_type(data=data)
+        if dataframe_type == DataFrameArgumentType.PANDAS:
+            return any(column in data.columns for column in invalid_column_names)
+        if dataframe_type == DataFrameArgumentType.POLARS:
+            return any(column in data.columns for column in invalid_column_names)
+        raise ValueError(f"Cannot check for invalid column existence for unsupported dataframe type: {dataframe_type}")
+
     def _build_column_variables_pandas(
         self,
         solver: AbstractOptimizationSolver,
         data: pd.DataFrame,
         destination_column: str,
-        variable_dtype: VariableDataType,
-        lb: np.array,
-        ub: np.array,
-        names: np.array,
-        indicators: np.array,
+        variable_domain: VariableDomain,
+        lower_bound_values: np.ndarray,
+        upper_bound_values: np.ndarray,
+        names: np.ndarray,
+        indicators: np.ndarray,
     ) -> pd.DataFrame:
         """
         Builds decision variables on a pandas DataFrame by applying a solver's add_variable method and add this to a
@@ -60,39 +166,61 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param solver: The solver object used to retrieve the variable values.
         :param data: The DataFrame containing the data.
         :param destination_column: The name of the column that should contain the decision variables.
-        :param variable_dtype: The type of variable (int, bool, float).
-        :param lb: The lower bound values.
-        :param ub: The upper bound values.
+        :param variable_domain: The domain of variable (integer, binary, continuous).
+        :param lower_bound_values: The lower bound values.
+        :param upper_bound_values: The upper bound values.
         :param names: The names of the variables.
-        :param indicators: The indicator for whether a variables should be created or not.
+        :param indicators: The indicator for whether variables should be created or not.
         :return: The updated pandas DataFrame with the decision variable values in the destination_column.
         """
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_build):
+            raise ValueError(
+                f"DataFrame must not contain column names from the following list: {self.invalid_column_names_build}."
+            )
 
         if data.empty:
-            # if dataframe is empty, we should not create any variables
             return data.assign(**{destination_column: None})
 
         data = data.assign(
             **{
-                "lb": lb,
-                "ub": ub,
-                "var_name": names,
-                "indicators": indicators,
+                self.lower_bound_column_name: lower_bound_values,
+                self.upper_bound_column_name: upper_bound_values,
+                self.variable_name_column_name: names,
+                self.indicator_column_name: indicators,
             }
         )
 
-        data["var_information"] = data[["lb", "ub", "var_name", "indicators"]].values.tolist()
+        data[self.variable_information_column_name] = data[
+            [
+                self.lower_bound_column_name,
+                self.upper_bound_column_name,
+                self.variable_name_column_name,
+                self.indicator_column_name,
+            ]
+        ].values.tolist()
 
         # Building variables, where y[0] is lb, y[1] is ub, y[2] is var_name and y[3] is indicators
         data = data.assign(
             **{
-                destination_column: lambda x: x["var_information"].apply(
-                    lambda y: solver.add_variable(lb=y[0], ub=y[1], name=y[2], dtype=variable_dtype) if y[3] else None
+                destination_column: lambda x: x[self.variable_information_column_name].apply(
+                    lambda y: solver.add_variable(
+                        lower_bound=y[0], upper_bound=y[1], name=y[2], variable_domain=variable_domain
+                    )
+                    if y[3]
+                    else None
                 ),
             }
         )
 
-        data = data.drop(columns=["lb", "ub", "var_name", "indicators", "var_information"])
+        data = data.drop(
+            columns=[
+                self.lower_bound_column_name,
+                self.upper_bound_column_name,
+                self.variable_name_column_name,
+                self.indicator_column_name,
+                self.variable_information_column_name,
+            ]
+        )
 
         return data
 
@@ -101,11 +229,11 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         solver: AbstractOptimizationSolver,
         data: pl.DataFrame,
         destination_column: str,
-        variable_dtype: VariableDataType,
-        lb: np.array,
-        ub: np.array,
-        names: np.array,
-        indicators: np.array,
+        variable_domain: VariableDomain,
+        lower_bound_values: np.ndarray,
+        upper_bound_values: np.ndarray,
+        names: np.ndarray,
+        indicators: np.ndarray,
     ) -> pl.DataFrame:
         """
         Builds decision variables on a polars DataFrame by applying a solver's add_variable method and add this to a
@@ -114,39 +242,57 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param solver: The solver object used to retrieve the variable values.
         :param data: The DataFrame containing the data.
         :param destination_column: The name of the column that should contain the decision variables.
-        :param variable_dtype: The type of variable (int, bool, float).
-        :param lb: The lower bound values.
-        :param ub: The upper bound values.
+        :param variable_domain: The domain of variable (integer, binary, continuous).
+        :param lower_bound_values: The lower bound values.
+        :param upper_bound_values: The upper bound values.
         :param names: The names of the variables.
-        :param indicators: The indicator for whether a variables should be created or not.
+        :param indicators: The indicator for whether variables should be created or not.
         :return: The updated polars DataFrame with the decision variable values in the destination_column.
         """
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_build):
+            raise ValueError(
+                f"DataFrame must not contain column names from the following list: {self.invalid_column_names_build}."
+            )
 
         if data.is_empty():
-            # if dataframe is empty, we should not create any variables
             return data.with_columns(pl.lit(None).alias(destination_column))
 
-        def build_variables(row: dict) -> VT:
-            return solver.add_variable(lb=row["lb"], ub=row["ub"], name=row["var_name"], dtype=variable_dtype)
+        def build_variables(row: dict) -> pl.datatypes.Object:
+            return solver.add_variable(
+                lower_bound=row[self.lower_bound_column_name],
+                upper_bound=row[self.upper_bound_column_name],
+                name=row[self.variable_name_column_name],
+                variable_domain=variable_domain,
+            )
 
         data = data.with_columns(
             **{
-                "lb": lb,
-                "ub": ub,
-                "var_name": names,
-                "indicators": indicators,
+                self.lower_bound_column_name: lower_bound_values,
+                self.upper_bound_column_name: upper_bound_values,
+                self.variable_name_column_name: names,
+                self.indicator_column_name: indicators,
             }
         )
 
-        # Building variables:
         data = data.with_columns(
-            pl.when(pl.col("indicators"))
-            .then(pl.struct(["lb", "ub", "var_name"]).map_elements(build_variables, return_dtype=pl.datatypes.Object))
+            pl.when(pl.col(self.indicator_column_name))
+            .then(
+                pl.struct(
+                    [self.lower_bound_column_name, self.upper_bound_column_name, self.variable_name_column_name]
+                ).map_elements(build_variables)
+            )
             .otherwise(None)
             .alias(destination_column)
         )
 
-        data = data.drop(["lb", "ub", "var_name", "indicators"])
+        data = data.drop(
+            [
+                self.lower_bound_column_name,
+                self.upper_bound_column_name,
+                self.variable_name_column_name,
+                self.indicator_column_name,
+            ]
+        )
 
         return data
 
@@ -155,11 +301,11 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         solver: AbstractOptimizationSolver,
         data: pd.DataFrame | pl.DataFrame,
         destination_column: str,
-        variable_dtype: VariableDataType,
+        variable_domain: VariableDomain,
         index_name_columns: list[str] | None = None,
         lower_bound: float | str | None = None,
         upper_bound: float | str | None = None,
-        var_name: str | None = None,
+        variable_name: str | None = None,
         filter_column: str | None = None,
     ) -> pd.DataFrame | pl.DataFrame:
         """
@@ -169,7 +315,7 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param solver: The solver object used to retrieve the variable values.
         :param data: The DataFrame containing the data.
         :param destination_column: The name of the column that should contain the decision variables.
-        :param variable_dtype: The type of variable (int, bool, float).
+        :param variable_domain: The domain of variable (integer, binary, continuous).
         :param index_name_columns: list of column names for indexing the variable name (optional, default naming will
         be after row number).
         :param lower_bound: The lower bound of the variable. If float, the lower bound will be assigned to all
@@ -178,65 +324,65 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param upper_bound: The upper bound of the variable. If float, the upper bound will be assigned to all
         variables. If str, the column will be used as upper bound values (optional, default is inf).
         both upper_bound and upper_bound_column is defined, we use the upper_bound_column values.
-        :param var_name: The name of the variable (optional, default is destination_column).
+        :param variable_name: The name of the variable (optional, default is destination_column).
         :param filter_column: The name of the column with True/False values to filter the rows (optional, default is
         creating variables for all rows).
         :return: The updated DataFrame with the decision variable values in the destination_column.
         """
-        # Input checks:
-        if any(column in data.columns for column in ["lb", "ub", "var_name", "indicators", "var_information"]):
-            raise ValueError(
-                "DataFrame must not contain column names equal to 'lb', 'ub', 'var_name', "
-                "'indicators' and 'var_information'"
-            )
+        dataframe_type = self._get_dataframe_argument_type(data=data)
 
-        # Check if DataFrame is Pandas or Polars:
-        is_pandas = isinstance(data, pd.DataFrame)
-        is_polars = isinstance(data, pl.DataFrame)
+        variable_name = self._get_variable_name(variable_name=variable_name, destination_column=destination_column)
 
-        # Setup var name prefix:
-        var_name_prefix = self._get_var_name_prefix(var_name, destination_column)
+        lower_bound_values = self._get_bounds(
+            bound=lower_bound,
+            solver=solver,
+            data=data,
+            variable_domain=variable_domain,
+            bound_type=BoundType.LOWER,
+        )
+        upper_bound_values = self._get_bounds(
+            bound=upper_bound,
+            solver=solver,
+            data=data,
+            variable_domain=variable_domain,
+            bound_type=BoundType.UPPER,
+        )
 
-        # Find upper and lower bounds:
-        lb = self._get_bound(lower_bound, solver, data, variable_dtype, bound_type="lower")
-        ub = self._get_bound(upper_bound, solver, data, variable_dtype, bound_type="upper")
+        indicators = self._get_indicators(filter_column=filter_column, data=data)
 
-        # Make indication for if row should have a variable:
-        indicators = self._get_indicators(filter_column, data)
+        names = self._get_variable_name_with_indices(
+            index_column_names=index_name_columns, data=data, variable_name=variable_name
+        )
 
-        # Create names for variables:
-        names = self._get_names(index_name_columns, data, var_name_prefix)
-
-        # Make columns in dataframe:
-        if is_pandas:
+        if dataframe_type == DataFrameArgumentType.PANDAS:
             data = self._build_column_variables_pandas(
                 solver=solver,
                 data=data,
                 destination_column=destination_column,
-                variable_dtype=variable_dtype,
-                lb=lb,
-                ub=ub,
+                variable_domain=variable_domain,
+                lower_bound_values=lower_bound_values,
+                upper_bound_values=upper_bound_values,
                 names=names,
                 indicators=indicators,
             )
 
             return data
 
-        if is_polars:
+        if dataframe_type == DataFrameArgumentType.POLARS:
             data = self._build_column_variables_polars(
                 solver=solver,
                 data=data,
                 destination_column=destination_column,
-                variable_dtype=variable_dtype,
-                lb=lb,
-                ub=ub,
+                variable_domain=variable_domain,
+                lower_bound_values=lower_bound_values,
+                upper_bound_values=upper_bound_values,
                 names=names,
                 indicators=indicators,
             )
 
             return data
 
-        raise ValueError(f"No method for building variables in DataFrame {type(data)} type is defined.")
+        raise ValueError(f"No method for building variables in DataFrame {dataframe_type} type is defined.")
 
     def _unpack_column_variables_pandas(
         self,
@@ -244,9 +390,9 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         decision_variable_column: str,
         decision_variable_value_column: str,
         solver: AbstractOptimizationSolver,
-        indicators: np.array,
+        indicators: np.ndarray,
         default_unpack_value: float,
-        return_dtype: VariableDataType,
+        variable_domain: VariableDomain,
     ) -> pd.DataFrame:
         """
         Unpacks decision variables from a pandas DataFrame by applying a solver's get_variable_value method and removes
@@ -256,48 +402,55 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param decision_variable_column: The name of the column containing the decision variables.
         :param decision_variable_value_column: The name of the column to store the unpacked decision variable values.
         :param solver: The solver object used to retrieve the variable values.
-        :param indicators: The indicator for if a variables should be unpacked or not. If not, the value is set
+        :param indicators: The indicator for if a variable should be unpacked or not. If not, the value is set
         to default_unpack_value.
         :param default_unpack_value: The default value to use if a variable does not exist.
-        :param return_dtype: return VariableDataType to cast decision_variable_value_column
+        :param variable_domain: domain of the variable.
         to (optional, default is float).
         :return: The updated pandas DataFrame with the unpacked decision variable values.
         """
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_unpack):
+            raise ValueError(
+                f"DataFrame must not contain column names from the following list: {self.invalid_column_names_unpack}."
+            )
 
         if data.empty:
-            # if dataframe is empty, we should not unpack any variables
             data = data.assign(**{decision_variable_value_column: np.array(None, dtype="float")}).drop(
                 columns=[decision_variable_column]
             )
         else:
             data = data.assign(
                 **{
-                    "indicators": indicators,
+                    self.indicator_column_name: indicators,
                 }
             )
 
-            data["var_information"] = data[[decision_variable_column, "indicators"]].values.tolist()
+            data[self.variable_information_column_name] = data[
+                [decision_variable_column, self.indicator_column_name]
+            ].values.tolist()
 
             data = data.assign(
                 **{
-                    decision_variable_value_column: lambda x: x["var_information"].apply(
+                    decision_variable_value_column: lambda x: x[self.variable_information_column_name].apply(
                         lambda y: solver.get_variable_value(y[0]) if y[1] else default_unpack_value
                     )
                 }
-            ).drop(columns=[decision_variable_column, "indicators", "var_information"])
+            ).drop(
+                columns=[decision_variable_column, self.indicator_column_name, self.variable_information_column_name]
+            )
 
-        if return_dtype == VariableDataType.FLOAT:
+        if variable_domain == VariableDomain.CONTINUOUS:
             return data
 
-        if return_dtype == VariableDataType.BOOL:
+        if variable_domain == VariableDomain.BINARY:
             data[decision_variable_value_column] = data[decision_variable_value_column].round(decimals=0).astype("bool")
             return data
 
-        if return_dtype == VariableDataType.INT:
+        if variable_domain == VariableDomain.INTEGER:
             data[decision_variable_value_column] = data[decision_variable_value_column].round(decimals=0).astype("int")
             return data
 
-        raise ValueError(f"Unsupported return_dtype {return_dtype}")
+        raise ValueError(f"Unsupported variable data type {variable_domain}")
 
     def _unpack_column_variables_polars(
         self,
@@ -305,9 +458,9 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         decision_variable_column: str,
         decision_variable_value_column: str,
         solver: AbstractOptimizationSolver,
-        indicators: np.array,
+        indicators: np.ndarray,
         default_unpack_value: float,
-        return_dtype: VariableDataType,
+        variable_domain: VariableDomain,
     ) -> pl.DataFrame:
         """
         Unpacks decision variables from a polars DataFrame by applying a solver's get_variable_value method and removes
@@ -317,58 +470,52 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param decision_variable_column: The name of the column containing the decision variables.
         :param decision_variable_value_column: The name of the column to store the unpacked decision variable values.
         :param solver: The solver object used to retrieve the variable values.
-        :param indicators: The indicator for if a variables should be unpacked or not. If not, the value is set
+        :param indicators: The indicator for if a variable should be unpacked or not. If not, the value is set
         to default_unpack_value.
         :param default_unpack_value: The default value to use if a variable does not exist.
-        :param return_dtype: return VariableDataType to cast decision_variable_value_column
+        :param variable_domain: VariableDomain to cast decision_variable_value_column
         to (optional, default is float).
         :return: The updated polars DataFrame with the unpacked decision variable values.
         """
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_unpack):
+            raise ValueError(
+                f"DataFrame must not contain column names from the following list: {self.invalid_column_names_unpack}."
+            )
 
         if data.is_empty():
-            # if dataframe is empty, we should not unpack any variables
             data = data.with_columns(pl.lit(None).cast(pl.Float64).alias(decision_variable_value_column)).drop(
                 decision_variable_column
             )
         else:
             data = data.with_columns(
                 **{
-                    "indicators": indicators,
+                    self.indicator_column_name: indicators,
                 }
             )
 
-            if data.filter(pl.col("indicators")).is_empty():
-                data = data.with_columns(pl.lit(default_unpack_value).alias(decision_variable_value_column))
-            else:
-                data = data.with_columns(
-                    pl.when(pl.col("indicators"))
-                    .then(
-                        pl.col(decision_variable_column).map_elements(
-                            solver.get_variable_value, return_dtype=pl.Float64
-                        )
-                    )
-                    .otherwise(default_unpack_value)
-                    .alias(decision_variable_value_column)
-                )
+            data = data.with_columns(
+                pl.when(pl.col(self.indicator_column_name))
+                .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value, return_dtype=pl.Float64))
+                .otherwise(default_unpack_value)
+                .alias(decision_variable_value_column)
+            ).drop([decision_variable_column, self.indicator_column_name])
 
-            data = data.drop([decision_variable_column, "indicators"])
-
-        if return_dtype == VariableDataType.FLOAT:
+        if variable_domain == VariableDomain.CONTINUOUS:
             return data
 
-        if return_dtype == VariableDataType.BOOL:
+        if variable_domain == VariableDomain.BINARY:
             data = data.with_columns(
                 pl.col(decision_variable_value_column).round(decimals=0).cast(pl.datatypes.Boolean)
             )
 
             return data
 
-        if return_dtype == VariableDataType.INT:
+        if variable_domain == VariableDomain.INTEGER:
             data = data.with_columns(pl.col(decision_variable_value_column).round(decimals=0).cast(pl.datatypes.Int64))
 
             return data
 
-        raise ValueError(f"Unsupported return_dtype {return_dtype}")
+        raise ValueError(f"Unsupported variable data type {variable_domain}")
 
     def unpack_column_variables(
         self,
@@ -377,8 +524,8 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         decision_variable_value_column: str,
         solver: AbstractOptimizationSolver,
         filter_column: str | None = None,
-        default_unpack_value: float | None = None,
-        return_dtype: VariableDataType | None = VariableDataType.FLOAT,
+        default_unpack_value: float = 0.0,
+        variable_domain: VariableDomain | None = VariableDomain.CONTINUOUS,
     ) -> pd.DataFrame | pl.DataFrame:
         """
         Unpacks decision variables from a DataFrame by applying a solver's get_variable_value method and removes the
@@ -391,30 +538,15 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param filter_column: The name of the column with True/False values to filter the rows (optional, default is
         unpacking for all rows).
         :param default_unpack_value: The default value to use if a variable does not exist (optional, default is 0.0).
-        :param return_dtype: return VariableDataType to cast decision_variable_value_column
+        :param variable_domain: VariableDomain to cast decision_variable_value_column
         to (optional, default is float).
         :return: The updated DataFrame with the unpacked decision variable values.
         """
-        # Input checks:
-        if any(column in data.columns for column in ["indicators", "var_information"]):
-            raise ValueError("DataFrame must not contain column names equal to 'indicators'")
+        dataframe_type = self._get_dataframe_argument_type(data=data)
 
-        # Check if DataFrame is Pandas or Polars:
-        is_pandas = isinstance(data, pd.DataFrame)
-        is_polars = isinstance(data, pl.DataFrame)
+        indicators = self._get_indicators(filter_column, data)
 
-        # Make indication for if row should have a variable:
-        if isinstance(filter_column, str):
-            indicators = data[filter_column].to_numpy()
-        elif filter_column is None:
-            indicators = np.ones(data.shape[0], dtype=bool)
-        else:
-            raise ValueError(f"Handling filter_column of type {type(filter_column)} not supported.")
-
-        if default_unpack_value is None:
-            default_unpack_value = 0.0
-
-        if is_pandas:
+        if dataframe_type == DataFrameArgumentType.PANDAS:
             data = self._unpack_column_variables_pandas(
                 data=data,
                 decision_variable_column=decision_variable_column,
@@ -422,12 +554,12 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
                 solver=solver,
                 indicators=indicators,
                 default_unpack_value=default_unpack_value,
-                return_dtype=return_dtype,
+                variable_domain=variable_domain,
             )
 
             return data
 
-        if is_polars:
+        if dataframe_type == DataFrameArgumentType.POLARS:
             data = self._unpack_column_variables_polars(
                 data=data,
                 decision_variable_column=decision_variable_column,
@@ -435,37 +567,35 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
                 solver=solver,
                 indicators=indicators,
                 default_unpack_value=default_unpack_value,
-                return_dtype=return_dtype,
+                variable_domain=variable_domain,
             )
 
             return data
 
-        raise ValueError(f"No method for unpacking DataFrame {type(data)} type is defined.")
+        raise ValueError(f"No method for unpacking variables in DataFrame of type {dataframe_type} is defined.")
 
-    def _get_var_name_prefix(self, var_name: str | None, destination_column: str) -> str:
+    @staticmethod
+    def _get_variable_name(destination_column: str, variable_name: str | None = None) -> str:
         """
-        Find the prefix of the variable name. If var_name is None, we simply use the destination column name.
+        Find the variable name. If variable_name is None, we simply use the destination column name.
 
-        :param var_name: The name of the variable prompted by the user.
+        :param variable_name: The name of the variable prompted by the user.
         :param destination_column: The name of the column that should contain the decision variables.
         :return: The prefix of the variable name.
         """
-        if isinstance(var_name, str):
-            return var_name
+        if variable_name is not None and not isinstance(variable_name, str):
+            raise ValueError(f"Handling variable_name of type {type(variable_name)} not supported.")
 
-        if var_name is None:
-            return destination_column
+        return variable_name or destination_column
 
-        raise ValueError(f"Handling var_name of type {type(var_name)} not supported.")
-
-    def _get_bound(
+    def _get_bounds(
         self,
         bound: str | float | None,
         solver: AbstractOptimizationSolver,
         data: pd.DataFrame | pl.DataFrame,
-        variable_dtype: VariableDataType,
-        bound_type: str,
-    ) -> np.array:
+        variable_domain: VariableDomain,
+        bound_type: BoundType,
+    ) -> np.ndarray:
         """
         Find the bound of the variable. The bound of the variable is float, the bound will be assigned to all
         variables. If str, the column will be used as bound values (optional, default is -inf / inf).
@@ -473,67 +603,106 @@ class AbstractDecisionVariableBuilder(ABC, Generic[T]):
         :param bound: The bound of the variable prompted by the user.
         :param solver: The solver object used to retrieve the variable values.
         :param data: The DataFrame containing the data.
-        :param variable_dtype: The type of variable (int, bool, float).
+        :param variable_domain: The domain of the variable (integer, binary, continuous).
         :param bound_type: The bound type of variable (lower or upper).
         :return: The lower or upper bound numpy array.
         """
-        if isinstance(bound, str):
-            return data[bound].to_numpy()
+        bound_argument_type = self._get_bound_argument_type(bound=bound)
+        dataframe_type = self._get_dataframe_argument_type(data=data)
+        number_of_variables = self._get_row_count(data=data)
 
-        if isinstance(bound, float):
-            return np.full(data.shape[0], fill_value=bound)
+        if bound_argument_type == BoundArgumentType.STRING:
+            if dataframe_type == DataFrameArgumentType.PANDAS and self._dataframe_has_column(
+                data=data, column_name=bound
+            ):
+                return data[bound].to_numpy()
+            if dataframe_type == DataFrameArgumentType.POLARS and self._dataframe_has_column(
+                data=data, column_name=bound
+            ):
+                return data[bound].to_numpy()
+            raise ValueError(f"Cannot find a bound column in DataFrame of unsupported type {dataframe_type}.")
 
-        if bound is None:
-            if bound_type == "lower":
-                bound = 0.0 if variable_dtype == VariableDataType.BOOL else -solver.infinity()
-            elif bound_type == "upper":
-                bound = 1.0 if variable_dtype == VariableDataType.BOOL else solver.infinity()
+        if bound_argument_type == BoundArgumentType.FLOAT:
+            return np.full(number_of_variables, fill_value=bound)
+
+        if bound_argument_type == BoundArgumentType.NONE:
+            if bound_type == BoundType.LOWER:
+                bound = 0.0 if variable_domain == VariableDomain.BINARY else -solver.infinity()
+            elif bound_type == BoundType.UPPER:
+                bound = 1.0 if variable_domain == VariableDomain.BINARY else solver.infinity()
             else:
-                raise ValueError(f"Handling lower_bound of type {type(bound)} not supported.")
+                raise ValueError(f"Handling of bound_type={bound_type} not supported.")
 
-            return np.full(data.shape[0], fill_value=bound)
+            return np.full(number_of_variables, fill_value=bound)
 
-        raise ValueError(f"Handling bound of type {type(bound)} not supported.")
+        raise ValueError(f"Handling bound of type {bound_argument_type} not supported.")
 
     def _get_indicators(
         self,
         filter_column: str | None,
         data: pd.DataFrame | pl.DataFrame,
-    ) -> np.array:
+    ) -> np.ndarray:
         """
-        Finds the indicator for whether a variable should be made. If filter_column is None, we create
-        variables in all rows.
+        Finds the indicator for whether a variable should exist. If filter_column is None, the variable
+        exists for all rows.
 
         :param filter_column: The name of the column with True/False values to filter the rows.
         :param data: The DataFrame containing the data.
         :return: The indicator numpy array.
         """
-        if isinstance(filter_column, str):
-            return data[filter_column].to_numpy()
+        filter_column_type = self._get_filter_column_argument_type(filter_column=filter_column)
+        dataframe_type = self._get_dataframe_argument_type(data=data)
+        number_of_variables = self._get_row_count(data=data)
 
-        if filter_column is None:
-            return np.ones(data.shape[0], dtype=bool)
+        if filter_column_type == FilterColumnArgumentType.STRING:
+            if dataframe_type == DataFrameArgumentType.POLARS and self._dataframe_has_column(
+                data=data, column_name=filter_column
+            ):
+                return data[filter_column].to_numpy()
+            if dataframe_type == DataFrameArgumentType.PANDAS and self._dataframe_has_column(
+                data=data, column_name=filter_column
+            ):
+                return data[filter_column].to_numpy()
+            raise ValueError(f"Cannot find a filter column in DataFrame of unsupported type {dataframe_type}.")
 
-        raise ValueError(f"Handling filter_column of type {type(filter_column)} not supported.")
+        if filter_column_type == FilterColumnArgumentType.NONE:
+            return np.ones(number_of_variables, dtype=bool)
 
-    def _get_names(
-        self, index_name_columns: list[str] | None, data: pd.DataFrame | pl.DataFrame, var_name_prefix: str
-    ) -> np.array:
+        raise ValueError(f"Handling filter_column of type {filter_column_type} not supported.")
+
+    def _get_variable_name_with_indices(
+        self, index_column_names: list[str] | None, data: pd.DataFrame | pl.DataFrame, variable_name: str
+    ) -> np.ndarray:
         """
-        Finds the name of each variable. If index_name_columns is None, we use number from 0 -> n-1,
+        Finds the name of each variable. If index_name_columns is None, we use numbers from 0 -> n-1,
         where n is the number of rows.
 
-        :param index_name_columns: List of column names for indexing the variable name.
+        :param index_column_names: List of column names for indexing the variable name.
         :param data: The DataFrame containing the data.
-        :param var_name_prefix: The prefix of the variable name.
+        :param variable_name: The prefix of the variable name.
         :return: The names numpy array.
         """
-        if isinstance(index_name_columns, list):
-            return np.array(
-                [f'{var_name_prefix}[{", ".join(row)}]' for row in data[index_name_columns].to_numpy().astype(str)]
-            )
+        index_name_columns_type = self._get_index_columns_argument_type(index_name_columns=index_column_names)
+        dataframe_type = self._get_dataframe_argument_type(data=data)
 
-        if index_name_columns is None:
-            return np.array([f"{var_name_prefix}[{str(index)}]" for index in range(data.shape[0])])
+        if index_name_columns_type == IndexColumnsArgumentType.LIST_OF_STRINGS:
+            if dataframe_type == DataFrameArgumentType.PANDAS:
+                return np.array(
+                    [
+                        f'{variable_name}[{", ".join(index)}]'
+                        for index in data[index_column_names].to_numpy().astype(str)
+                    ]
+                )
+            if dataframe_type == DataFrameArgumentType.POLARS:
+                return np.array(
+                    [
+                        f'{variable_name}[{", ".join(index)}]'
+                        for index in data[index_column_names].to_numpy().astype(str)
+                    ]
+                )
+            raise ValueError(f"Cannot add variable indices from a DataFrame of unsupported type {dataframe_type}.")
 
-        raise ValueError(f"Handling index_name_columns of type {type(index_name_columns)} not supported.")
+        if index_name_columns_type == IndexColumnsArgumentType.NONE:
+            return np.array([f"{variable_name}[{str(index)}]" for index in range(self._get_row_count(data=data))])
+
+        raise ValueError(f"Handling index_name_columns of type {index_name_columns_type} not supported.")

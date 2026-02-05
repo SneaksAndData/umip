@@ -6,7 +6,7 @@ import numpy as np
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.or_tools._solver_engine import OrToolsSolverEngine
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 
 
 class OrToolsSolver(
@@ -22,99 +22,115 @@ class OrToolsSolver(
         :param logger: The logger to use.
         """
         super().__init__(logger)
-        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()
         self._objective: pywraplp.Objective = self._solver.Objective()
         self.status = None
 
-    def set_variable_hint(self, var: pywraplp.Variable, hint: float) -> None:
-        self._solver.SetHint([var], [hint])
+    def set_variable_hint(self, variable: pywraplp.Variable, hint: float) -> None:
+        self._solver.SetHint([variable], [hint])
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[pywraplp.Variable], hints: npt.NDArray[float]) -> None:
-        self._solver.SetHint(vars_, hints)
+    def set_multiple_variable_hints(self, variables: npt.NDArray[pywraplp.Variable], hints: npt.NDArray[float]) -> None:
+        self._solver.SetHint(variables, hints)
 
     def add_multiple_variables(
         self,
         names: npt.NDArray[str],
-        dtype: VariableDataType,
-        lb: float | None = None,
-        ub: float | None = None,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[pywraplp.Variable]:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
-        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}", dtype=dtype) for name in names])
+        return np.array(
+            [
+                self.add_variable(
+                    lower_bound=lower_bound,
+                    upper_bound=upper_bound,
+                    name=f"{name}",
+                    variable_domain=variable_domain,
+                )
+                for name in names
+            ]
+        )
 
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[pywraplp.Variable]] | npt.NDArray[pywraplp.Variable],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[pywraplp.Variable]] | npt.NDArray[pywraplp.Variable],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
-        if coeffs.size == 0:
+        if coefficients.size == 0:
             return
 
-        num_constrs = len(coeffs)
+        num_constrs = len(coefficients)
         for i in range(num_constrs):
             constr: pywraplp.Constraint = (
                 self._solver.Constraint(
-                    lb[i] if lb is not None else -self._solver.infinity(),
-                    ub[i] if ub is not None else self._solver.infinity(),
+                    lower_bounds[i] if lower_bounds is not None else -self._solver.infinity(),
+                    upper_bounds[i] if upper_bounds is not None else self._solver.infinity(),
                     names[i],
                 )
                 if names is not None
                 else self._solver.Constraint(
-                    lb[i] if lb is not None else -self._solver.infinity(),
-                    ub[i] if ub is not None else self._solver.infinity(),
+                    lower_bounds[i] if lower_bounds is not None else -self._solver.infinity(),
+                    upper_bounds[i] if upper_bounds is not None else self._solver.infinity(),
                 )
             )
-            if coeffs.ndim == 1 and not isinstance(coeffs[0], (np.ndarray, list, set)):
-                constr.SetCoefficient(vars_[i], coeffs[i])
+            if coefficients.ndim == 1 and not isinstance(coefficients[0], (np.ndarray, list, set)):
+                constr.SetCoefficient(variables[i], coefficients[i])
             else:
-                for j in range(len(coeffs[i])):
-                    constr.SetCoefficient(vars_[i][j], coeffs[i][j])
+                for j in range(len(coefficients[i])):
+                    constr.SetCoefficient(variables[i][j], coefficients[i][j])
 
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[pywraplp.Variable] | pywraplp.Variable,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[pywraplp.Variable] | pywraplp.Variable,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> pywraplp.Constraint | None:
-        if lb is None and ub is None:
+        if lower_bound is None and upper_bound is None:
             return None
 
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
         constr: pywraplp.Constraint = (
-            self._solver.Constraint(lb, ub, name) if name is not None else self._solver.Constraint(lb, ub)
+            self._solver.Constraint(lower_bound, upper_bound, name)
+            if name is not None
+            else self._solver.Constraint(lower_bound, upper_bound)
         )
 
-        if isinstance(vars_, Iterable):
-            for coeff, var in zip(coeffs, vars_):
+        if isinstance(variables, Iterable):
+            for coeff, var in zip(coefficients, variables):
                 constr.SetCoefficient(var, coeff)
         else:
-            constr.SetCoefficient(vars_, coeffs)
+            constr.SetCoefficient(variables, coefficients)
 
         return constr
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> pywraplp.Variable:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
-        self.number_of_variables_of_type[dtype] += 1
-        if dtype == VariableDataType.INT:
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        self.number_of_variables_of_type[variable_domain] += 1
+        if variable_domain == VariableDomain.INTEGER:
             self._integer_problem = True
-            return self._solver.IntVar(lb, ub, name)
-        if dtype == VariableDataType.FLOAT:
-            return self._solver.NumVar(lb, ub, name)
-        if dtype == VariableDataType.BOOL:
+            return self._solver.IntVar(lower_bound, upper_bound, name)
+        if variable_domain == VariableDomain.CONTINUOUS:
+            return self._solver.NumVar(lower_bound, upper_bound, name)
+        if variable_domain == VariableDomain.BINARY:
             self._integer_problem = True
             return self._solver.BoolVar(name)
         raise ValueError("Unsupported variable data type")
@@ -123,28 +139,28 @@ class OrToolsSolver(
         return var.SolutionValue()
 
     def add_objective_term(
-        self, coeff: float, var: pywraplp.Variable, overwrite: bool = True, name: str = None
+        self, coefficient: float, variable: pywraplp.Variable, overwrite: bool = True, name: str = None
     ) -> None:
         if name is not None:
-            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
         if overwrite:
-            self._objective.SetCoefficient(var, coeff)
+            self._objective.SetCoefficient(variable, coefficient)
         else:
-            self._objective.SetCoefficient(var, self._objective.GetCoefficient(var) + coeff)
+            self._objective.SetCoefficient(variable, self._objective.GetCoefficient(variable) + coefficient)
 
     def add_multiple_objective_terms(
         self,
-        coeffs: npt.NDArray[float],
-        vars_: npt.NDArray[pywraplp.Variable],
+        coefficients: npt.NDArray[float],
+        variables: npt.NDArray[pywraplp.Variable],
         overwrite: bool = True,
         name: str = None,
     ) -> None:
         if name is not None:
-            self.add_named_objective(coeffs, vars_, overwrite, name)
+            self.add_named_objective(coefficients, variables, overwrite, name)
 
-        for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
-            self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite, name=None)
+        for i in range(len(coefficients)):  # pylint: disable=consider-using-enumerate
+            self.add_objective_term(coefficients[i], variables[i], overwrite=overwrite, name=None)
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._objective.SetOptimizationDirection(maximization)
@@ -208,8 +224,8 @@ class OrToolsSolver(
     def get_variable_count(self):
         return self._solver.NumVariables()
 
-    def get_variable_count_of_type(self, var_type: VariableDataType):
-        return self.number_of_variables_of_type[var_type]
+    def get_variable_count_of_type(self, variable_domain: VariableDomain):
+        return self.number_of_variables_of_type[variable_domain]
 
     def get_constraint_count(self):
         return self._solver.NumConstraints()

@@ -4,7 +4,7 @@ import numpy as np
 from adapta.logs import LoggerInterface
 import localsolver as ls
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 
 
 class LocalSolver(
@@ -19,7 +19,7 @@ class LocalSolver(
         self._objective = self._model.create_constant(0)
         self._maximization = True
         self.number_of_variables = 0
-        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
         self.number_of_objective_terms = 0
         self._solution = None
 
@@ -28,22 +28,22 @@ class LocalSolver(
 
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[ls.LSExpression] | ls.LSExpression,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[ls.LSExpression] | ls.LSExpression,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> ls.LSExpression | None:
-        if lb is None and ub is None:
+        if lower_bound is None and upper_bound is None:
             return None
 
-        expr = self._model.sum(coeffs * vars_)
+        expr = self._model.sum(coefficients * variables)
 
         if name is not None:
             expr.set_name(name)
 
-        constr_lb = self._model.add_constraint(expr >= lb) if lb is not None else None
-        constr_ub = self._model.add_constraint(expr <= ub) if ub is not None else None
+        constr_lb = self._model.add_constraint(expr >= lower_bound) if lower_bound is not None else None
+        constr_ub = self._model.add_constraint(expr <= upper_bound) if upper_bound is not None else None
 
         return constr_lb or constr_ub
 
@@ -52,45 +52,49 @@ class LocalSolver(
 
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[ls.LSExpression]] | npt.NDArray[ls.LSExpression],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[ls.LSExpression]] | npt.NDArray[ls.LSExpression],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
-        if coeffs.size == 0:
+        if coefficients.size == 0:
             return
 
-        if names is not None and len(names) != len(coeffs):
+        if names is not None and len(names) != len(coefficients):
             raise ValueError("The number of names must match the number of constraints")
 
-        num_constrs = len(coeffs)
+        num_constrs = len(coefficients)
         for i in range(num_constrs):
             self.add_constraint(
-                coeffs=coeffs[i],
-                vars_=vars_[i],
-                lb=lb[i] if lb is not None else None,
-                ub=ub[i] if ub is not None else None,
+                coefficients=coefficients[i],
+                variables=variables[i],
+                lower_bound=lower_bounds[i] if lower_bounds is not None else None,
+                upper_bound=upper_bounds[i] if upper_bounds is not None else None,
                 name=f"{names[i]}" if names is not None else None,
             )
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> ls.LSExpression:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
         self.number_of_variables += 1
-        self.number_of_variables_of_type[dtype] += 1
-        if dtype == VariableDataType.INT:
-            var = self._model.int(math.ceil(lb), math.floor(ub))
+        self.number_of_variables_of_type[variable_domain] += 1
+        if variable_domain == VariableDomain.INTEGER:
+            var = self._model.int(math.ceil(lower_bound), math.floor(upper_bound))
             self._integer_problem = True
-        elif dtype == VariableDataType.BOOL:
+        elif variable_domain == VariableDomain.BINARY:
             var = self._model.bool()
             self._integer_problem = True
-        elif dtype == VariableDataType.FLOAT:
-            var = self._model.float(lb, ub)
+        elif variable_domain == VariableDomain.CONTINUOUS:
+            var = self._model.float(lower_bound, upper_bound)
         else:
-            raise ValueError(f"Unknown variable data type: {dtype}")
+            raise ValueError(f"Unknown variable domain: {variable_domain}")
 
         if name is not None:
             var.set_name(name)
@@ -98,37 +102,57 @@ class LocalSolver(
         return var
 
     def add_multiple_variables(
-        self, names: npt.NDArray[str], dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self,
+        names: npt.NDArray[str],
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[ls.LSExpression]:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
-        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}", dtype=dtype) for name in names])
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        return np.array(  # pylint: disable=duplicate-code
+            [
+                self.add_variable(
+                    lower_bound=lower_bound,
+                    upper_bound=upper_bound,
+                    name=f"{name}",
+                    variable_domain=variable_domain,
+                )
+                for name in names
+            ]
+        )
 
-    def set_variable_hint(self, var: ls.LSExpression, hint: float) -> None:
+    def set_variable_hint(self, variable: ls.LSExpression, hint: float) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[ls.LSExpression], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(self, variables: npt.NDArray[ls.LSExpression], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
-    def add_objective_term(self, coeff: float, var: ls.LSExpression, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(
+        self, coefficient: float, variable: ls.LSExpression, overwrite: bool = True, name: str = None
+    ) -> None:
         if name is not None:
-            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
         if overwrite:
-            self._objective += coeff * var
+            self._objective += coefficient * variable
             self.number_of_objective_terms += 1
         else:
             raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[ls.LSExpression], overwrite: bool = True, name: str = None
+        self,
+        coefficients: npt.NDArray[float],
+        variables: npt.NDArray[ls.LSExpression],
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
         if name is not None:
-            self.add_named_objective(coeffs, vars_, overwrite, name)
+            self.add_named_objective(coefficients, variables, overwrite, name)
 
         if overwrite:
-            self._objective = self._model.sum(coeffs * vars_) + self._objective
-            self.number_of_objective_terms += len(coeffs)
+            self._objective = self._model.sum(coefficients * variables) + self._objective
+            self.number_of_objective_terms += len(coefficients)
         else:
             raise NotImplementedError()
 
@@ -192,8 +216,8 @@ class LocalSolver(
     def get_variable_count(self):
         return self.number_of_variables
 
-    def get_variable_count_of_type(self, var_type: VariableDataType):
-        return self.number_of_variables_of_type[var_type]
+    def get_variable_count_of_type(self, variable_domain: VariableDomain):
+        return self.number_of_variables_of_type[variable_domain]
 
     def get_constraint_count(self):
         return self._model.get_nb_constraints()

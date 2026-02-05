@@ -4,7 +4,7 @@ import numpy.typing as npt
 import numpy as np
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 
 
 class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-many-public-methods
@@ -23,13 +23,13 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self._constr_count = 0
         self._obj_count = 0
         self._solver = highspy.Highs()
-        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
         if model_path is not None:
             self._solver.readModel(model_path)
         self.status: highspy.HighsModelStatus | None = None
         self._solution: list[float] | None = None
 
-    def set_variable_hint(self, var: str, hint: float) -> None:
+    def set_variable_hint(self, variable: str, hint: float) -> None:
         raise NotImplementedError()
 
     def _get_var_by_name(self, name: str) -> int:
@@ -57,41 +57,41 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def _get_constraint_by_name(self, name: str) -> int:
         return self._solver.getRowByName(name)[1]
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[str], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(self, variables: npt.NDArray[str], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[str], overwrite: bool = True, name: str = None
+        self, coefficients: npt.NDArray[float], variables: npt.NDArray[str], overwrite: bool = True, name: str = None
     ) -> None:
         if name is not None:
-            self.add_named_objective(coeffs, self._get_vars_by_names(vars_), overwrite, name)
+            self.add_named_objective(coefficients, self._get_vars_by_names(variables), overwrite, name)
 
-        for i in range(len(coeffs)):  # pylint: disable=consider-using-enumerate
-            self.add_objective_term(coeffs[i], vars_[i], overwrite=overwrite)
+        for i in range(len(coefficients)):  # pylint: disable=consider-using-enumerate
+            self.add_objective_term(coefficients[i], variables[i], overwrite=overwrite)
 
     def add_multiple_variables(
         self,
         names: npt.NDArray[str],
-        dtype: VariableDataType,
-        lb: float | None = None,
-        ub: float | None = None,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[str]:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
         first_var_number = self._var_count
         self._var_count += len(names)
 
-        self._solver.addVars(len(names), lb, ub)
+        self._solver.addVars(len(names), lower_bound, upper_bound)
 
         for i, name in enumerate(names):
-            self.number_of_variables_of_type[dtype] += 1
-            if dtype == VariableDataType.INT:
+            self.number_of_variables_of_type[variable_domain] += 1
+            if variable_domain == VariableDomain.INTEGER:
                 self._integer_problem = True
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
-            elif dtype == VariableDataType.FLOAT:
+            elif variable_domain == VariableDomain.CONTINUOUS:
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kContinuous)
-            elif dtype == VariableDataType.BOOL:
+            elif variable_domain == VariableDomain.BINARY:
                 self._integer_problem = True
                 self._solver.changeColIntegrality(first_var_number + i, highspy.HighsVarType.kInteger)
                 self._solver.changeColBounds(first_var_number + i, 0, 1)
@@ -103,40 +103,40 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[str]] | npt.NDArray[str],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[str]] | npt.NDArray[str],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
-        if lb is None and ub is None:
+        if lower_bounds is None and upper_bounds is None:
             raise ValueError("Either lb or ub must be specified")
 
-        if lb is None:
-            lb = np.full(len(ub), -self.infinity())
-        if ub is None:
-            ub = np.full(len(lb), self.infinity())
+        if lower_bounds is None:
+            lower_bounds = np.full(len(upper_bounds), -self.infinity())
+        if upper_bounds is None:
+            upper_bounds = np.full(len(lower_bounds), self.infinity())
 
-        if len(lb) == 0:
+        if len(lower_bounds) == 0:
             return
 
-        self._constr_count += len(lb)
+        self._constr_count += len(lower_bounds)
 
-        if coeffs.ndim == 1 and not isinstance(coeffs[0], (np.ndarray, list, set)):
-            flat_coeffs = coeffs
-            flat_vars = self._get_vars_by_names(vars_)
+        if coefficients.ndim == 1 and not isinstance(coefficients[0], (np.ndarray, list, set)):
+            flat_coeffs = coefficients
+            flat_vars = self._get_vars_by_names(variables)
             starts = np.arange(0, len(flat_coeffs) + 1)
         else:
-            flat_coeffs = np.concatenate(coeffs)
-            flat_vars = self._get_vars_by_names(vars_)
-            starts = np.cumsum([0] + [len(c) for c in coeffs][:-1])
+            flat_coeffs = np.concatenate(coefficients)
+            flat_vars = self._get_vars_by_names(variables)
+            starts = np.cumsum([0] + [len(c) for c in coefficients][:-1])
 
         # In HiGHS, the number of non-zero coefficients is simply the number of coefficients
         # num_cons, lower, upper, num_new_nz, starts, indices, values
         self._solver.addRows(
-            len(lb),
-            lb,
-            ub,
+            len(lower_bounds),
+            lower_bounds,
+            upper_bounds,
             len(flat_coeffs),
             starts,
             flat_vars,
@@ -145,58 +145,66 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[str] | str,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[str] | str,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> str | None:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
         constr_number = self._constr_count
         self._constr_count += 1
 
-        if isinstance(coeffs, np.ndarray) & isinstance(vars_, np.ndarray):
-            if coeffs.size != vars_.size:
+        if isinstance(coefficients, np.ndarray) & isinstance(variables, np.ndarray):
+            if coefficients.size != variables.size:
                 raise ValueError("The number of coefficients must be equal to the number of variables")
-            coeffs = np.array(coeffs)
-            vars_ = np.array(self._get_vars_by_names(vars_))
+            coefficients = np.array(coefficients)
+            variables = np.array(self._get_vars_by_names(variables))
 
-        elif isinstance(coeffs, (float, int, bool)) and isinstance(vars_, str):
-            coeffs = np.array([coeffs])
-            vars_ = np.array([self._get_var_by_name(vars_)])
+        elif isinstance(coefficients, (float, int, bool)) and isinstance(variables, str):
+            coefficients = np.array([coefficients])
+            variables = np.array([self._get_var_by_name(variables)])
         else:
             raise ValueError("Coeffs and vars_ must be of the same type")
 
         # In HiGHS, the number of non-zero coefficients is simply the number of coefficients
-        number_of_non_zero_coefficients = len(coeffs)
+        number_of_non_zero_coefficients = len(coefficients)
 
         # In some very specific cases, (completely) wrong coefficients are added to the model if not casted to float64
         # lower, upper, num_new_nz, index, value
-        self._solver.addRow(lb, ub, number_of_non_zero_coefficients, vars_, coeffs.astype(np.float64))
+        self._solver.addRow(
+            lower_bound, upper_bound, number_of_non_zero_coefficients, variables, coefficients.astype(np.float64)
+        )
 
         name = name if name is not None else str(constr_number)
         self._solver.passRowName(constr_number, name)
 
         return name
 
-    def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> str:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+    def add_variable(
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+    ) -> str:
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
         var_number = self._var_count
         self._var_count += 1
 
-        self._solver.addVar(lb, ub)
-        self.number_of_variables_of_type[dtype] += 1
+        self._solver.addVar(lower_bound, upper_bound)
+        self.number_of_variables_of_type[variable_domain] += 1
 
-        if dtype == VariableDataType.INT:
+        if variable_domain == VariableDomain.INTEGER:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kInteger)
             self._integer_problem = True
-        elif dtype == VariableDataType.FLOAT:
+        elif variable_domain == VariableDomain.CONTINUOUS:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kContinuous)
-        elif dtype == VariableDataType.BOOL:
+        elif variable_domain == VariableDomain.BINARY:
             self._solver.changeColIntegrality(var_number, highspy.HighsVarType.kInteger)
             self._solver.changeColBounds(var_number, 0, 1)
             self._integer_problem = True
@@ -210,20 +218,22 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def get_variable_value(self, var: str) -> float:
         return self._solution[self._solver.getColByName(var)[1]]
 
-    def add_objective_term(self, coeff: float, var: str, overwrite: bool = True, name: str = None) -> None:
-        _, old_coeff, _, _, _ = self._solver.getCol(self._get_var_by_name(var))  # status, cost, lb, ub, index
+    def add_objective_term(self, coefficient: float, variable: str, overwrite: bool = True, name: str = None) -> None:
+        _, old_coeff, _, _, _ = self._solver.getCol(self._get_var_by_name(variable))  # status, cost, lb, ub, index
         if name is not None:
-            self.add_named_objective(np.array([coeff]), np.array([self._get_var_by_name(var)]), overwrite, name)
+            self.add_named_objective(
+                np.array([coefficient]), np.array([self._get_var_by_name(variable)]), overwrite, name
+            )
 
-        if old_coeff == 0 and coeff != 0:
+        if old_coeff == 0 and coefficient != 0:
             self._obj_count += 1
-        elif old_coeff != 0 and coeff == 0:
+        elif old_coeff != 0 and coefficient == 0:
             self._obj_count -= 1
 
         if overwrite:
-            self._solver.changeColCost(self._get_var_by_name(var), coeff)
+            self._solver.changeColCost(self._get_var_by_name(variable), coefficient)
         else:
-            self._solver.changeColCost(self._get_var_by_name(var), coeff + old_coeff)
+            self._solver.changeColCost(self._get_var_by_name(variable), coefficient + old_coeff)
 
     def get_named_objective(self, name: str) -> float:
         if name in self._named_objectives:
@@ -316,8 +326,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def get_variable_count(self):
         return self._solver.getNumCol()
 
-    def get_variable_count_of_type(self, var_type: VariableDataType):
-        return self.number_of_variables_of_type[var_type]
+    def get_variable_count_of_type(self, variable_domain: VariableDomain):
+        return self.number_of_variables_of_type[variable_domain]
 
     def get_objective_terms_count(self):
         return self._obj_count

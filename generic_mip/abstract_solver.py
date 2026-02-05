@@ -5,7 +5,7 @@ from typing import TypeVar, Generic
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.enums.constraint_type import ConstraintType
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 from generic_mip.variable_with_objective_coefficient import VariableWithObjectiveCoefficient
 
 CT = TypeVar("CT")  # Constraint type
@@ -32,10 +32,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[VT] | VT,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[VT] | VT,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> CT | None:
         """
@@ -44,11 +44,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         or
         lb <= cx <= ub
 
-        :param lb: Lower bound.
-        :param ub: Upper bound.
-        :param coeffs: List of coefficients: [c_1, c_2, ...] or a single coefficient: c.
+        :param lower_bound: Lower bound.
+        :param upper_bound: Upper bound.
+        :param coefficients: List of coefficients: [c_1, c_2, ...] or a single coefficient: c.
             Each index in the list must correspond to the same index in the vars_ list.
-        :param vars_: List of variables: [x_1, x_2, ...] or a single variable: x.
+        :param variables: List of variables: [x_1, x_2, ...] or a single variable: x.
             Each index in the list must correspond to the same index in the coeffs list.
         :param name: Name of constraint.
         :return: The constraint.
@@ -65,10 +65,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         """
@@ -81,12 +81,12 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             lb_2 <= c_2x_2 <= ub_2
             ...
 
-        :param lb: A list of lower bounds, one for each constraint.
-        :param ub: A list of upper bounds, one for each constraint.
-        :param coeffs: A list of lists of constraint coefficients. Each inner list represent a constraint,
+        :param lower_bounds: A list of lower bounds, one for each constraint.
+        :param upper_bounds: A list of upper bounds, one for each constraint.
+        :param coefficients: A list of lists of constraint coefficients. Each inner list represent a constraint,
             and each element of the inner list is a coefficient of a variable in the constraint.
             Example input: [[c_11,c_12,...],[c_21,c_22,...],...] or [c_1, c_2, ...]
-        :param vars_: A list of lists of constraint coefficients. Each inner list represent a constraint,
+        :param variables: A list of lists of constraint coefficients. Each inner list represent a constraint,
             and each element of the inner list is a variable in the constraint. The dimensions must exactly
             match those of the parameter coeffs. Example: The coefficient in index [1,2] must belong to the variable in
             index [1,2].
@@ -97,8 +97,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def add_constraint_of_type(
         self,
         constraint_type: ConstraintType,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[VT] | VT,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[VT] | VT,
         right_hand_side: float | None = None,
         name: str | None = None,
     ) -> CT | None:
@@ -108,27 +108,37 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
         :param constraint_type: The relation to be used in the constraint. (Either >=, = or <=)
         :param right_hand_side: The right hand side of the constraint.
-        :param coeffs: List of coefficients: [c_1, c_2, ...] or a single coefficient: c.
+        :param coefficients: List of coefficients: [c_1, c_2, ...] or a single coefficient: c.
             Each index in the list must correspond to the same index in the vars_ list.
-        :param vars_: List of variables: [x_1, x_2, ...] or a single variable: x.
+        :param variables: List of variables: [x_1, x_2, ...] or a single variable: x.
             Each index in the list must correspond to the same index in the coeffs list.
         :param name: Name of constraint.
         :return: The constraint.
         """
         if constraint_type == ConstraintType.LESS_THAN_OR_EQUAL:
-            return self.add_constraint(coeffs=coeffs, vars_=vars_, ub=right_hand_side, name=name)
+            return self.add_constraint(
+                coefficients=coefficients, variables=variables, upper_bound=right_hand_side, name=name
+            )
         if constraint_type == ConstraintType.EQUAL:
-            return self.add_constraint(coeffs=coeffs, vars_=vars_, lb=right_hand_side, ub=right_hand_side, name=name)
+            return self.add_constraint(
+                coefficients=coefficients,
+                variables=variables,
+                lower_bound=right_hand_side,
+                upper_bound=right_hand_side,
+                name=name,
+            )
         if constraint_type == ConstraintType.GREATER_THAN_OR_EQUAL:
-            return self.add_constraint(coeffs=coeffs, vars_=vars_, lb=right_hand_side, name=name)
+            return self.add_constraint(
+                coefficients=coefficients, variables=variables, lower_bound=right_hand_side, name=name
+            )
 
         raise ValueError(f"Unsupported constraint type: {constraint_type}")
 
     def add_multiple_constraints_of_type(
         self,
         constraint_type: ConstraintType,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
         right_hand_sides: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
@@ -140,10 +150,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
         :param constraint_type: The relation to be used in the constraint. (Either >=, = or <=)
         :param right_hand_sides: The right hand side sof the constraints.
-        :param coeffs: A list of lists of constraint coefficients. Each inner list represent a constraint,
+        :param coefficients: A list of lists of constraint coefficients. Each inner list represent a constraint,
             and each element of the inner list is a coefficient of a variable in the constraint.
             Example input: [[c_11,c_12,...],[c_21,c_22,...],...] or [c_1, c_2, ...]
-        :param vars_: A list of lists of constraint coefficients. Each inner list represent a constraint,
+        :param variables: A list of lists of constraint coefficients. Each inner list represent a constraint,
             and each element of the inner list is a variable in the constraint. The dimensions must exactly
             match those of the parameter coeffs. Example: The coefficient in index [1,2] must belong to the variable in
             index [1,2].
@@ -151,25 +161,39 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :param names: Names of the constraints
         """
         if constraint_type == ConstraintType.LESS_THAN_OR_EQUAL:
-            return self.add_multiple_constraints(coeffs=coeffs, vars_=vars_, ub=right_hand_sides, names=names)
+            return self.add_multiple_constraints(
+                coefficients=coefficients, variables=variables, upper_bounds=right_hand_sides, names=names
+            )
         if constraint_type == ConstraintType.EQUAL:
             return self.add_multiple_constraints(
-                coeffs=coeffs, vars_=vars_, lb=right_hand_sides, ub=right_hand_sides, names=names
+                coefficients=coefficients,
+                variables=variables,
+                lower_bounds=right_hand_sides,
+                upper_bounds=right_hand_sides,
+                names=names,
             )
         if constraint_type == ConstraintType.GREATER_THAN_OR_EQUAL:
-            return self.add_multiple_constraints(coeffs=coeffs, vars_=vars_, lb=right_hand_sides, names=names)
+            return self.add_multiple_constraints(
+                coefficients=coefficients, variables=variables, lower_bounds=right_hand_sides, names=names
+            )
 
         raise ValueError(f"Unsupported constraint type: {constraint_type}")
 
     @abstractmethod
-    def add_variable(self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None) -> VT:
+    def add_variable(
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+    ) -> VT:
         """
         Adds variable to the model.
 
-        :param lb: Lower bound.
-        :param ub: Upper bound.
+        :param lower_bound: Lower bound.
+        :param upper_bound: Upper bound.
         :param name: Name of the variable.
-        :param dtype: The type of variable.
+        :param variable_domain: The domain of the variable.
         :return: The variable.
         """
 
@@ -177,82 +201,83 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def add_multiple_variables(
         self,
         names: npt.NDArray[str],
-        dtype: VariableDataType,
-        lb: float | None = None,
-        ub: float | None = None,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
 
         :param names: Names of the variables.
-        :param lb: Lower bound.
-        :param ub: Upper bound.
-        :param dtype: The type of variables.
+        :param lower_bound: Lower bound.
+        :param upper_bound: Upper bound.
+        :param variable_domain: The domain of variables.
         :return: The variables.
         """
 
     @abstractmethod
-    def set_variable_hint(self, var: VT, hint: float) -> None:
+    def set_variable_hint(self, variable: VT, hint: float) -> None:
         """
         Adds solution hint to decision variable.
 
-        :param var: Variable to add hint to.
+        :param variable: Variable to add hint to.
         :param hint: Solution hint.
-        :return:
         """
 
     @abstractmethod
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[VT], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(self, variables: npt.NDArray[VT], hints: npt.NDArray[float]) -> None:
         """
         Adds solution hints to multiple decision variables. Number of variables and hints must be identical.
 
-        :param vars_: Variables to add hint to.
+        :param variables: Variables to add hint to.
         :param hints: Solution hints.
-        :return:
         """
 
     @abstractmethod
-    def add_objective_term(self, coeff: float, var: VT, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(self, coefficient: float, variable: VT, overwrite: bool = True, name: str = None) -> None:
         """
         Adds a single objective term.
 
-        :param coeff: The coefficient of the term.
-        :param var: The variable of the term.
-        :return:
+        :param coefficient: The coefficient of the term.
+        :param variable: The variable of the term.
+        :param overwrite: Whether to overwrite the coefficients or not.
+        :param name: The name of the objective term
         """
 
     @abstractmethod
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT], overwrite: bool = True, name: str = None
+        self, coefficients: npt.NDArray[float], variables: npt.NDArray[VT], overwrite: bool = True, name: str = None
     ) -> None:
         """
         Adds multiple objective terms at once: c_1x_1 + c_2x_2 + ...
 
-        :param coeffs: The coefficients of the term. Example: [c_1, c_2, ...].
+        :param coefficients: The coefficients of the term. Example: [c_1, c_2, ...].
             Each index must match an index in the vars_ list.
-        :param vars_: The variables of the term. Example: [x_1, x_2, ...].
-            Each index must match an index in the coeffs list.
-        :return:
+        :param variables: The variables of the term. Example: [x_1, x_2, ...].
+            Each index must match an index in the coefficient list.
+        :param overwrite: Whether to overwrite the coefficients or not.
+        :param name: The name of the objective term
         """
 
     def add_named_objective(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[VT], overwrite: bool, name: str
+        self, coefficients: npt.NDArray[float], variables: npt.NDArray[VT], overwrite: bool, name: str
     ) -> None:
         """
         Add/update the coefficients and variables of a named objective term
 
-        :param coeffs: The coefficients of the term. Example: [c_1, c_2, ...].
+        :param coefficients: The coefficients of the term. Example: [c_1, c_2, ...].
             Each index must match an index in the vars_ list.
-        :param vars_: The variables of the term. Example: [x_1, x_2, ...].
-            Each index must match an index in the coeffs list.
+        :param variables: The variables of the term. Example: [x_1, x_2, ...].
+            Each index must match an index in the coefficient list.
         :param overwrite: Whether to overwrite the coefficients or not.
-        :param name: The name of the objective
-        :return:
+        :param name: The name of the objective term
         """
         if overwrite:
             raise ValueError("Add_named_objective is not supported with overwrite = true")
 
-        elements_to_add = [VariableWithObjectiveCoefficient(vars_[i], coeffs[i]) for i in range(len(coeffs))]
+        elements_to_add = [
+            VariableWithObjectiveCoefficient(variables[i], coefficients[i]) for i in range(len(coefficients))
+        ]
         if name in self._named_objectives:
             self._named_objectives[name].extend(elements_to_add)
         else:
@@ -273,7 +298,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
         Get the value of a named objective term
 
-        :param name: The name of the objective
+        :param name: The name of the objective term
         :return: objective value for the named objective.
         """
 
@@ -299,7 +324,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         Solve the optimization problem. If both time_limit and mip_gap_limit are provided, the optimization would stop
         when reach the tighter limit.
         :param time_limit: The time limit in seconds. None means no time limit.
-        :param mip_gap_limit: The optimality gap in percent, and in format of float. None means no mip gap limit.
+        :param mip_gap_limit: The optimality gap as a percentage, and in format of float. None means no mip gap limit.
         :return: The status of the optimization.
         """
 
@@ -386,29 +411,29 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def get_variable_count(self) -> int:
         """
-        Get number of variables in the model.
+        Get the number of variables in the model.
         :return: Number of variables.
         """
 
     @abstractmethod
-    def get_variable_count_of_type(self, var_type: VariableDataType) -> int:
+    def get_variable_count_of_type(self, variable_domain: VariableDomain) -> int:
         """
-        Get number of variables of the specified type in the model.
-        :param var_type: The variable type.
+        Get the number of variables of the specified type in the model.
+        :param variable_domain: The variable domain.
         :return: Number of variables of the provided type.
         """
 
     @abstractmethod
     def get_constraint_count(self) -> int:
         """
-        Get number of constraints in the model.
+        Get the number of constraints in the model.
         :return: Number of constraints.
         """
 
     @abstractmethod
     def get_objective_terms_count(self) -> int:
         """
-        Get number of objective terms in the model.
+        Get the number of objective terms in the model.
         :return: Number of objective terms.
         """
 
@@ -418,7 +443,6 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         Some models add variables, constraints and objective lazily.
         Use this method to force an update of the model, if the specific implementation uses lazy updates.
         E.g. Gurobi uses lazy updates.
-        :return:
         """
 
     @abstractmethod
@@ -434,7 +458,6 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         Set the objective offset.
         :param offset: The offset to set.
         :param overwrite: Whether to overwrite the current offset or add to it.
-        :return
         """
 
     @abstractmethod

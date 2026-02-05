@@ -12,29 +12,45 @@ The aim of this repository is to...
 ## Class overview
 The Generic MIP framework is a collection of classes that can be used to construct a MIP model.
 The classes are:
-* [``AbstractOptimisationModel``](./generic_mip/abstract_model.py) - Represents an optimization problem in the broadest sense.
-* [`AbstractMipModel`](./generic_mip/abstract_mip.py) - Represents a MIP model which is a specialization of the `AbstractOptimisationModel`.
+* [`AbstractMipModel`](./generic_mip/abstract_mip.py) - Represents a MIP model.
 * [`AbstractOptimizationSolver`](./generic_mip/abstract_solver.py) - Represents a MIP solver regardless of implementation.
-  * [`OrToolsSolver`](./generic_mip/solver/ortools_solver.py) - Represents a MIP solver implemented with Google OR Tools.
-  * [`GurobiSolver`](./generic_mip/solver/gurobi_solver.py) - Represents a MIP solver implemented with Gurobi.
+  * [`OrToolsSolver`](./generic_mip/solver/or_tools/_solver.py) - Represents a MIP solver implemented with Google OR Tools.
+  * [`GurobiSolver`](./generic_mip/solver/gurobi/_solver.py) - Represents a MIP solver implemented with Gurobi.
+  * [`CplexSolver`](./generic_mip/solver/cplex/_solver.py) - Represents a MIP solver implemented with CPLEX.
+  * [`ScipSolver`](./generic_mip/solver/scip/_solver.py) - Represents a MIP solver implemented with SCIP.
+  * [`HighsSolver`](./generic_mip/solver/highs/_solver.py) - Represents a MIP solver implemented with HiGHS.
+  * [`LocalSolver`](./generic_mip/solver/local_solver/_solver.py) - Represents a MIP solver implemented with LocalSolver.
 * [`AbstractDataPreparator`](./generic_mip/abstract_data_prep.py) - A class used to prepare data for the model - this is used by the `AbstractMipModel`.
-* [`AbstractVariableBuilder`](./generic_mip/abstract_var_builder.py) - A class used to construct decision variables - this is used by the `AbstractMipModel`.
+* [`AbstractDecisionVariableBuilder`](./generic_mip/abstract_var_builder.py) - A class used to construct decision variables - this is used by the `AbstractMipModel`.
 * [`AbstractConstraintBuilder`](./generic_mip/abstract_constr_builder.py) - A class used to construct constraints - this is used by the `AbstractMipModel`.
 * [`AbstractObjectiveBuilder`](./generic_mip/abstract_obj_builder.py) - A class used to construct objective terms - this is used by the `AbstractMipModel`.
-* [`AbstractOptimizationModelFactory`](./generic_mip/abstract_model_factory.py) - A class used to construct a model and injects the necessary builders based on given context or settings.
-* [`AbstractOptimisationSolverFactory`](./generic_mip/abstract_solver_factory.py) - A class used to construct a solver based on given context or settings.
-* [`VariableDataType`](generic_mip/enums/variable_data_type.py) - An enum used to represent the data type of a decision variable.
+* [`AbstractMipModelFactory`](./generic_mip/abstract_model_factory.py) - A class used to construct a model and injects the necessary builders based on given context or settings.
+* [`SolverFactory`](./generic_mip/solver_factory/solver_factory.py) - A class used to construct a solver based on given context or settings.
+* [`VariableWithObjectiveCoefficient`](./generic_mip/variable_with_objective_coefficient.py) - A class containing a decision variable and its objective coefficient.
+
+Abstract data classes:
+* [`AbstractInputData`](generic_mip/abstract_dataclasses.py) - A class containing input data.
+* [`AbstractInternalData`](generic_mip/abstract_dataclasses.py) - A class containing internal data.
+* [`AbstractOutputData`](generic_mip/abstract_dataclasses.py) - A class containing output data.
+
+Enums:
+* [`VariableDataType`](generic_mip/enums/variable_domain.py) - An enum used to represent the data type of a decision variable.
+* [`SolverType`](generic_mip/enums/solver_type.py) - An enum of solver types.
+* [`BoundType`](generic_mip/enums/bound_type.py) - An enum of bound types (lower/upper)
+* [`ConstraintType`](generic_mip/enums/constraint_type.py) - An enum of constraint types.
+* [`DataFrameArgumentType`](generic_mip/enums/data_types.py) - An enum of dataframe argument types.
+* [`BoundArgumentType`](generic_mip/enums/data_types.py) - An enum of bound argument types.
+* [`FilterColumnArgumentType`](generic_mip/enums/data_types.py) - An enum of filter column argument types.
+* [`IndexColumnsArgumentType`](generic_mip/enums/data_types.py) - An enum of index column argument types.
 
 Above classes is visualised ín the below UML class diagram. For an explanation of UML diagrams, please go to [https://www.uml-diagrams.org](https://www.uml-diagrams.org).
 
-![UML diagram](./img/uml.png)
+![UML diagram](./img/generic_mip_uml.png)
 
 ## Usage
-To implement a MIP model, you need to create implementations of all the above abstract classes with two exceptions:
-* The `AbstractSolver` already comes with two implementations.
-* The `AbstractOptimisationModel` has a specialization, `AbstractMipModel`, which is the main class you need to implement.
+To implement a MIP model, you need to create implementations of all the above abstract classes except for `AbstractSolver`, which already comes with six implementations.
 
-All settings logics needs to be implemented in the factories. I.e. logic related to "if this setting is turned on, add decision variables X and Y and add constraint Z." is placed in the `AbstractModelFactory`, and logic related to "if used solver is SCIP, construct OrToolsSolver" is placed in the `AbstractSolverFactory`.
+All settings logics needs to be implemented in the factories. I.e. logic related to "if this setting is turned on, add decision variables X and Y and add constraint Z." is placed in the `AbstractMipModelFactory`, and logic related to "if used solver is SCIP, construct OrToolsSolver" is placed in the `SolverFactory`.
 Code related to the data preparation is implemented in the `AbstractDataPreparator`. All builders and models should be instantiated in a model factory - never outside (e.g. never in a main function).
 
 Code related to the decision variable construction is implemented in the `AbstractVariableBuilder`. I.e. "this dataframe with 10 rows infers the creation of 10 decision variables". Similar principles goes for the constraint and objective builders.
@@ -45,21 +61,52 @@ Given that you have started your project called "Awesome Stuff", your code shoul
 solver = AwesomeStuffSolverFactory().construct(some_settings)
 model = AwesomeStuffModelFactory(solver).construct(some_other_settings)
 model.build(some_df=some_prepared_df, some_other_df=some_other_prepared_df)
-result_df = model.solve()
+model.solve()
+result = model.get_output_data()
 ```
 
-Here is an example of how we used the framework to implement Intelligent Auto Replenishment:
+Here is an example of how we used the framework to implement Stock Redistribution:
 ```python
-solver = AutoReplenishmentSolverFactory().construct(settings.solver, [])
-model = AutoReplenishmentModelFactory(solver).construct(settings, col_def)
-model.build(sku_route_df=sku_route_df, demand_df=demand_df, location_df=location_df, parameter_df=parameter_df )
-result_df = model.solve()
+@dataclass
+class InputData(AbstractInputData):
+    sku_location_demand: pl.DataFrame
+    route: pl.DataFrame
+    sku_location: pl.DataFrame
+    sku: pl.DataFrame | None = None
+    collection_group_sku_location: pl.DataFrame | None = None
+    location: pl.DataFrame | None = None
+    location_segment_overstock: pl.DataFrame | None = None
+    overall_parameters: pl.DataFrame | None = None
+
+    
+solver = SolverFactory(logger).construct(SolverType.ORTOOLS_SCIP)
+
+stock_redistribution_model = StockRedistributionModelFactory(
+    solver=solver, logger=logger, settings=settings
+).construct()
+
+stock_redistribution_model.build(
+    input_data=InputData(
+        sku_location_demand=demand,
+        sku_location=sku_location,
+        route=route,
+        sku=sku,
+        location=location,
+        location_segment_overstock=location_segment,
+        collection_group_sku_location=collection_group_sku_location,
+        overall_parameters=overall_parameters,
+    )
+)
+
+stock_redistribution_model.solve()
+
+result = stock_redistribution_model.get_output_data()
 ```
 
-Deciding which solver to use is done in `AutoReplenishmentSolverFactory` in the call to `construct()`. 
-Deciding what model components (constraints, variables, objectives) to use and how to construct them is done in `AutoReplenishmentModelFactory` in the call to `construct()`.
+Deciding which solver to use is done in `SolverFactory` in the call to `construct()`. 
+Deciding what model components (constraints, variables, objectives) to use and how to construct them is done in `StockRedistributionModelFactory` in the call to `construct()`.
 Building the components and preparing the model is done by calling `build()` on the model.
-Finally, the model is solved by calling `solve()` on the model and the results are returned.
+Finally, the model is solved by calling `solve()` on the model and the results are returned upon calling `get_output_data()`.
 
 ### Suggested first steps
 You can implement the above classes by following the below steps. However, you can use any approach you like. Let this serve as a help if you do not know where to start.

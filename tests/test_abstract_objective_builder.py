@@ -1,5 +1,4 @@
 from typing import Any
-from unittest.mock import MagicMock
 
 from adapta.logs import LoggerInterface
 
@@ -7,7 +6,11 @@ from generic_mip import AbstractObjectiveBuilder
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 
-def test__abstract_objective_builder__add_analytics(logger):
+def test__abstract_objective_builder__get_analytics__general(logger):
+    """
+    Tests whether the get_analytics method correctly calls the analytics calculators.
+    """
+
     ### Arrange
     class ObjectiveBuilder1(AbstractObjectiveBuilder):
         def __init__(self, logger: LoggerInterface):

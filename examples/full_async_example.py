@@ -13,6 +13,7 @@ from examples.example_model import (
     MyObjectiveBuilder,
     MyDataPreparator,
     MyOtherConstraintBuilder,
+    ExampleInputData,
 )
 from generic_mip.enums import SolverType
 from generic_mip.solver_factory import SolverFactory
@@ -52,14 +53,17 @@ async def run_async():
             logger=async_logger,
         )
         await my_async_model.build_async(
-            my_df=pd.DataFrame(
-                data={
-                    "row_number": [1, 2],
-                }
+            input_data=ExampleInputData(
+                my_data=pd.DataFrame(
+                    {
+                        "row_number": [1, 2],
+                    }
+                )
             )
         )
 
-        async_result = await my_async_model.solve_async()
+        await my_async_model.solve_async()
+        async_result = my_async_model.get_output_data().my_data
 
     # allow to gracefully shut down and flush the logger
     await asyncio.sleep(1)

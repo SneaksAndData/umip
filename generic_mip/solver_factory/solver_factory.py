@@ -16,7 +16,7 @@ ORTOOLS_SOLVERS = [
 
 class SolverFactory:
     """
-    Solver factory for obtaining a implementation of a solver
+    Solver factory for obtaining an implementation of a solver
     """
 
     def __init__(self, logger: LoggerInterface):

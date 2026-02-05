@@ -6,7 +6,7 @@ import pyscipopt
 from pyscipopt import Model
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 
 
 class ScipSolver(
@@ -19,54 +19,54 @@ class ScipSolver(
         self._solver = Model()
         if model_path is not None:
             self._solver = self._solver.readProblem(model_path)
-        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDataType)}
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
         self._objective = 0
         self._objective_term_count = 0
 
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[pyscipopt.Variable] | pyscipopt.Variable,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[pyscipopt.Variable] | pyscipopt.Variable,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> pyscipopt.Constraint | None:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
         name = name if name is not None else ""
 
-        if isinstance(coeffs, Iterable):
+        if isinstance(coefficients, Iterable):
             constr_expr = 0
-            for coeff, var in zip(coeffs, vars_):
+            for coeff, var in zip(coefficients, variables):
                 constr_expr += coeff * var
         else:
-            constr_expr = coeffs * vars_
+            constr_expr = coefficients * variables
 
-        if lb == ub:
-            return self._solver.addCons(cons=(constr_expr == lb), name=name)
-        if lb != -self.infinity() and ub != self.infinity():
-            return self._solver.addCons(cons=lb <= (constr_expr <= ub), name=name)
-        if lb != -self.infinity():
-            return self._solver.addCons(cons=(constr_expr >= lb), name=name)
+        if lower_bound == upper_bound:
+            return self._solver.addCons(cons=(constr_expr == lower_bound), name=name)
+        if lower_bound != -self.infinity() and upper_bound != self.infinity():
+            return self._solver.addCons(cons=lower_bound <= (constr_expr <= upper_bound), name=name)
+        if lower_bound != -self.infinity():
+            return self._solver.addCons(cons=(constr_expr >= lower_bound), name=name)
 
-        return self._solver.addCons(cons=(constr_expr <= ub), name=name)
+        return self._solver.addCons(cons=(constr_expr <= upper_bound), name=name)
 
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[pyscipopt.Variable]] | npt.NDArray[pyscipopt.Variable],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[pyscipopt.Variable]] | npt.NDArray[pyscipopt.Variable],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
-        if coeffs.size == 0:
+        if coefficients.size == 0:
             return
 
-        for i, coeff in enumerate(coeffs):
-            lowerbound = lb[i] if lb is not None else None
-            upperbound = ub[i] if ub is not None else None
+        for i, coeff in enumerate(coefficients):
+            lowerbound = lower_bounds[i] if lower_bounds is not None else None
+            upperbound = upper_bounds[i] if upper_bounds is not None else None
             name = names[i] if names is not None else None
-            self.add_constraint(coeff, vars_[i], lb=lowerbound, ub=upperbound, name=name)
+            self.add_constraint(coeff, variables[i], lower_bound=lowerbound, upper_bound=upperbound, name=name)
 
     def get_constraint(self, name: str) -> pyscipopt.Constraint:
         for constraint in self._solver.getConss():
@@ -76,68 +76,84 @@ class ScipSolver(
         raise ValueError(f"Constraint with name {name} not found")
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> pyscipopt.Variable:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
-        self.number_of_variables_of_type[dtype] += 1
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        self.number_of_variables_of_type[variable_domain] += 1
 
-        if dtype == VariableDataType.INT:
+        if variable_domain == VariableDomain.INTEGER:
             self._integer_problem = True
             variable_type = "I"
-        elif dtype == VariableDataType.BOOL:
+        elif variable_domain == VariableDomain.BINARY:
             self._integer_problem = True
             variable_type = "B"
-        elif dtype == VariableDataType.FLOAT:
+        elif variable_domain == VariableDomain.CONTINUOUS:
             variable_type = "C"
         else:
             raise ValueError("Unsupported variable data type")
 
-        return self._solver.addVar(name=name, lb=lb, ub=ub, vtype=variable_type)
+        return self._solver.addVar(name=name, lb=lower_bound, ub=upper_bound, vtype=variable_type)
 
     def add_multiple_variables(
         self,
         names: npt.NDArray[str],
-        dtype: VariableDataType,
-        lb: float | None = None,
-        ub: float | None = None,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[pyscipopt.Variable]:
-        return np.array([self.add_variable(lb=lb, ub=ub, name=f"{name}", dtype=dtype) for name in names])
+        return np.array(
+            [
+                self.add_variable(
+                    lower_bound=lower_bound,
+                    upper_bound=upper_bound,
+                    name=f"{name}",
+                    variable_domain=variable_domain,
+                )
+                for name in names
+            ]
+        )
 
-    def set_variable_hint(self, var: pyscipopt.Variable, hint: float) -> None:
+    def set_variable_hint(self, variable: pyscipopt.Variable, hint: float) -> None:
         partial_solution = self._solver.createPartialSol()
-        self._solver.setSolVal(partial_solution, var, hint)
+        self._solver.setSolVal(partial_solution, variable, hint)
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[pyscipopt.Variable], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[pyscipopt.Variable], hints: npt.NDArray[float]
+    ) -> None:
         partial_solution = self._solver.createPartialSol()
 
-        for i in range(vars_.size):
-            self._solver.setSolVal(partial_solution, vars_[i], hints[i])
+        for i in range(variables.size):
+            self._solver.setSolVal(partial_solution, variables[i], hints[i])
 
     def add_objective_term(
-        self, coeff: float, var: pyscipopt.Variable, overwrite: bool = True, name: str = None
+        self, coefficient: float, variable: pyscipopt.Variable, overwrite: bool = True, name: str = None
     ) -> None:
         if name is not None:
-            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
-        self._objective_term_count += 1 if coeff != 0 else 0
+        self._objective_term_count += 1 if coefficient != 0 else 0
 
         if overwrite:
             raise ValueError("ScipSolver.add_objective_term() is not supported with overwrite = true ")
 
-        self._objective += coeff * var
+        self._objective += coefficient * variable
 
     def add_multiple_objective_terms(
         self,
-        coeffs: npt.NDArray[float],
-        vars_: npt.NDArray[pyscipopt.Variable],
+        coefficients: npt.NDArray[float],
+        variables: npt.NDArray[pyscipopt.Variable],
         overwrite: bool = True,
         name: str = None,
     ) -> None:
         if name is not None:
-            self.add_named_objective(coeffs, vars_, overwrite, name)
+            self.add_named_objective(coefficients, variables, overwrite, name)
 
-        for coeff, var in zip(coeffs, vars_):
+        for coeff, var in zip(coefficients, variables):
             self._objective_term_count += 1 if coeff != 0 else 0
             if overwrite:
                 raise ValueError("ScipSolver.add_objective_term() is not supported with overwrite = true ")
@@ -223,8 +239,8 @@ class ScipSolver(
     def get_variable_count(self) -> int:
         return self._solver.getNVars()
 
-    def get_variable_count_of_type(self, var_type: VariableDataType) -> int:
-        return self.number_of_variables_of_type[var_type]
+    def get_variable_count_of_type(self, variable_domain: VariableDomain) -> int:
+        return self.number_of_variables_of_type[variable_domain]
 
     def get_constraint_count(self) -> int:
         return len(self._solver.getConss())

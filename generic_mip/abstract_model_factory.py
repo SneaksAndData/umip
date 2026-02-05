@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from adapta.logs import LoggerInterface
-from generic_mip.abstract_mip import AbstractOptimizationModel
+from generic_mip.abstract_mip import AbstractMipModel
 
 
-class AbstractOptimizationModelFactory(ABC):
-    """A generic optimization model factory."""
+class AbstractMipModelFactory(ABC):
+    """A generic MIP model factory."""
 
     def __init__(self, logger: LoggerInterface):
         """
@@ -20,9 +20,9 @@ class AbstractOptimizationModelFactory(ABC):
     def construct(
         self,
         **kwargs: Any,
-    ) -> AbstractOptimizationModel:
+    ) -> AbstractMipModel:
         """
-        Given the arguments, construct an optimization model.
+        Given the arguments, construct an MIP model.
         :param kwargs: The arguments to the construction.
-        :return: The constructed optimization model.
+        :return: The constructed MIP model.
         """

@@ -23,7 +23,7 @@ def logger() -> LoggerInterface:
     return logger
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def solver(logger, request):
     if request.param == "OrTools":
         return OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)

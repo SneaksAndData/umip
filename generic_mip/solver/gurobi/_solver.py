@@ -6,7 +6,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 
 
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
@@ -28,42 +28,46 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self._solver.setParam(gp.GRB.Param.LogToConsole, 0)
         self.status = None
 
-    def set_variable_hint(self, var: gp.Var, hint: float) -> None:
+    def set_variable_hint(self, variable: gp.Var, hint: float) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, vars_: npt.NDArray[gp.Var], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(self, variables: npt.NDArray[gp.Var], hints: npt.NDArray[float]) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coeffs: npt.NDArray[float], vars_: npt.NDArray[gp.Var], overwrite: bool = True, name: str = None
+        self, coefficients: npt.NDArray[float], variables: npt.NDArray[gp.Var], overwrite: bool = True, name: str = None
     ) -> None:
         if overwrite:
-            for var in vars_:
+            for var in variables:
                 self._objective.remove(var)
 
         if name is not None:
-            self.add_named_objective(coeffs, vars_, overwrite, name)
-        self._objective.addTerms(coeffs, vars_)
+            self.add_named_objective(coefficients, variables, overwrite, name)
+        self._objective.addTerms(coefficients, variables)
 
     def add_multiple_variables(
         self,
         names: npt.NDArray[str],
-        dtype: VariableDataType,
-        lb: float | None = None,
-        ub: float | None = None,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> npt.NDArray[gp.Var]:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
-        if dtype == VariableDataType.INT:
-            vars_ = self._solver.addMVar(shape=(len(names),), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.INTEGER, name=names)
-            self._integer_problem = True
-        elif dtype == VariableDataType.FLOAT:
+        if variable_domain == VariableDomain.INTEGER:
             vars_ = self._solver.addMVar(
-                shape=(len(names),), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=names
+                shape=(len(names),), lb=lower_bound, ub=upper_bound, obj=0.0, vtype=gp.GRB.INTEGER, name=names
             )
-        elif dtype == VariableDataType.BOOL:
-            vars_ = self._solver.addMVar(shape=(len(names),), lb=lb, ub=ub, obj=0.0, vtype=gp.GRB.BINARY, name=names)
+            self._integer_problem = True
+        elif variable_domain == VariableDomain.CONTINUOUS:
+            vars_ = self._solver.addMVar(
+                shape=(len(names),), lb=lower_bound, ub=upper_bound, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=names
+            )
+        elif variable_domain == VariableDomain.BINARY:
+            vars_ = self._solver.addMVar(
+                shape=(len(names),), lb=lower_bound, ub=upper_bound, obj=0.0, vtype=gp.GRB.BINARY, name=names
+            )
             self._integer_problem = True
         else:
             raise ValueError("Unsupported variable data type")
@@ -72,94 +76,100 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def add_multiple_constraints(
         self,
-        coeffs: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
-        vars_: npt.NDArray[npt.NDArray[gp.Var]] | npt.NDArray[gp.Var],
-        lb: npt.NDArray[float] | None = None,
-        ub: npt.NDArray[float] | None = None,
+        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        variables: npt.NDArray[npt.NDArray[gp.Var]] | npt.NDArray[gp.Var],
+        lower_bounds: npt.NDArray[float] | None = None,
+        upper_bounds: npt.NDArray[float] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
-        if coeffs.size == 0:
+        if coefficients.size == 0:
             return
 
-        if coeffs.ndim == 1 and not isinstance(coeffs[0], np.ndarray):
-            coeffs = np.asarray([coeffs]).T
-            vars_ = np.asarray([vars_]).T
+        if coefficients.ndim == 1 and not isinstance(coefficients[0], np.ndarray):
+            coefficients = np.asarray([coefficients]).T
+            variables = np.asarray([variables]).T
 
-        coeff_list = np.concatenate(coeffs)
-        var_vector = np.concatenate(vars_)
+        coeff_list = np.concatenate(coefficients)
+        var_vector = np.concatenate(variables)
 
-        matrix_rows = [j for i, coeff in enumerate(coeffs) for j in [i] * len(coeff)]
+        matrix_rows = [j for i, coeff in enumerate(coefficients) for j in [i] * len(coeff)]
         matrix_cols = list(range(len(var_vector)))
         matrix_data = coeff_list
 
         coeff_matrix = coo_matrix(
-            (matrix_data.astype(float), (matrix_rows, matrix_cols)), shape=(len(coeffs), len(var_vector))
+            (matrix_data.astype(float), (matrix_rows, matrix_cols)), shape=(len(coefficients), len(var_vector))
         )
         var_vector = var_vector.tolist()
 
-        if lb is not None:
-            self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.GREATER_EQUAL, lb.tolist())
-        if ub is not None:
-            self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.LESS_EQUAL, ub.tolist())
+        if lower_bounds is not None:
+            self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.GREATER_EQUAL, lower_bounds.tolist())
+        if upper_bounds is not None:
+            self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.LESS_EQUAL, upper_bounds.tolist())
 
     def add_constraint(
         self,
-        coeffs: npt.NDArray[float] | float,
-        vars_: npt.NDArray[gp.Var] | gp.Var,
-        lb: float | None = None,
-        ub: float | None = None,
+        coefficients: npt.NDArray[float] | float,
+        variables: npt.NDArray[gp.Var] | gp.Var,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         name: str | None = None,
     ) -> gp.Constr | None:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
 
         constr_expr = gp.LinExpr()
-        if isinstance(vars_, Iterable):
-            for coeff, var in zip(coeffs, vars_):
+        if isinstance(variables, Iterable):
+            for coeff, var in zip(coefficients, variables):
                 constr_expr += coeff * var
         else:
-            constr_expr = coeffs * vars_
+            constr_expr = coefficients * variables
 
-        if lb == ub:
-            return self._solver.addConstr(lb == constr_expr, name)
+        if lower_bound == upper_bound:
+            return self._solver.addConstr(lower_bound == constr_expr, name)
 
         constr_lb, constr_ub = None, None
-        if lb != -self.infinity():
-            constr_lb: gp.Constr = self._solver.addConstr(lb <= constr_expr, name)
-        if ub != self.infinity():
-            constr_ub: gp.Constr = self._solver.addConstr(constr_expr <= ub, name)
+        if lower_bound != -self.infinity():
+            constr_lb: gp.Constr = self._solver.addConstr(lower_bound <= constr_expr, name)
+        if upper_bound != self.infinity():
+            constr_ub: gp.Constr = self._solver.addConstr(constr_expr <= upper_bound, name)
 
         return constr_lb or constr_ub
 
     def add_variable(
-        self, name: str, dtype: VariableDataType, lb: float | None = None, ub: float | None = None
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ) -> gp.Var:
-        lb = lb if lb is not None else -self.infinity()
-        ub = ub if ub is not None else self.infinity()
-        if dtype == VariableDataType.INT:
-            var = self._solver.addVar(lb, ub, 0, gp.GRB.INTEGER, name, None)
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        if variable_domain == VariableDomain.INTEGER:
+            var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.INTEGER, name, None)
             self._integer_problem = True
-        elif dtype == VariableDataType.FLOAT:
-            var = self._solver.addVar(lb, ub, 0, gp.GRB.CONTINUOUS, name, None)
-        elif dtype == VariableDataType.BOOL:
-            var = self._solver.addVar(lb, ub, 0, gp.GRB.BINARY, name, None)
+        elif variable_domain == VariableDomain.CONTINUOUS:
+            var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.CONTINUOUS, name, None)
+        elif variable_domain == VariableDomain.BINARY:
+            var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.BINARY, name, None)
             self._integer_problem = True
         else:
-            raise ValueError("Unsupported variable data type")
+            raise ValueError("Unsupported variable domain")
         return var
 
     def get_variable_value(self, var: gp.Var) -> float:
         return var.x
 
-    def add_objective_term(self, coeff: float, var: gp.Var, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(
+        self, coefficient: float, variable: gp.Var, overwrite: bool = True, name: str = None
+    ) -> None:
         if overwrite:
             # Might have bad performance?
-            self._objective.remove(var)
+            self._objective.remove(variable)
 
         if name is not None:
-            self.add_named_objective(np.array([coeff]), np.array([var]), overwrite, name)
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
-        self._objective.addTerms([coeff], [var])
+        self._objective.addTerms([coefficient], [variable])
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE)
@@ -227,15 +237,15 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
     def get_variable_count(self):
         return len(self._solver.getVars())
 
-    def get_variable_count_of_type(self, var_type: VariableDataType):
-        if var_type == VariableDataType.FLOAT:
+    def get_variable_count_of_type(self, variable_domain: VariableDomain):
+        if variable_domain == VariableDomain.CONTINUOUS:
             return self._solver.NumVars - self._solver.NumIntVars
-        if var_type == VariableDataType.INT:
+        if variable_domain == VariableDomain.INTEGER:
             return self._solver.NumIntVars - self._solver.NumBinVars
-        if var_type == VariableDataType.BOOL:
+        if variable_domain == VariableDomain.BINARY:
             return self._solver.NumBinVars
 
-        raise ValueError(f"Unsupported variable data type: {var_type}")
+        raise ValueError(f"Unsupported variable data type: {variable_domain}")
 
     def get_objective_terms_count(self):
         return self._objective.size()

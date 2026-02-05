@@ -1,13 +1,11 @@
 """Abstract definition of a constraint builder."""
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
+from generic_mip.abstract_dataclasses import AbstractInternalData
 
-T = TypeVar("T")
 
-
-class AbstractConstraintBuilder(ABC, Generic[T]):
+class AbstractConstraintBuilder(ABC):
     """A constraint builder has the responsibility of building one or more constraints."""
 
     def __init__(self, logger: LoggerInterface):
@@ -18,7 +16,7 @@ class AbstractConstraintBuilder(ABC, Generic[T]):
         self._logger = logger
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> None:
         """
         Builds the constraints on the given model and the given data.
 

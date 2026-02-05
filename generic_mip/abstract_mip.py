@@ -1,7 +1,8 @@
 """Abstract definition of a MIP model."""
 import time
 import sys
-from typing import TypeVar, Generic, Any
+from abc import abstractmethod, ABC
+from typing import Any
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
@@ -9,20 +10,17 @@ from adapta.metrics import MetricsProvider
 from adapta.metrics.providers.void_provider import VoidMetricsProvider
 from adapta.utils.decorators import run_time_metrics_async
 
-from generic_mip.enums.variable_data_type import VariableDataType
+from generic_mip.enums.variable_domain import VariableDomain
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
 from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder
 from generic_mip.abstract_obj_builder import AbstractObjectiveBuilder
 from generic_mip.abstract_data_prep import AbstractDataPreparator
-from generic_mip.abstract_model import AbstractOptimizationModel
 from generic_mip.exception import OptimizationException, AbnormalException, InfeasibleException, UnboundedException
-
-T = TypeVar("T")
-U = TypeVar("U")
+from generic_mip.abstract_dataclasses import AbstractInputData, AbstractOutputData, AbstractInternalData
 
 
-class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
+class AbstractMipModel(ABC):
     """
     The MIP model contains builders for variables, constraints and objectives as well as the data preparator.
     The model orchestrates the building and solving processes.
@@ -31,10 +29,10 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
     def __init__(
         self,
         solver: AbstractOptimizationSolver,
-        data_preparator: AbstractDataPreparator[T, U],
-        constraint_builders: list[AbstractConstraintBuilder[U]],
-        variable_builders: list[AbstractDecisionVariableBuilder[U]],
-        objective_builders: list[AbstractObjectiveBuilder[U]],
+        data_preparator: AbstractDataPreparator,
+        constraint_builders: list[AbstractConstraintBuilder],
+        variable_builders: list[AbstractDecisionVariableBuilder],
+        objective_builders: list[AbstractObjectiveBuilder],
         logger: LoggerInterface = SemanticLogger().add_log_source(
             log_source_name="AbstractMipModel",
             min_log_level=LogLevel.INFO,
@@ -58,17 +56,22 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         self._constraint_builders = constraint_builders
         self._data_preparator = data_preparator
         self._solver = solver
-        self._data = None
+        self._internal_data: AbstractInternalData | None = None
+        self._output_data: AbstractOutputData | None = None
         self._built = False
         self._solved = False
         self._logger = logger
         self._metrics_provider = metrics_provider
         self._objective_builder_names = []
 
-    def build(self, **input_data: T) -> None:
+    def build(self, input_data: AbstractInputData) -> None:
+        """
+        Builds the model using the given variable, constraint and objective builders.
+        :param input_data: Input data to the variables, constraints and objectives.
+        """
         start_time = time.time()
 
-        self._data = self._data_preparator.prepare(input_data)
+        self._internal_data = self._data_preparator.prepare(input_data=input_data)
 
         self._logger.info(template="Spent {time}s preparing data", time=time.time() - start_time)
         start_time = time.time()
@@ -100,7 +103,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
     def _build_variables(self):
         for variable_builder in self._variable_builders:
-            self._data = variable_builder.build(solver=self._solver, data=self._data)
+            self._internal_data = variable_builder.build(solver=self._solver, data=self._internal_data)
 
     def _log_variables(self):
         self._logger.info(
@@ -108,29 +111,34 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         )
         self._logger.info(
             template="Number of continuous variables: {number_of_continuous_variables}",
-            number_of_continuous_variables=self._solver.get_variable_count_of_type(VariableDataType.FLOAT),
+            number_of_continuous_variables=self._solver.get_variable_count_of_type(VariableDomain.CONTINUOUS),
         )
         self._logger.info(
             template="Number of binary variables: {number_of_binary_variables}",
-            number_of_binary_variables=self._solver.get_variable_count_of_type(VariableDataType.BOOL),
+            number_of_binary_variables=self._solver.get_variable_count_of_type(VariableDomain.BINARY),
         )
         self._logger.info(
             template="Number of integer variables: {number_of_integer_variables}",
-            number_of_integer_variables=self._solver.get_variable_count_of_type(VariableDataType.INT),
+            number_of_integer_variables=self._solver.get_variable_count_of_type(VariableDomain.INTEGER),
         )
 
     def _build_constraints(self):
         for constraint_builder in self._constraint_builders:
-            constraint_builder.build(solver=self._solver, data=self._data)
+            constraint_builder.build(solver=self._solver, data=self._internal_data)
 
     def _build_objectives(self):
         for objective_builder in self._objective_builders:
-            objective_builder.build(solver=self._solver, data=self._data)
+            objective_builder.build(solver=self._solver, data=self._internal_data)
             if objective_builder.objective_name in self._objective_builder_names:
                 raise ValueError(f"Duplicate objective builder name found: {objective_builder.objective_name}")
             self._objective_builder_names.append(objective_builder.objective_name)
 
-    async def build_async(self, **input_data: T) -> None:
+    async def build_async(self, input_data: AbstractInputData) -> None:
+        """
+        Async version of self.build.
+        :param input_data: Input data to the variables, constraints and objectives.
+        """
+
         @run_time_metrics_async(
             metric_name="mip_data_preparation",
             on_finish_message_template="Finished preparing data for {model} in {elapsed:.4f}s seconds",
@@ -139,7 +147,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             },
         )
         async def _prepare_async(**_):
-            self._data = self._data_preparator.prepare(input_data)
+            self._internal_data = self._data_preparator.prepare(input_data=input_data)
 
         @run_time_metrics_async(
             metric_name="mip_build_variables",
@@ -187,7 +195,12 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         self._built = True
 
-    def solve(self, time_limit: float | None = None, redirect_solver_log: bool = True, **kwargs: Any) -> Any:
+    def solve(self, time_limit: float | None = None, redirect_solver_log: bool = True) -> None:
+        """
+        Solves the model and returns the result of the optimization.
+        :param time_limit: The time limit of the optimization in seconds.
+        :param redirect_solver_log: Whether to redirect stdout to a temporary file
+        """
         if not self._built:
             raise ValueError("Model must be built before calling .solve()")
 
@@ -204,8 +217,9 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         if self._solver.is_optimal() or self._solver.is_feasible():
             with self._logger.redirect(log_level=LogLevel.INFO):
                 for variable_builder in self._variable_builders:
-                    self._data = variable_builder.unpack(solver=self._solver, data=self._data)
+                    self._internal_data = variable_builder.unpack(solver=self._solver, data=self._internal_data)
             return None
+
         if self._solver.is_infeasible():
             raise InfeasibleException("The model is infeasible.")
         if self._solver.is_unbounded():
@@ -214,9 +228,14 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             raise AbnormalException("The optimization failed with status ABNORMAL.")
         raise OptimizationException(f"Ended with status code {status}.")
 
-    async def solve_async(
-        self, time_limit: float | None = None, redirect_solver_log: bool = True, **kwargs: any
-    ) -> any:
+    async def solve_async(self, time_limit: float | None = None, redirect_solver_log: bool = True) -> None:
+        """
+        Async version of self.solve.
+        :param time_limit: The time limit of the optimization in seconds.
+        :param redirect_solver_log: Whether to redirect stdout to a temporary file
+        :return: (optimization status code, boolean indicating whether the model has been solved)
+        """
+
         @run_time_metrics_async(
             metric_name="mip_solve",
             on_finish_message_template="Finished solving {model} in {elapsed:.4f}s seconds",
@@ -236,7 +255,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             if self._solver.is_optimal() or self._solver.is_feasible():
                 async with self._logger.redirect_async(log_level=LogLevel.INFO):
                     for variable_builder in self._variable_builders:
-                        self._data = variable_builder.unpack(solver=self._solver, data=self._data)
+                        self._internal_data = variable_builder.unpack(solver=self._solver, data=self._internal_data)
 
                 return status, True
 
@@ -257,6 +276,10 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
             raise OptimizationException(f"Ended with status code {result_status_code}.")
 
     def objective_value(self) -> float:
+        """
+        Get the objective value of the optimization.
+        :return: The objective value.
+        """
         if not self._solved:
             raise ValueError("Model must be solved before calling .objective_value()")
 
@@ -281,8 +304,8 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
     def get_analytics(self, granularity: str, analytics_data: Any | None = None) -> dict[str, Any]:
         """
-        Get analytics for the specified granularity from the objective builders. if analytics_data is not provided,
-        the model must have been solved already and must contain the necessary data in self._data.
+        Get analytics for the specified granularity from the objective builders. If analytics_data is not provided,
+        the model must have been solved already and must contain the necessary data in self._output_data.
 
         Returns a dictionary where each key is an objective builder name and the value is its analytics.
         """
@@ -291,7 +314,7 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
 
         analytics_results = {}
 
-        analytics_data = analytics_data if analytics_data is not None else self._data
+        analytics_data = analytics_data if analytics_data is not None else self._output_data
 
         for objective_builder in self._objective_builders:
             if granularity in objective_builder.get_supported_analytics_granularities():
@@ -336,10 +359,20 @@ class AbstractMipModel(AbstractOptimizationModel, Generic[T]):
         """
         return self._solved
 
-    def get_solved_data(self) -> dict[str, U]:
+    def get_output_data(self) -> AbstractOutputData:
         """
         Get the data after solving the model.
         """
         if not self._solved:
-            raise ValueError("Model must be solved before calling .get_solved_data()")
-        return self._data
+            raise ValueError("Model must be solved before calling .get_output_data()")
+
+        if not self._output_data:
+            self._output_data = self._convert_internal_to_output_data(internal_data=self._internal_data)
+
+        return self._output_data
+
+    @abstractmethod
+    def _convert_internal_to_output_data(self, internal_data: AbstractInternalData) -> AbstractOutputData:
+        """
+        Converts the internal data post optimization to output data.
+        """

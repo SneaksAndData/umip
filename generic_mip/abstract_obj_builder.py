@@ -2,14 +2,13 @@
 import base64
 import os
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Any
+from typing import Any
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
+from generic_mip.abstract_dataclasses import AbstractInternalData
 
-T = TypeVar("T")
 
-
-class AbstractObjectiveBuilder(ABC, Generic[T]):
+class AbstractObjectiveBuilder(ABC):
     """An objective builder has the responsibility of building one or more objective terms."""
 
     def __init__(self, logger: LoggerInterface):
@@ -23,13 +22,12 @@ class AbstractObjectiveBuilder(ABC, Generic[T]):
         self._cached__analytics_granularity_results: dict[str, Any] = {}
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: dict[str, T]) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> None:
         """
         Builds the objective terms on the given model and the given data.
 
         :param solver: The solver to use to build the objective terms.
         :param data: The data (e.g. dataframes) providing variables and parameters for the objective terms.
-        :return:
         """
 
     def add_analytics_granularity(self, granularity_name: str, analytics_calculator: callable) -> None:
