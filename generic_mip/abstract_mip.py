@@ -314,7 +314,7 @@ class AbstractMipModel(ABC):
 
         analytics_results = {}
 
-        analytics_data = analytics_data if analytics_data is not None else self._output_data
+        analytics_data = analytics_data if analytics_data is not None else self.get_output_data()
 
         for objective_builder in self._objective_builders:
             if granularity in objective_builder.get_supported_analytics_granularities():
