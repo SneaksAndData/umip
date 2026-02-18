@@ -359,7 +359,7 @@ class AbstractMipModel(ABC):
         """
         return self._solved
 
-    def get_output_data(self) -> AbstractOutputData:
+    def get_output_data(self, **kwargs) -> AbstractOutputData:
         """
         Get the data after solving the model.
         """
@@ -367,12 +367,12 @@ class AbstractMipModel(ABC):
             raise ValueError("Model must be solved before calling .get_output_data()")
 
         if not self._output_data:
-            self._output_data = self._convert_internal_to_output_data(internal_data=self._internal_data)
+            self._output_data = self._convert_internal_to_output_data(internal_data=self._internal_data, **kwargs)
 
         return self._output_data
 
     @abstractmethod
-    def _convert_internal_to_output_data(self, internal_data: AbstractInternalData) -> AbstractOutputData:
+    def _convert_internal_to_output_data(self, internal_data: AbstractInternalData, **kwargs) -> AbstractOutputData:
         """
         Converts the internal data post optimization to output data.
         """
