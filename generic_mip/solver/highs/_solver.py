@@ -29,7 +29,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self.status: highspy.HighsModelStatus | None = None
         self._solution: list[float] | None = None
 
-    def set_variable_hint(self, variable: str, hint: float) -> None:
+    def set_variable_hint(self, variable: str, hint: float | int | bool) -> None:
         raise NotImplementedError()
 
     def _get_var_by_name(self, name: str) -> int:
@@ -57,12 +57,19 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def _get_constraint_by_name(self, name: str) -> int:
         return self._solver.getRowByName(name)[1]
 
-    def set_multiple_variable_hints(self, variables: npt.NDArray[str], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[str], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+    ) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coefficients: npt.NDArray[float], variables: npt.NDArray[str], overwrite: bool = True, name: str = None
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[str],
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
+        coefficients = self._to_float(value=coefficients)
         if name is not None:
             self.add_named_objective(coefficients, self._get_vars_by_names(variables), overwrite, name)
 
@@ -73,11 +80,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[str]:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         first_var_number = self._var_count
         self._var_count += len(names)
@@ -103,19 +110,27 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_multiple_constraints(
         self,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[str]] | npt.NDArray[str],
-        lower_bounds: npt.NDArray[float] | None = None,
-        upper_bounds: npt.NDArray[float] | None = None,
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         if lower_bounds is None and upper_bounds is None:
             raise ValueError("Either lb or ub must be specified")
 
+        coefficients = self._to_float(value=coefficients)
+
         if lower_bounds is None:
+            upper_bounds = self._to_float(value=upper_bounds)
             lower_bounds = np.full(len(upper_bounds), -self.infinity())
-        if upper_bounds is None:
+        elif upper_bounds is None:
+            lower_bounds = self._to_float(value=lower_bounds)
             upper_bounds = np.full(len(lower_bounds), self.infinity())
+        else:
+            lower_bounds = self._to_float(value=lower_bounds)
+            upper_bounds = self._to_float(value=upper_bounds)
 
         if len(lower_bounds) == 0:
             return
@@ -145,14 +160,15 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[str] | str,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> str | None:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        coefficients = self._to_float(value=coefficients)
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         constr_number = self._constr_count
         self._constr_count += 1
@@ -187,11 +203,11 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> str:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         var_number = self._var_count
         self._var_count += 1
@@ -218,7 +234,10 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
     def get_variable_value(self, var: str) -> float:
         return self._solution[self._solver.getColByName(var)[1]]
 
-    def add_objective_term(self, coefficient: float, variable: str, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(
+        self, coefficient: float | int | bool, variable: str, overwrite: bool = True, name: str = None
+    ) -> None:
+        coefficient = self._to_float(value=coefficient)
         _, old_coeff, _, _, _ = self._solver.getCol(self._get_var_by_name(variable))  # status, cost, lb, ub, index
         if name is not None:
             self.add_named_objective(
@@ -345,7 +364,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             return 0
         return abs(bound - objective_value) / abs(objective_value)
 
-    def add_objective_offset(self, offset: float, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
+        offset = self._to_float(value=offset)
         if overwrite:
             self._solver.changeObjectiveOffset(offset)
         else:

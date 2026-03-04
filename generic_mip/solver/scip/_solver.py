@@ -25,14 +25,15 @@ class ScipSolver(
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[pyscipopt.Variable] | pyscipopt.Variable,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> pyscipopt.Constraint | None:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        coefficients = self._to_float(value=coefficients)
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         name = name if name is not None else ""
 
         if isinstance(coefficients, Iterable):
@@ -53,18 +54,21 @@ class ScipSolver(
 
     def add_multiple_constraints(
         self,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[pyscipopt.Variable]] | npt.NDArray[pyscipopt.Variable],
-        lower_bounds: npt.NDArray[float] | None = None,
-        upper_bounds: npt.NDArray[float] | None = None,
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         if coefficients.size == 0:
             return
 
+        coefficients = self._to_float(value=coefficients)
+
         for i, coeff in enumerate(coefficients):
-            lowerbound = lower_bounds[i] if lower_bounds is not None else None
-            upperbound = upper_bounds[i] if upper_bounds is not None else None
+            lowerbound = self._to_float(value=lower_bounds[i]) if lower_bounds is not None else None
+            upperbound = self._to_float(value=upper_bounds[i]) if upper_bounds is not None else None
             name = names[i] if names is not None else None
             self.add_constraint(coeff, variables[i], lower_bound=lowerbound, upper_bound=upperbound, name=name)
 
@@ -79,11 +83,11 @@ class ScipSolver(
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> pyscipopt.Variable:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         self.number_of_variables_of_type[variable_domain] += 1
 
         if variable_domain == VariableDomain.INTEGER:
@@ -103,8 +107,8 @@ class ScipSolver(
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[pyscipopt.Variable]:
         return np.array(
             [
@@ -118,21 +122,24 @@ class ScipSolver(
             ]
         )
 
-    def set_variable_hint(self, variable: pyscipopt.Variable, hint: float) -> None:
+    def set_variable_hint(self, variable: pyscipopt.Variable, hint: float | int | bool) -> None:
+        hint = self._to_float(value=hint)
         partial_solution = self._solver.createPartialSol()
         self._solver.setSolVal(partial_solution, variable, hint)
 
     def set_multiple_variable_hints(
-        self, variables: npt.NDArray[pyscipopt.Variable], hints: npt.NDArray[float]
+        self, variables: npt.NDArray[pyscipopt.Variable], hints: npt.NDArray[np.floating | np.integer | np.bool_]
     ) -> None:
+        hints = self._to_float(value=hints)
         partial_solution = self._solver.createPartialSol()
 
         for i in range(variables.size):
             self._solver.setSolVal(partial_solution, variables[i], hints[i])
 
     def add_objective_term(
-        self, coefficient: float, variable: pyscipopt.Variable, overwrite: bool = True, name: str = None
+        self, coefficient: float | int | bool, variable: pyscipopt.Variable, overwrite: bool = True, name: str = None
     ) -> None:
+        coefficient = self._to_float(value=coefficient)
         if name is not None:
             self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
@@ -145,11 +152,12 @@ class ScipSolver(
 
     def add_multiple_objective_terms(
         self,
-        coefficients: npt.NDArray[float],
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[pyscipopt.Variable],
         overwrite: bool = True,
         name: str = None,
     ) -> None:
+        coefficients = self._to_float(value=coefficients)
         if name is not None:
             self.add_named_objective(coefficients, variables, overwrite, name)
 
@@ -254,7 +262,8 @@ class ScipSolver(
     def get_gap(self) -> float:
         return self._solver.getGap()
 
-    def add_objective_offset(self, offset: float, overwrite: bool = True) -> None:
+    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True) -> None:
+        offset = self._to_float(value=offset)
         if overwrite:
             offset -= self._solver.getObjoffset()
 

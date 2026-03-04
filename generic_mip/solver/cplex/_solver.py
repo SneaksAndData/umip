@@ -34,15 +34,22 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self.status = None
         self.solution = None
 
-    def set_variable_hint(self, variable: Var, hint: float) -> None:
+    def set_variable_hint(self, variable: Var, hint: float | int | bool) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, variables: npt.NDArray[Var], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[Var], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+    ) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coefficients: npt.NDArray[float], variables: npt.NDArray[Var], overwrite: bool = True, name: str = None
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[Var],
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
+        coefficients = self._to_float(value=coefficients)
         if name is not None:
             self.add_named_objective(coefficients, variables, overwrite, name)
 
@@ -56,11 +63,11 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[Var]:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         count = len(names)
 
         if variable_domain == VariableDomain.INTEGER:
@@ -77,32 +84,38 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
 
     def add_multiple_constraints(
         self,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[Var]] | npt.NDArray[Var],
-        lower_bounds: npt.NDArray[float] | None = None,
-        upper_bounds: npt.NDArray[float] | None = None,
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: str | None = None,
     ) -> None:
         if coefficients.size == 0:
             return
 
+        coefficients = self._to_float(value=coefficients)
+
         if lower_bounds is not None:
+            lower_bounds = self._to_float(value=lower_bounds)
             for i, coeff in enumerate(coefficients):
                 self._solver.add_constraint(self._solver.dot(variables[i], coeff) >= lower_bounds[i])
         if upper_bounds is not None:
+            upper_bounds = self._to_float(value=upper_bounds)
             for i, coeff in enumerate(coefficients):
                 self._solver.add_constraint(self._solver.dot(variables[i], coeff) <= upper_bounds[i])
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[Var] | Var,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> int | None:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        coefficients = self._to_float(value=coefficients)
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         constr_expr = self._solver.linear_expr()
         if isinstance(variables, Iterable):
@@ -128,11 +141,11 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> int:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         if variable_domain == VariableDomain.INTEGER:
             var = self._solver.integer_var(lower_bound, upper_bound, name)
             self._integer_problem = True
@@ -148,7 +161,10 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
     def get_variable_value(self, var: Var) -> float:
         return self.solution.get_value(var)
 
-    def add_objective_term(self, coefficient: float, variable: Var, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(
+        self, coefficient: float | int | bool, variable: Var, overwrite: bool = True, name: str = None
+    ) -> None:
+        coefficient = self._to_float(value=coefficient)
         if name is not None:
             self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
@@ -247,7 +263,8 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
             return self.infinity()
         return self._solver.solve_details.mip_relative_gap
 
-    def add_objective_offset(self, offset: float, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
+        offset = self._to_float(value=offset)
         if overwrite:
             self._objective.constant = 0
         self._objective.constant += offset

@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 
+import numpy as np
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.enums.constraint_type import ConstraintType
@@ -29,13 +30,31 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         self._named_objectives = {}
         self._integer_problem = False
 
+    @staticmethod
+    def _to_float(
+        value: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+    ) -> float | npt.NDArray[float]:
+        """
+        Converts a value to float or numpy array to float array.
+        """
+        if isinstance(value, (int, float, bool, np.number, np.bool_)):
+            return float(value)
+
+        if isinstance(value, np.ndarray):
+            try:
+                return np.asarray(value, dtype=float)
+            except (ValueError, TypeError) as e:
+                raise TypeError(f"Cannot convert numpy array of dtype {value.dtype} to float.") from e
+
+        raise TypeError(f"Type {type(value).__name__} is not supported for conversion to float.")
+
     @abstractmethod
     def add_constraint(
         self,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[VT] | VT,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> CT | None:
         """
@@ -65,10 +84,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_multiple_constraints(
         self,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
-        lower_bounds: npt.NDArray[float] | None = None,
-        upper_bounds: npt.NDArray[float] | None = None,
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         """
@@ -97,9 +117,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def add_constraint_of_type(
         self,
         constraint_type: ConstraintType,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[VT] | VT,
-        right_hand_side: float | None = None,
+        right_hand_side: float | int | bool | None = None,
         name: str | None = None,
     ) -> CT | None:
         """
@@ -137,9 +157,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def add_multiple_constraints_of_type(
         self,
         constraint_type: ConstraintType,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
-        right_hand_sides: npt.NDArray[float] | None = None,
+        right_hand_sides: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         """
@@ -184,8 +205,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> VT:
         """
         Adds variable to the model.
@@ -202,8 +223,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
@@ -216,7 +237,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def set_variable_hint(self, variable: VT, hint: float) -> None:
+    def set_variable_hint(self, variable: VT, hint: float | int | bool) -> None:
         """
         Adds solution hint to decision variable.
 
@@ -225,7 +246,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def set_multiple_variable_hints(self, variables: npt.NDArray[VT], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[VT], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+    ) -> None:
         """
         Adds solution hints to multiple decision variables. Number of variables and hints must be identical.
 
@@ -234,7 +257,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_objective_term(self, coefficient: float, variable: VT, overwrite: bool = True, name: str = None) -> None:
+    def add_objective_term(
+        self, coefficient: float | int | bool, variable: VT, overwrite: bool = True, name: str = None
+    ) -> None:
         """
         Adds a single objective term.
 
@@ -246,7 +271,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @abstractmethod
     def add_multiple_objective_terms(
-        self, coefficients: npt.NDArray[float], variables: npt.NDArray[VT], overwrite: bool = True, name: str = None
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[VT],
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
         """
         Adds multiple objective terms at once: c_1x_1 + c_2x_2 + ...
@@ -260,7 +289,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     def add_named_objective(
-        self, coefficients: npt.NDArray[float], variables: npt.NDArray[VT], overwrite: bool, name: str
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[VT],
+        overwrite: bool,
+        name: str,
     ) -> None:
         """
         Add/update the coefficients and variables of a named objective term
@@ -276,7 +309,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             raise ValueError("Add_named_objective is not supported with overwrite = true")
 
         elements_to_add = [
-            VariableWithObjectiveCoefficient(variables[i], coefficients[i]) for i in range(len(coefficients))
+            VariableWithObjectiveCoefficient(variables[i], self._to_float(coefficients[i]))
+            for i in range(len(coefficients))
         ]
         if name in self._named_objectives:
             self._named_objectives[name].extend(elements_to_add)
@@ -453,7 +487,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_objective_offset(self, offset: float, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
         """
         Set the objective offset.
         :param offset: The offset to set.

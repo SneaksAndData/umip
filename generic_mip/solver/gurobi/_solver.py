@@ -28,15 +28,22 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self._solver.setParam(gp.GRB.Param.LogToConsole, 0)
         self.status = None
 
-    def set_variable_hint(self, variable: gp.Var, hint: float) -> None:
+    def set_variable_hint(self, variable: gp.Var, hint: float | int | bool) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, variables: npt.NDArray[gp.Var], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[gp.Var], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+    ) -> None:
         raise NotImplementedError()
 
     def add_multiple_objective_terms(
-        self, coefficients: npt.NDArray[float], variables: npt.NDArray[gp.Var], overwrite: bool = True, name: str = None
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[gp.Var],
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
+        coefficients = self._to_float(value=coefficients)
         if overwrite:
             for var in variables:
                 self._objective.remove(var)
@@ -49,11 +56,11 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[gp.Var]:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         if variable_domain == VariableDomain.INTEGER:
             vars_ = self._solver.addMVar(
@@ -76,14 +83,16 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
     def add_multiple_constraints(
         self,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[gp.Var]] | npt.NDArray[gp.Var],
-        lower_bounds: npt.NDArray[float] | None = None,
-        upper_bounds: npt.NDArray[float] | None = None,
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         if coefficients.size == 0:
             return
+
+        coefficients = self._to_float(value=coefficients)
 
         if coefficients.ndim == 1 and not isinstance(coefficients[0], np.ndarray):
             coefficients = np.asarray([coefficients]).T
@@ -102,20 +111,23 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         var_vector = var_vector.tolist()
 
         if lower_bounds is not None:
+            lower_bounds = self._to_float(value=lower_bounds)
             self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.GREATER_EQUAL, lower_bounds.tolist())
         if upper_bounds is not None:
+            upper_bounds = self._to_float(value=upper_bounds)
             self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.LESS_EQUAL, upper_bounds.tolist())
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[gp.Var] | gp.Var,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> gp.Constr | None:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        coefficients = self._to_float(value=coefficients)
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         constr_expr = gp.LinExpr()
         if isinstance(variables, Iterable):
@@ -139,11 +151,11 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> gp.Var:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         if variable_domain == VariableDomain.INTEGER:
             var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.INTEGER, name, None)
             self._integer_problem = True
@@ -160,8 +172,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         return var.x
 
     def add_objective_term(
-        self, coefficient: float, variable: gp.Var, overwrite: bool = True, name: str = None
+        self, coefficient: float | int | bool, variable: gp.Var, overwrite: bool = True, name: str = None
     ) -> None:
+        coefficient = self._to_float(value=coefficient)
         if overwrite:
             # Might have bad performance?
             self._objective.remove(variable)
@@ -262,7 +275,8 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
             return 0
         return abs(bound - objective_value) / abs(objective_value)
 
-    def add_objective_offset(self, offset: float, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
+        offset = self._to_float(value=offset)
         if overwrite:
             self._objective -= self._objective.getConstant()
         self._objective += offset

@@ -28,22 +28,28 @@ class LocalSolver(
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[float] | float,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
         variables: npt.NDArray[ls.LSExpression] | ls.LSExpression,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> ls.LSExpression | None:
         if lower_bound is None and upper_bound is None:
             return None
+
+        coefficients = self._to_float(value=coefficients)
 
         expr = self._model.sum(coefficients * variables)
 
         if name is not None:
             expr.set_name(name)
 
-        constr_lb = self._model.add_constraint(expr >= lower_bound) if lower_bound is not None else None
-        constr_ub = self._model.add_constraint(expr <= upper_bound) if upper_bound is not None else None
+        constr_lb = (
+            self._model.add_constraint(expr >= self._to_float(value=lower_bound)) if lower_bound is not None else None
+        )
+        constr_ub = (
+            self._model.add_constraint(expr <= self._to_float(value=upper_bound)) if upper_bound is not None else None
+        )
 
         return constr_lb or constr_ub
 
@@ -52,14 +58,19 @@ class LocalSolver(
 
     def add_multiple_constraints(
         self,
-        coefficients: npt.NDArray[npt.NDArray[float]] | npt.NDArray[float],
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[ls.LSExpression]] | npt.NDArray[ls.LSExpression],
-        lower_bounds: npt.NDArray[float] | None = None,
-        upper_bounds: npt.NDArray[float] | None = None,
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         if coefficients.size == 0:
             return
+
+        coefficients = self._to_float(value=coefficients)
+        lower_bounds = self._to_float(value=lower_bounds) if lower_bounds is not None else None
+        upper_bounds = self._to_float(value=upper_bounds) if upper_bounds is not None else None
 
         if names is not None and len(names) != len(coefficients):
             raise ValueError("The number of names must match the number of constraints")
@@ -78,11 +89,11 @@ class LocalSolver(
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> ls.LSExpression:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         self.number_of_variables += 1
         self.number_of_variables_of_type[variable_domain] += 1
         if variable_domain == VariableDomain.INTEGER:
@@ -105,11 +116,11 @@ class LocalSolver(
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[ls.LSExpression]:
-        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
-        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         return np.array(  # pylint: disable=duplicate-code
             [
                 self.add_variable(
@@ -122,15 +133,18 @@ class LocalSolver(
             ]
         )
 
-    def set_variable_hint(self, variable: ls.LSExpression, hint: float) -> None:
+    def set_variable_hint(self, variable: ls.LSExpression, hint: float | int | bool) -> None:
         raise NotImplementedError()
 
-    def set_multiple_variable_hints(self, variables: npt.NDArray[ls.LSExpression], hints: npt.NDArray[float]) -> None:
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[ls.LSExpression], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+    ) -> None:
         raise NotImplementedError()
 
     def add_objective_term(
-        self, coefficient: float, variable: ls.LSExpression, overwrite: bool = True, name: str = None
+        self, coefficient: float | int | bool, variable: ls.LSExpression, overwrite: bool = True, name: str = None
     ) -> None:
+        coefficient = self._to_float(value=coefficient)
         if name is not None:
             self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
@@ -142,11 +156,12 @@ class LocalSolver(
 
     def add_multiple_objective_terms(
         self,
-        coefficients: npt.NDArray[float],
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[ls.LSExpression],
         overwrite: bool = True,
         name: str = None,
     ) -> None:
+        coefficients = self._to_float(value=coefficients)
         if name is not None:
             self.add_named_objective(coefficients, variables, overwrite, name)
 
