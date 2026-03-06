@@ -62,7 +62,13 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
     solver.add_multiple_constraints(
         lower_bounds=np.array([0.0, 0.0, 0.0]),
         upper_bounds=None,
-        coefficients=np.array([[-1.0, 1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, -1.0]]),
+        coefficients=np.array(
+            [
+                np.array([-1.0, 1.0, 1.0]),
+                np.array([1.0, -1.0, 1.0]),
+                np.array([1.0, 1.0, -1.0]),
+            ]
+        ),
         variables=np.array([vars_] * 3),
         names=np.array(["c1", "c2", "c3"]),
     )

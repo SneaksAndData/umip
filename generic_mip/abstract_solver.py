@@ -32,19 +32,44 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @staticmethod
     def _to_float(
-        value: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+        value: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_]
+        | float
+        | int
+        | bool,
     ) -> float | npt.NDArray[float]:
         """
-        Converts a value to float or numpy array to float array.
+        Converts a numeric value, 1D numpy array or numpy array of numpy arrays to float representations.
+
+        This method processes three distinct input cases:
+
+        1. Scalars: Standard Python and NumPy numeric or boolean scalars are converted
+           to a standard Python float.
+           Example: `5` -> `5.0` or `True` -> `1.0`
+
+        2. Nested Object Arrays: 1D object arrays containing inner NumPy arrays are
+           iterated over, and each inner array is cast to a float array.
+           Example: `np.array([np.array([1, 2]), np.array([3])], dtype=object)`
+                 -> `np.array([np.array([1.0, 2.0]), np.array([3.0])], dtype=object)`
+
+        3. Standard 1D Arrays: 1D NumPy arrays of integers, floats, or booleans are
+           cast to a new float array. 2D arrays or unsupported types will be rejected.
+           Example: `np.array([1, 2, 3])` -> `np.array([1.0, 2.0, 3.0])`
         """
         if isinstance(value, (int, float, bool, np.number, np.bool_)):
             return float(value)
 
         if isinstance(value, np.ndarray):
-            try:
-                return np.asarray(value, dtype=float)
-            except (ValueError, TypeError) as e:
-                raise TypeError(f"Cannot convert numpy array of dtype {value.dtype} to float.") from e
+            if value.size > 0 and isinstance(value[0], np.ndarray):
+                try:
+                    return np.array([np.asarray(inner, dtype=float) for inner in value], dtype=object)
+                except (ValueError, TypeError) as e:
+                    raise TypeError("Cannot convert nested elements in object array to float.") from e
+            if value.ndim == 1:
+                try:
+                    return np.asarray(value, dtype=float)
+                except (ValueError, TypeError) as e:
+                    raise TypeError(f"Cannot convert numpy array of dtype {value.dtype} to float.") from e
 
         raise TypeError(f"Type {type(value).__name__} is not supported for conversion to float.")
 

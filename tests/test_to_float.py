@@ -116,9 +116,19 @@ class TestOutput:
             id="19) Convert single element integer array to float array",
         ),
         pytest.param(
-            TestInput(value=np.array([[1, 2], [3, 4]], dtype=int)),
-            TestOutput(expected=np.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)),
-            id="20) Convert 2D integer array to float array",
+            TestInput(value=np.array([np.array([1, 2]), np.array([3])], dtype=object)),
+            TestOutput(expected=np.array([np.array([1.0, 2.0]), np.array([3.0])], dtype=object)),
+            id="20) Convert nested object array with integer inner arrays",
+        ),
+        pytest.param(
+            TestInput(value=np.array([np.array([1.5, 2.5]), np.array([3])], dtype=object)),
+            TestOutput(expected=np.array([np.array([1.5, 2.5]), np.array([3.0])], dtype=object)),
+            id="21) Convert nested object array with mixed numeric inner arrays",
+        ),
+        pytest.param(
+            TestInput(value=np.array([np.array([1, 2]), np.array([3])], dtype=object)),
+            TestOutput(expected=np.array([np.array([1.0, 2.0]), np.array([3.0])], dtype=object)),
+            id="20) Convert nested object array with integer inner arrays",
         ),
     ],
 )
@@ -135,8 +145,12 @@ def test__to_float__unit_test(inputs: TestInput, expected: TestOutput):
     result = AbstractOptimizationSolver._to_float(inputs.value)
 
     if isinstance(expected.expected, np.ndarray):
-        np.testing.assert_allclose(result, expected.expected, atol=1e-7)
-        assert np.issubdtype(result.dtype, float)
+        if result.size > 0 and isinstance(result[0], np.ndarray):
+            for result_inner, expected_inner in zip(result, expected.expected):
+                np.testing.assert_allclose(result_inner, expected_inner, atol=1e-7)
+        else:
+            np.testing.assert_allclose(result, expected.expected, atol=1e-7)
+            assert np.issubdtype(result.dtype, float)
     else:
         assert result == pytest.approx(expected.expected)
         assert isinstance(result, float)
