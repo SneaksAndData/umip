@@ -265,7 +265,9 @@ def test__abstract_mip__get_analytics__logs_warning(solver: AbstractOptimization
     model.get_analytics(granularity="aggregated")
 
     expected_warning_call = call(
-        "No analytics found for granularity 'aggregated' in objective builders: ['ObjectiveBuilder1', 'ObjectiveBuilder2']"
+        template="No analytics found for granularity '{granularity}' in objective builders: {objective_builders}",
+        granularity="aggregated",
+        objective_builders=["ObjectiveBuilder1", "ObjectiveBuilder2"],
     )
 
     assert model._logger.warning.call_args_list[0] == expected_warning_call

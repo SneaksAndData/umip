@@ -325,8 +325,10 @@ class AbstractMipModel(ABC):
 
         if not analytics_results:
             self._logger.warning(
-                f"No analytics found for granularity '{granularity}' in objective builders: "
-                f"{[builder.objective_name for builder in self._objective_builders]}"
+                template="No analytics found for granularity '{granularity}' in objective builders: "
+                "{objective_builders}",
+                granularity=granularity,
+                objective_builders=[builder.objective_name for builder in self._objective_builders],
             )
 
         return analytics_results
