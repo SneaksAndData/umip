@@ -23,7 +23,7 @@ def test__build__general():
     )
 
     model = MockMipModel(
-        solver=MagicMock(),
+        solver_type=SolverType.ORTOOLS_SCIP,
         constraint_builders=[mock_constraint_builder],
         variable_builders=[mock_variable_builder],
         objective_builders=[mock_objective_builder],
@@ -53,7 +53,7 @@ def test__solve__model_built__methods_are_called():
     mock_data_preparator = MagicMock(spec=AbstractDataPreparator)
 
     model = MockMipModel(
-        solver=mock.Mock(),
+        solver_type=SolverType.ORTOOLS_SCIP,
         constraint_builders=[mock_constraint_builder],
         variable_builders=[mock_variable_builder],
         objective_builders=[mock_objective_builder],
@@ -82,7 +82,7 @@ def test__solve__model_not_built__raises_value_error():
     mock_data_preparator = MagicMock(spec=AbstractDataPreparator)
 
     model = MockMipModel(
-        solver=mock.Mock(),
+        solver_type=SolverType.ORTOOLS_SCIP,
         constraint_builders=[mock_constraint_builder],
         variable_builders=[mock_variable_builder],
         objective_builders=[mock_objective_builder],
@@ -95,8 +95,8 @@ def test__solve__model_not_built__raises_value_error():
         model.solve()
 
 
-@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
-def test__abstract_mip__get_analytics__analytics_data_not_provided(solver: AbstractOptimizationSolver, logger):
+@pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
+def test__abstract_mip__get_analytics__analytics_data_not_provided(solver_type: SolverType, logger):
     """
     Tests the get_analytics method for the case when analytics_data is not provided as an argument for
     the method (model._output_data must be used)
@@ -142,7 +142,7 @@ def test__abstract_mip__get_analytics__analytics_data_not_provided(solver: Abstr
             return sum(analytics_data.location)
 
     model = MockMipModel(
-        solver=mock.Mock(),
+        solver_type=solver_type,
         constraint_builders=[MockConstraintBuilder(logger)],
         variable_builders=[MockDecisionVariableBuilder(logger)],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -163,8 +163,8 @@ def test__abstract_mip__get_analytics__analytics_data_not_provided(solver: Abstr
     assert model.get_analytics(granularity="unknown") == {}
 
 
-@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
-def test__abstract_mip__get_analytics__analytics_data_provided(solver: AbstractOptimizationSolver, logger):
+@pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
+def test__abstract_mip__get_analytics__analytics_data_provided(solver_type: SolverType, logger):
     """
     Tests the get_analytics method for the case when analytics_data provided as an argument for
     the method. Model is not built and therefore it does not have any data attributes.
@@ -210,7 +210,7 @@ def test__abstract_mip__get_analytics__analytics_data_provided(solver: AbstractO
             return sum(analytics_data.location)
 
     model = MockMipModel(
-        solver=solver,
+        solver_type=solver_type,
         constraint_builders=[],
         variable_builders=[],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -234,8 +234,8 @@ def test__abstract_mip__get_analytics__analytics_data_provided(solver: AbstractO
     assert model.get_analytics(granularity="unknown", analytics_data=analytics_data) == {}
 
 
-@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
-def test__abstract_mip__get_analytics__logs_warning(solver: AbstractOptimizationSolver):
+@pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
+def test__abstract_mip__get_analytics__logs_warning(solver_type: SolverType):
     class ObjectiveBuilder1(AbstractObjectiveBuilder):
         def __init__(self, logger: LoggerInterface):
             super().__init__(logger)
@@ -252,7 +252,7 @@ def test__abstract_mip__get_analytics__logs_warning(solver: AbstractOptimization
 
     logger = MagicMock()
     model = MockMipModel(
-        solver=solver,
+        solver_type=solver_type,
         constraint_builders=[],
         variable_builders=[],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -273,8 +273,8 @@ def test__abstract_mip__get_analytics__logs_warning(solver: AbstractOptimization
     assert model._logger.warning.call_args_list[0] == expected_warning_call
 
 
-@pytest.mark.parametrize("solver", ["OrTools"], indirect=True)
-def test__abstract_mip__duplicate_objective_builder_names(solver: AbstractOptimizationSolver, logger):
+@pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
+def test__abstract_mip__duplicate_objective_builder_names(solver_type: SolverType, logger):
     class ObjectiveBuilder1(AbstractObjectiveBuilder):
         def __init__(self, logger: LoggerInterface):
             super().__init__(logger)
@@ -292,7 +292,7 @@ def test__abstract_mip__duplicate_objective_builder_names(solver: AbstractOptimi
             pass
 
     model = MockMipModel(
-        solver=solver,
+        solver_type=solver_type,
         constraint_builders=[],
         variable_builders=[],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -302,3 +302,95 @@ def test__abstract_mip__duplicate_objective_builder_names(solver: AbstractOptimi
 
     with pytest.raises(ValueError, match="Duplicate objective builder name found: same_as_other"):
         model.build(input_data=MagicMock())
+
+
+var1_object = object()
+var2_object = object()
+
+
+@dataclass
+class InputTestKeepVariablesData:
+    keep_variables_data: bool
+
+
+@dataclass
+class OutputTestKeepVariablesData:
+    internal_data: dict
+    internal_unpacked_data: dict
+
+
+@pytest.mark.parametrize(
+    ("inputs", "expected"),
+    [
+        pytest.param(
+            InputTestKeepVariablesData(keep_variables_data=False),
+            OutputTestKeepVariablesData(
+                internal_data={"var1_unpacked": 1.0, "var2_unpacked": 2.0},
+                internal_unpacked_data={"var1_unpacked": 1.0, "var2_unpacked": 2.0},
+            ),
+            id="1) When keep_variables_data=False, internal_data and internal_unpacked_data are the same object",
+        ),
+        pytest.param(
+            InputTestKeepVariablesData(keep_variables_data=True),
+            OutputTestKeepVariablesData(
+                internal_data={"var1": var1_object, "var2": var2_object},
+                internal_unpacked_data={"var1_unpacked": 1.0, "var2_unpacked": 2.0},
+            ),
+            id="2) When keep_variables_data=True, internal_data and internal_unpacked_data are different objects",
+        ),
+    ],
+)
+def test__solve__keep_variables_data__general(
+    inputs: InputTestKeepVariablesData, expected: OutputTestKeepVariablesData
+):
+    """
+    Test method solve logic for keep_variables_data parameter:
+
+    * 1) When keep_variables_data=False, internal_data and internal_unpacked_data reference the same object,
+         and variable data is removed after unpacking.
+    * 2) When keep_variables_data=True, internal_data and internal_unpacked_data are different objects,
+         with variable data preserved in internal_data but removed from internal_unpacked_data after unpacking.
+    """
+
+    # Arrange
+    @dataclass
+    class TestInputData(AbstractInternalData):
+        """
+        Test input data class.
+        """
+
+        variables: dict = None
+
+    @dataclass
+    class TestInternalData(TestInputData, AbstractInternalData):
+        """
+        Test internal data class.
+        """
+
+    class TestVariableBuilder(AbstractDecisionVariableBuilder):
+        def build(self, solver: AbstractOptimizationSolver, data: TestInternalData) -> TestInternalData:
+            data.variables = {"var1": var1_object, "var2": var2_object}
+            return data
+
+        def unpack(self, solver: AbstractOptimizationSolver, data: TestInternalData) -> TestInternalData:
+            data.variables = {"var1_unpacked": 1.0, "var2_unpacked": 2.0}
+            return data
+
+    model = MockMipModel(
+        solver_type=SolverType.ORTOOLS_SCIP,
+        constraint_builders=[],
+        variable_builders=[TestVariableBuilder(MagicMock())],
+        objective_builders=[],
+        data_preparator=MagicMock(spec=AbstractDataPreparator),
+        logger=MagicMock(),
+    )
+
+    # Act
+    model.build(
+        input_data=TestInputData(),
+    )
+    model.solve(keep_variables_data=inputs.keep_variables_data)
+
+    # Assert
+    assert model._internal_data.variables == expected.internal_data
+    assert model._internal_unpacked_data.variables == expected.internal_unpacked_data

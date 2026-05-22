@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
-
+from generic_mip.enums import SolverType
 from generic_mip.abstract_var_builder import AbstractDecisionVariableBuilder
 from generic_mip.abstract_obj_builder import AbstractObjectiveBuilder
 from generic_mip.abstract_data_prep import AbstractDataPreparator
@@ -32,7 +32,7 @@ class MockOutputData(MockInternalData, AbstractOutputData):
 
 class MockMipModel(AbstractMipModel):
     @staticmethod
-    def _convert_internal_to_output_data(internal_data: MockInternalData) -> MockOutputData:
+    def _convert_internal_to_output_data(internal_unpacked_data: MockInternalData) -> MockOutputData:
         pass
 
 

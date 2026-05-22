@@ -127,7 +127,7 @@ class MyMipModel(AbstractMipModel):
         super().solve(**kwargs)
 
     @staticmethod
-    def _convert_internal_to_output_data(internal_data: ExampleInternalData) -> ExampleOutputData:
+    def _convert_internal_to_output_data(internal_unpacked_data: ExampleInternalData) -> ExampleOutputData:
         return ExampleOutputData(
             my_data=internal_data.my_data,
             another_data=internal_data.another_data,
