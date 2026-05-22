@@ -6,11 +6,13 @@ import pandas as pd
 import numpy as np
 
 from generic_mip import VariableDomain
-from generic_mip.enums import BoundArgumentType, DataFrameArgumentType
+from generic_mip.enums import BoundArgumentType, SolverType
 from generic_mip.enums.bound_type import BoundType
+from generic_mip.solver_factory import SolverFactory
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 bound_col = "bound"
+bound_col_none = "bound_none"
 
 
 @dataclass
@@ -25,7 +27,21 @@ class TestExpected:
     expected_bound: np.ndarray
 
 
+solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverType.ORTOOLS_SCIP)
+
+
 @pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(
+            pd.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}), id="Pandas dataframe"
+        ),
+        pytest.param(
+            pl.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}), id="Polars dataframe"
+        ),
+    ],
+)
 @pytest.mark.parametrize(
     ("inputs,expected"),
     [
@@ -91,131 +107,35 @@ class TestExpected:
                 bound_type=BoundType.UPPER,
             ),
             TestExpected(
-                expected_bound=np.array([np.inf, np.inf, np.inf]),
+                expected_bound=np.array([solver_mocked.infinity(), solver_mocked.infinity(), solver_mocked.infinity()]),
             ),
             id="Case 6: Bound is none, variable domain is continuous and bound type is upper",
         ),
+        pytest.param(
+            TestInputs(
+                bound=bound_col_none,
+                variable_dtype=MagicMock(),
+                bound_type=MagicMock(),
+            ),
+            TestExpected(
+                expected_bound=np.array([10.0, solver_mocked.infinity(), 30.0]),
+            ),
+            id="Case 7: Bound is a string and the column exists. The column has None, which should be solver.infinity()",
+        ),
     ],
 )
-def test__get_bounds__polars_dataframe__general(solver, inputs, expected):
+def test__get_bounds__general(solver, data: pl.DataFrame | pd.DataFrame, inputs: TestInputs, expected: TestExpected):
     """
-    Tests whether the _get_bounds method works as expected with polars dataframes.
+    Tests whether the _get_bounds method works as expected with polars and pandas dataframes.
     Case 1: bound is a string and column exists
     Case 2: bound is a float
     Case 3: bound is None, bound type is lower and variable domain is binary
     Case 4: bound is None, bound type is upper and variable domain is binary
     Case 5: bound is None, bound type is lower and variable domain is continuous
     Case 6: bound is None, bound type is upper and variable domain is continuous
+    Case 7: bound is a string and column exists. The column has None, which should be solver.infinity()
     """
     # Arrange
-    data = pl.DataFrame(
-        {
-            bound_col: [10.0, 20.0, 30.0],
-        }
-    )
-    var_builder = MockDecisionVariableBuilder(logger=MagicMock())
-
-    # Act
-    result = var_builder._get_bounds(
-        solver=solver,
-        bound=inputs.bound,
-        data=data,
-        variable_domain=inputs.variable_dtype,
-        bound_type=inputs.bound_type,
-    )
-
-    # Assert
-    assert np.array_equal(result, expected.expected_bound)
-
-
-@pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
-@pytest.mark.parametrize(
-    ("inputs,expected"),
-    [
-        pytest.param(
-            TestInputs(
-                bound=bound_col,
-                variable_dtype=MagicMock(),
-                bound_type=MagicMock(),
-            ),
-            TestExpected(
-                expected_bound=np.array([10.0, 20.0, 30.0]),
-            ),
-            id="Case 1: Bound is a string and the column exists",
-        ),
-        pytest.param(
-            TestInputs(
-                bound=0.2,
-                variable_dtype=MagicMock(),
-                bound_type=MagicMock(),
-            ),
-            TestExpected(
-                expected_bound=np.array([0.2, 0.2, 0.2]),
-            ),
-            id="Case 2: Bound is a float",
-        ),
-        pytest.param(
-            TestInputs(
-                bound=None,
-                variable_dtype=VariableDomain.BINARY,
-                bound_type=BoundType.LOWER,
-            ),
-            TestExpected(
-                expected_bound=np.array([0.0, 0.0, 0.0]),
-            ),
-            id="Case 3: Bound is none, variable domain is binary and bound type is lower",
-        ),
-        pytest.param(
-            TestInputs(
-                bound=None,
-                variable_dtype=VariableDomain.BINARY,
-                bound_type=BoundType.UPPER,
-            ),
-            TestExpected(
-                expected_bound=np.array([1.0, 1.0, 1.0]),
-            ),
-            id="Case 4: Bound is none, variable domain is binary and bound type is upper",
-        ),
-        pytest.param(
-            TestInputs(
-                bound=None,
-                variable_dtype=VariableDomain.CONTINUOUS,
-                bound_type=BoundType.LOWER,
-            ),
-            TestExpected(
-                expected_bound=np.array([-np.inf, -np.inf, -np.inf]),
-            ),
-            id="Case 5: Bound is none, variable domain is continuous and bound type is upper",
-        ),
-        pytest.param(
-            TestInputs(
-                bound=None,
-                variable_dtype=VariableDomain.CONTINUOUS,
-                bound_type=BoundType.UPPER,
-            ),
-            TestExpected(
-                expected_bound=np.array([np.inf, np.inf, np.inf]),
-            ),
-            id="Case 6: Bound is none, variable domain is continuous and bound type is upper",
-        ),
-    ],
-)
-def test__get_bounds__pandas_dataframe__general(solver, inputs, expected):
-    """
-    Tests whether the _get_bounds method works as expected with pandas dataframes.
-    Case 1: bound is a string and column exists
-    Case 2: bound is a float
-    Case 3: bound is None, bound type is lower and variable domain is binary
-    Case 4: bound is None, bound type is upper and variable domain is binary
-    Case 5: bound is None, bound type is lower and variable domain is continous
-    Case 6: bound is None, bound type is upper and variable domain is continuous
-    """
-    # Arrange
-    data = pd.DataFrame(
-        {
-            bound_col: [10.0, 20.0, 30.0],
-        }
-    )
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
 
     # Act

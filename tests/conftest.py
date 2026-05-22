@@ -4,12 +4,14 @@ from adapta.logs import SemanticLogger, LoggerInterface
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
+from generic_mip.enums import SolverType
 from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.gurobi import GurobiSolver
 from generic_mip.solver.highs import HighsSolver
 from generic_mip.solver.scip import ScipSolver
 from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 from generic_mip.solver.local_solver import LocalSolver
+from generic_mip.solver_factory import SolverFactory
 
 
 @pytest.fixture(scope="session")
@@ -26,14 +28,14 @@ def logger() -> LoggerInterface:
 @pytest.fixture(scope="function")
 def solver(logger, request):
     if request.param == "OrTools":
-        return OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
+        return SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP)
     elif request.param == "Gurobi":
-        return GurobiSolver(logger=logger)
+        return SolverFactory(logger=logger).construct(solver_type=SolverType.GUROBI)
     elif request.param == "LocalSolver":
-        return LocalSolver(logger=logger)
+        raise NotImplementedError("LocalSolver is not implemented yet.")
     elif request.param == "Highs":
-        return HighsSolver(logger=logger)
+        return SolverFactory(logger=logger).construct(solver_type=SolverType.HIGHS)
     elif request.param == "Cplex":
-        return CplexSolver(logger=logger)
+        return SolverFactory(logger=logger).construct(solver_type=SolverType.CPLEX)
     elif request.param == "Scip":
-        return ScipSolver(logger=logger)
+        return SolverFactory(logger=logger).construct(solver_type=SolverType.SCIP)

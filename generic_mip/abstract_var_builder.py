@@ -615,11 +615,11 @@ class AbstractDecisionVariableBuilder(ABC):
             if dataframe_type == DataFrameArgumentType.PANDAS and self._dataframe_has_column(
                 data=data, column_name=bound
             ):
-                return data[bound].to_numpy()
+                return data[bound].fillna(value=solver.infinity()).to_numpy()
             if dataframe_type == DataFrameArgumentType.POLARS and self._dataframe_has_column(
                 data=data, column_name=bound
             ):
-                return data[bound].to_numpy()
+                return data.get_column(name=bound).fill_null(value=solver.infinity()).to_numpy()
             raise ValueError(f"Cannot find a bound column in DataFrame of unsupported type {dataframe_type}.")
 
         if bound_argument_type == BoundArgumentType.FLOAT:
