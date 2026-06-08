@@ -19,7 +19,7 @@ pyscipopt = { version = "^5.4.1", optional = true}
 numpy = "^1.23.2"
 scipy = "^1.9.0"
 numexpr = "2.11.0" # pinned due to issues with numpy.typing in 2.14
-adapta = "^3.3"
+adapta = "^4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8"
