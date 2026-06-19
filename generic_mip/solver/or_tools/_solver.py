@@ -7,6 +7,7 @@ from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.or_tools._solver_engine import OrToolsSolverEngine
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import OrToolsSolverConfig
 
 
 class OrToolsSolver(
@@ -22,6 +23,7 @@ class OrToolsSolver(
         :param logger: The logger to use.
         """
         super().__init__(logger)
+        self._solver_engine = solver_engine
         self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
         self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()
@@ -215,8 +217,9 @@ class OrToolsSolver(
     def is_not_solved(self) -> bool:
         return self.status == pywraplp.Solver.NOT_SOLVED
 
-    def set_solver_setting(self, setting: str) -> None:
-        self._solver.SetSolverSpecificParametersAsString(setting)
+    def set_solver_setting(self, setting: OrToolsSolverConfig) -> None:
+        if self._solver_engine == OrToolsSolverEngine.SCIP:
+            self._solver.SetSolverSpecificParametersAsString(setting.to_scip_parameters_string())
 
     def export_to_file(self, path: str) -> None:
         if path.lower().endswith(".lp"):

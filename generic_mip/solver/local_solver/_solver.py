@@ -5,6 +5,7 @@ from adapta.logs import LoggerInterface
 import localsolver as ls
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import LocalSolverConfig
 
 
 class LocalSolver(
@@ -225,7 +226,7 @@ class LocalSolver(
     def set_verbose(self, verbose: bool) -> None:
         self._solver.get_param().set_verbosity(2 if verbose else 0)
 
-    def set_solver_setting(self, setting: str) -> None:
+    def set_solver_setting(self, setting: LocalSolverConfig) -> None:
         raise NotImplementedError()
 
     def get_variable_count(self):

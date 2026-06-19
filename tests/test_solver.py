@@ -8,6 +8,7 @@ import numpy as np
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.enums.constraint_type import ConstraintType
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import OrToolsScipSolverConfig
 
 
 @pytest.mark.parametrize(
@@ -491,7 +492,9 @@ def test__get_gap__time_limit_reached__gap_greater_than_zero(solver: AbstractOpt
                     variables=np.array([u[i], u[j], x[i][j]]),
                 )
     if type(solver).__name__ == "OrToolsSolver":
-        solver.set_solver_setting("presolving/maxrounds=0")
+        solver.set_solver_setting(
+            setting=OrToolsScipSolverConfig(presolving_max_rounds=0),
+        )
     if type(solver).__name__ == "ScipSolver":
         solver.set_param("presolving/maxrounds", 0)
     solver.set_verbose(verbose=True)

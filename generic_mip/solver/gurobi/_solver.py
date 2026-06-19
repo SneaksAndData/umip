@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import GurobiSolverConfig
 
 
 class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: disable=too-many-public-methods
@@ -232,7 +233,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
             gp.GRB.WORK_LIMIT,
         ]
 
-    def set_solver_setting(self, setting: str) -> None:
+    def set_solver_setting(self, setting: GurobiSolverConfig) -> None:
         raise ValueError("Not supported in Gurobi solver")
 
     def export_to_file(self, path: str) -> None:

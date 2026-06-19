@@ -9,7 +9,8 @@ from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from adapta.metrics import MetricsProvider
 from adapta.metrics.providers.void_provider import VoidMetricsProvider
-from generic_mip.enums import SolverType
+
+from generic_mip.abstract_solver import AbstractOptimizationSolver
 
 from generic_mip.enums.variable_domain import VariableDomain
 from generic_mip.abstract_constr_builder import AbstractConstraintBuilder
@@ -18,7 +19,6 @@ from generic_mip.abstract_obj_builder import AbstractObjectiveBuilder
 from generic_mip.abstract_data_prep import AbstractDataPreparator
 from generic_mip.exception import OptimizationException, AbnormalException, InfeasibleException, UnboundedException
 from generic_mip.abstract_dataclasses import AbstractInputData, AbstractOutputData, AbstractInternalData
-from generic_mip.solver_factory import SolverFactory
 
 
 class AbstractMipModel(ABC):
@@ -29,7 +29,7 @@ class AbstractMipModel(ABC):
 
     def __init__(
         self,
-        solver_type: SolverType,
+        solver: AbstractOptimizationSolver,
         data_preparator: AbstractDataPreparator,
         constraint_builders: list[AbstractConstraintBuilder],
         variable_builders: list[AbstractDecisionVariableBuilder],
@@ -51,12 +51,13 @@ class AbstractMipModel(ABC):
         :param data_preparator: The data preparator.
         :param logger: The logger to use. Logging to stdout by default.
         :param metrics_provider: The MetricsProvider to use. Metrics are ignored by default.
+        :param solver_config: The solver config to use - can be empty to just use default solver settings.
         """
         self._objective_builders = objective_builders
         self._variable_builders = variable_builders
         self._constraint_builders = constraint_builders
         self._data_preparator = data_preparator
-        self._solver = SolverFactory(logger=logger).construct(solver_type=solver_type)
+        self._solver = solver
         self._internal_data: AbstractInternalData | None = None
         self._internal_unpacked_data: AbstractInternalData | None = None
         self._output_data: AbstractOutputData | None = None

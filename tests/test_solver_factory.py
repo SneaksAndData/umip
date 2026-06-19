@@ -1,10 +1,16 @@
+"""Tests for SolverFactory construction and solver config validation."""
+
 import pytest
 
 from generic_mip import AbstractOptimizationSolver
 from generic_mip.enums.solver_type import SolverType
 from generic_mip.solver.cplex import CplexSolver
 from generic_mip.solver.highs import HighsSolver
-from generic_mip.solver.or_tools import OrToolsSolver
+from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
+from generic_mip.solver_config import GurobiSolverConfig
+from generic_mip.solver_config import HighsPresolveOption
+from generic_mip.solver_config import HighsSolverConfig
+from generic_mip.solver_config import OrToolsScipSolverConfig
 from generic_mip.solver_factory.solver_factory import SolverFactory
 
 
@@ -17,28 +23,37 @@ from generic_mip.solver_factory.solver_factory import SolverFactory
         SolverType.HIGHS,
     ],
 )
-def test_construct_solver_is_correct_type(solver_type, logger):
+def test_construct_solver_is_correct_type(solver_type, logger) -> None:
     # Arrange
-    sut = SolverFactory(logger)
+    sut = SolverFactory(logger=logger)
 
     # Act
-    solver = sut.construct(solver_type)
+    solver = sut.construct(solver_type=solver_type)
 
     # Assert
     assert solver is not None
-    assert __isinstance_of_solver(solver, solver_type)
+    assert __isinstance_of_solver(solver=solver, solver_type=solver_type)
 
 
-def test_construct_unknown_solver_type_throws_exception(logger):
+def test_construct_unknown_solver_type_throws_exception(logger) -> None:
     # Arrange
-    sut = SolverFactory(logger)
+    sut = SolverFactory(logger=logger)
 
     # Act & Assert
     with pytest.raises(ValueError):
-        sut.construct(100)
+        sut.construct(solver_type=100)
 
 
-def __isinstance_of_solver(solver: AbstractOptimizationSolver, solver_type: SolverType):
+def test_construct_raises_for_incompatible_solver_config(logger) -> None:
+    # Arrange
+    sut = SolverFactory(logger=logger)
+
+    # Act & Assert
+    with pytest.raises(ValueError):
+        sut.construct(solver_type=SolverType.ORTOOLS_SCIP, solver_config=GurobiSolverConfig())
+
+
+def __isinstance_of_solver(solver: AbstractOptimizationSolver, solver_type: SolverType) -> bool:
     if solver_type == SolverType.CPLEX:
         return isinstance(solver, CplexSolver)
 

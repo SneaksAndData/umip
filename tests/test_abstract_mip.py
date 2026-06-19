@@ -6,8 +6,15 @@ from unittest.mock import call, MagicMock
 
 import pytest
 from adapta.logs import LoggerInterface
+from generic_mip.solver_factory import SolverFactory
 
 from tests.mock_classes_and_data import *
+
+
+def _construct_solver(
+    logger: LoggerInterface, solver_type: SolverType = SolverType.ORTOOLS_SCIP
+) -> AbstractOptimizationSolver:
+    return SolverFactory(logger=logger).construct(solver_type=solver_type)
 
 
 def test__build__general():
@@ -21,14 +28,15 @@ def test__build__general():
     mock_objective_builder = MagicMock(
         spec=AbstractObjectiveBuilder, build=MagicMock(), unpack=MagicMock(), objective_name="test_name"
     )
+    logger = MagicMock(spec=LoggerInterface)
 
     model = MockMipModel(
-        solver_type=SolverType.ORTOOLS_SCIP,
+        solver=_construct_solver(logger=logger),
         constraint_builders=[mock_constraint_builder],
         variable_builders=[mock_variable_builder],
         objective_builders=[mock_objective_builder],
         data_preparator=mock_data_preparator,
-        logger=MagicMock(),
+        logger=logger,
     )
 
     # Act
@@ -51,14 +59,15 @@ def test__solve__model_built__methods_are_called():
     mock_variable_builder = MagicMock(spec=AbstractDecisionVariableBuilder, unpack=MagicMock())
     mock_constraint_builder = MagicMock(spec=AbstractConstraintBuilder)
     mock_data_preparator = MagicMock(spec=AbstractDataPreparator)
+    logger = MagicMock(spec=LoggerInterface)
 
     model = MockMipModel(
-        solver_type=SolverType.ORTOOLS_SCIP,
+        solver=_construct_solver(logger=logger),
         constraint_builders=[mock_constraint_builder],
         variable_builders=[mock_variable_builder],
         objective_builders=[mock_objective_builder],
         data_preparator=mock_data_preparator,
-        logger=MagicMock(),
+        logger=logger,
     )
     model._built = True
     model._internal_data = MockInternalData(data=MagicMock())
@@ -80,14 +89,15 @@ def test__solve__model_not_built__raises_value_error():
     mock_variable_builder = MagicMock(spec=AbstractDecisionVariableBuilder)
     mock_constraint_builder = MagicMock(spec=AbstractConstraintBuilder)
     mock_data_preparator = MagicMock(spec=AbstractDataPreparator)
+    logger = MagicMock(spec=LoggerInterface)
 
     model = MockMipModel(
-        solver_type=SolverType.ORTOOLS_SCIP,
+        solver=_construct_solver(logger=logger),
         constraint_builders=[mock_constraint_builder],
         variable_builders=[mock_variable_builder],
         objective_builders=[mock_objective_builder],
         data_preparator=mock_data_preparator,
-        logger=MagicMock(),
+        logger=logger,
     )
 
     # Act & Assert
@@ -142,7 +152,7 @@ def test__abstract_mip__get_analytics__analytics_data_not_provided(solver_type: 
             return sum(analytics_data.location)
 
     model = MockMipModel(
-        solver_type=solver_type,
+        solver=_construct_solver(logger=logger, solver_type=solver_type),
         constraint_builders=[MockConstraintBuilder(logger)],
         variable_builders=[MockDecisionVariableBuilder(logger)],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -210,7 +220,7 @@ def test__abstract_mip__get_analytics__analytics_data_provided(solver_type: Solv
             return sum(analytics_data.location)
 
     model = MockMipModel(
-        solver_type=solver_type,
+        solver=_construct_solver(logger=logger, solver_type=solver_type),
         constraint_builders=[],
         variable_builders=[],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -252,7 +262,7 @@ def test__abstract_mip__get_analytics__logs_warning(solver_type: SolverType):
 
     logger = MagicMock()
     model = MockMipModel(
-        solver_type=solver_type,
+        solver=_construct_solver(logger=logger, solver_type=solver_type),
         constraint_builders=[],
         variable_builders=[],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -292,7 +302,7 @@ def test__abstract_mip__duplicate_objective_builder_names(solver_type: SolverTyp
             pass
 
     model = MockMipModel(
-        solver_type=solver_type,
+        solver=_construct_solver(logger=logger, solver_type=solver_type),
         constraint_builders=[],
         variable_builders=[],
         objective_builders=[ObjectiveBuilder1(logger), ObjectiveBuilder2(logger)],
@@ -376,13 +386,14 @@ def test__solve__keep_variables_data__general(
             data.variables = {"var1_unpacked": 1.0, "var2_unpacked": 2.0}
             return data
 
+    logger = MagicMock(spec=LoggerInterface)
     model = MockMipModel(
-        solver_type=SolverType.ORTOOLS_SCIP,
+        solver=_construct_solver(logger=logger),
         constraint_builders=[],
-        variable_builders=[TestVariableBuilder(MagicMock())],
+        variable_builders=[TestVariableBuilder(logger=logger)],
         objective_builders=[],
         data_preparator=MagicMock(spec=AbstractDataPreparator),
-        logger=MagicMock(),
+        logger=logger,
     )
 
     # Act

@@ -14,6 +14,7 @@ from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.solver.cplex.enum import CplexStatus
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import CplexSolverConfig
 
 
 class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint: disable=too-many-public-methods
@@ -227,7 +228,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
             CplexStatus.INTEGER_LIMIT.value,
         ]
 
-    def set_solver_setting(self, setting: str) -> None:
+    def set_solver_setting(self, setting: CplexSolverConfig) -> None:
         raise ValueError("Not supported in Cplex solver")
 
     def export_to_file(self, path: str) -> None:

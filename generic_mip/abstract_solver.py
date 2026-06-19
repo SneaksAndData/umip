@@ -7,6 +7,7 @@ import numpy.typing as npt
 from adapta.logs import LoggerInterface
 from generic_mip.enums.constraint_type import ConstraintType
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import SolverConfig
 from generic_mip.variable_with_objective_coefficient import VariableWithObjectiveCoefficient
 
 CT = TypeVar("CT")  # Constraint type
@@ -460,7 +461,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :return:
         """
 
-    def set_solver_setting(self, setting: str) -> None:
+    def set_solver_setting(self, setting: SolverConfig) -> None:
         """
         Set solver setting.
         :param setting: The setting to set.

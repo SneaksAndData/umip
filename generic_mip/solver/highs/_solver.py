@@ -5,6 +5,7 @@ import numpy as np
 from adapta.logs import LoggerInterface
 from generic_mip.abstract_solver import AbstractOptimizationSolver
 from generic_mip.enums.variable_domain import VariableDomain
+from generic_mip.solver_config import HighsSolverConfig
 
 
 class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-many-public-methods
@@ -89,7 +90,9 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         first_var_number = self._var_count
         self._var_count += len(names)
 
-        self._solver.addVars(len(names), lower_bound, upper_bound)
+        lower_bounds = np.full(shape=len(names), fill_value=lower_bound, dtype=np.float64)
+        upper_bounds = np.full(shape=len(names), fill_value=upper_bound, dtype=np.float64)
+        self._solver.addVars(len(names), lower_bounds, upper_bounds)
 
         for i, name in enumerate(names):
             self.number_of_variables_of_type[variable_domain] += 1
@@ -329,8 +332,9 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             highspy.HighsModelStatus.kSolutionLimit,
         ]
 
-    def set_solver_setting(self, setting: str) -> None:
-        raise ValueError("Not supported in HiGHS solver")
+    def set_solver_setting(self, setting: HighsSolverConfig) -> None:
+        for option_name, option_value in setting.to_highs_options().items():
+            self._solver.setOptionValue(option_name, option_value)
 
     def export_to_file(self, path: str) -> None:
         self._solver.writeModel(path)
