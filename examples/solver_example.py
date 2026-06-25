@@ -4,11 +4,8 @@ from adapta.logs import SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from generic_mip import VariableDomain
-from generic_mip.solver.cplex import CplexSolver
-from generic_mip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
-from generic_mip.solver.gurobi import GurobiSolver
-from generic_mip.solver.highs import HighsSolver
-
+from generic_mip.enums import SolverType
+from generic_mip.solver_factory import SolverFactory
 
 """
 Model to implement:
@@ -27,8 +24,6 @@ You can access the solver API directly for local experiments, prototyping, debug
 For production grade models, use the generic_mip framework (full_example.py).
 """
 
-SOLVER = "ortools"
-
 logger = SemanticLogger().add_log_source(
     log_source_name="MyModel",
     min_log_level=LogLevel.DEBUG,
@@ -36,16 +31,7 @@ logger = SemanticLogger().add_log_source(
     is_default=True,
 )
 
-if SOLVER == "ortools":
-    solver = OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger)
-elif SOLVER == "gurobi":
-    solver = GurobiSolver(logger=logger)
-elif SOLVER == "highs":
-    solver = HighsSolver(logger=logger)
-elif SOLVER == "cplex":
-    solver = CplexSolver(logger=logger)
-else:
-    raise ValueError(f"Invalid solver: {SOLVER}")
+solver = SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP)
 
 x = solver.add_variable(lower_bound=0, upper_bound=100, name="x", variable_domain=VariableDomain.INTEGER)
 y = solver.add_variable(lower_bound=0, upper_bound=100, name="y", variable_domain=VariableDomain.INTEGER)

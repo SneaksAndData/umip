@@ -1,13 +1,172 @@
-# Generic MIP framework
+# generic-mip
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+`generic-mip` is both:
+- a **MIP modeling package** with a unified solver API
+- a **framework for structuring optimization systems** into explicit, reusable building blocks
+
+The framework side is the core value: it enforces clean boundaries between data prep, variable creation, constraints, objectives, and model assembly. That structure makes large MIP codebases easier to grow, test, reason about, and explain.
+
 ## Purpose
-The aim of this repository is to...
-* Unify the way MIP models are implemented in ECCO Sneaks & Data.
-* Make models modular and highly customizable.
-* Separate responsibilities by forcing the MIP implementations to separate constraints, objectives and variables.
-* Separate responsibilities by removing settings logic from the model and let the model factory handle how to construct a model based on given settings.
-* Abstract the solver layer to allow for fast switching between solver engines such as Google OR Tools, Gurobi and SCIP.
+The aim of this repository is to:
+- Build complex MIP models through explicit, reusable building blocks.
+- Make models modular, highly customizable, and easier to extend over time.
+- Enforce separation of responsibilities by structuring implementations into dedicated builders for variables, constraints, and objective functions.
+- Keep settings and composition logic in model factories, so model classes focus on optimization behavior.
+- Use an object-oriented framework and factory interface to keep model assembly explicit and consistent.
+- Treat objective analytics as a native framework capability, where each objective function builder can expose named analytics and/or granularity analytics.
+- Abstract the solver layer to enable fast switching between solver engines such as OR-Tools, Gurobi, and SCIP.
+
+## Installation
+This project uses Poetry.
+
+```bash
+poetry install
+```
+
+Install optional solver extras as needed:
+
+```bash
+poetry install --extras ortools
+poetry install --extras highs
+poetry install --extras gurobi
+poetry install --extras docplex
+poetry install --extras pyscipopt
+poetry install --extras localsolver
+```
+
+## Solver support
+The framework supports multiple backends behind one API.
+
+- OR-Tools engines (SCIP, CBC, CPLEX, XPRESS, GLPK, Gurobi)
+- Native Gurobi
+- Native CPLEX
+- Native SCIP
+- Native HiGHS
+
+Select a backend via `SolverType` and create it through `SolverFactory`.
+## Minimal usage flow
+At a high level, production usage should look like this:
+
+```python
+model = MyModelFactory(logger=logger, solver_type=SolverType.ORTOOLS_SCIP).construct(
+    settings=settings
+)
+
+model.build(input_data=input_data)
+model.solve(time_limit=60.0)
+
+output_data = model.get_output_data()
+objective_value = model.get_objective_value()
+product_analytics = model.get_analytics(granularity="product")
+```
+
+Notes:
+- `build(...)` expects an `AbstractInputData` implementation.
+- `solve(...)` runs the optimization and unpacks variable values through variable builders.
+- `get_output_data()` delegates conversion via your model's `_convert_internal_to_output_data(...)`.
+
+## Modelling variables and constraints in practice
+The recommended approach for production models is to back decision variables with DataFrames (pandas or polars), where **each row represents one or more decision variable and associated parameters**. This keeps variables, their parameters, and their solved values co-located and makes vectorised operations natural.
+
+### Creating variables
+Use `build_column_variables` on `AbstractDecisionVariableBuilder` to add a column of solver variables to a DataFrame in one call. Bounds can be passed as a scalar or as a column name, in which case per-row values are read directly from the DataFrame:
+
+```python
+data.items = self.build_column_variables(
+    solver=solver,
+    data=data.items,
+    destination_column=VAR,
+    variable_domain=VariableDomain.INTEGER,
+    index_name_columns=[ITEM_NAME],
+    lower_bound=0.0,
+    upper_bound=UPPER_BOUND,  # reads per-row values from the UPPER_BOUND column
+)
+```
+
+### Unpacking solved values
+Use `unpack_column_variables` after solving to replace the solver variable objects with their solved values in a new column:
+
+```python
+data.items = self.unpack_column_variables(
+    data=data.items,
+    decision_variable_column=VAR,
+    decision_variable_value_column=VALUE,
+    solver=solver,
+    variable_domain=VariableDomain.INTEGER,
+)
+```
+
+### Building constraints
+Pass variable and coefficient columns directly as numpy arrays for vectorised constraint construction — one solver call per constraint regardless of the number of variables involved:
+
+```python
+solver.add_constraint(
+    coefficients=np.ones(len(data.items)),
+    variables=data.items[VAR].to_numpy(),
+    upper_bound=100,
+    name="flow",
+)
+```
+
+See [`examples/settings_factory_example.py`](./examples/settings_factory_example.py) for a complete working example of this pattern.
+
+## Multi-granularity analytics and white-boxing
+One of the most useful framework features is native support for analytics at different granularities.
+
+Typical pattern:
+- implement objective analytics on highest granularity (for example, `product_store`)
+- add a higher level (`store`)
+- add an aggregate level (`total`)
+- and optionally make these calculations nested/reused across levels with native caching at each level to avoid recalculation
+
+This gives you a practical path to white-boxing complex models, as you can solve an optimization problem, while automatically get individual objective contributions on different granularities. This makes the model traceable and explainable at multiple business levels directly.
+
+Relevant model APIs:
+- `model.get_objective_analytics_granularities()`
+- `model.get_analytics(granularity=...)`
+- `model.get_named_objectives()`
+
+## Framework-first project structure
+When implementing a model package on top of `generic-mip`, a common structure is:
+
+- `data_prep/`: input normalization and derivations.
+- `variables/`: one builder per set of variables.
+- `constraints/`: one builder per set of constraints.
+- `objectives/`: one builder per objective function + analytics definitions.
+- `factories/`: factories that build the model based on the input settings enabled for the run.
+- `model.py`: concrete `AbstractMipModel` implementation.
+
+This style keeps optimization systems modular and easier to evolve as requirements change.
+
+## Suggested implementation path
+### For a new project (ground up)
+1. Start with a minimal base model made of the set of variables, set of constraints, and set of objective functions that are always present.
+2. Make sure this base model solves the minimum problem you care about. The base can be feasible and useful even without optional objective functions.
+3. Test the base model thoroughly.
+4. Define a settings object early, but leave it intentionally empty to make it explicit that no settings are implemented yet.
+5. Keep the factory settings-aware from day one, even if the first version only builds the base model.
+
+### For an existing project (incremental extension)
+1. Add or extend a settings object and wire it in the model factory so composition is decided from input settings.
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class FlowProblemMip:
+    edge_cost: bool = False
+```
+
+2. Map each setting to the collection of constraint builders, variable builders, and objective function builders associated with that setting.
+3. Implement only the collection of constraint builders, variable builders, and objective function builders needed to implement the new setting / feature.
+4. Test each new setting / feature in isolation.
+
+## Examples
+You can inspect the repository examples in [`examples/`](./examples), but treat them primarily as development references.
+
+If you specifically want a minimal settings-driven factory composition example, see [`examples/settings_factory_example.py`](./examples/settings_factory_example.py)
 
 ## Class overview
 The Generic MIP framework is a collection of classes that can be used to construct a MIP model.
@@ -23,7 +182,7 @@ The classes are:
 * [`AbstractDataPreparator`](./generic_mip/abstract_data_prep.py) - A class used to prepare data for the model - this is used by the `AbstractMipModel`.
 * [`AbstractDecisionVariableBuilder`](./generic_mip/abstract_var_builder.py) - A class used to construct decision variables - this is used by the `AbstractMipModel`.
 * [`AbstractConstraintBuilder`](./generic_mip/abstract_constr_builder.py) - A class used to construct constraints - this is used by the `AbstractMipModel`.
-* [`AbstractObjectiveBuilder`](./generic_mip/abstract_obj_builder.py) - A class used to construct objective terms - this is used by the `AbstractMipModel`.
+* [`AbstractObjectiveBuilder`](./generic_mip/abstract_obj_builder.py) - A class used to construct objective function terms - this is used by the `AbstractMipModel`.
 * [`AbstractMipModelFactory`](./generic_mip/abstract_model_factory.py) - A class used to construct a model and injects the necessary builders based on given context or settings.
 * [`SolverFactory`](./generic_mip/solver_factory/solver_factory.py) - A class used to construct a solver based on given context or settings.
 * [`VariableWithObjectiveCoefficient`](./generic_mip/variable_with_objective_coefficient.py) - A class containing a decision variable and its objective coefficient.
@@ -46,80 +205,3 @@ Enums:
 Above classes is visualised ín the below UML class diagram. For an explanation of UML diagrams, please go to [https://www.uml-diagrams.org](https://www.uml-diagrams.org).
 
 ![UML diagram](./img/generic_mip_uml.png)
-
-## Usage
-To implement a MIP model, you need to create implementations of all the above abstract classes except for `AbstractSolver`, which already comes with six implementations.
-
-All settings logics needs to be implemented in the factories. I.e. logic related to "if this setting is turned on, add decision variables X and Y and add constraint Z." is placed in the `AbstractMipModelFactory`, and logic related to "if used solver is SCIP, construct OrToolsSolver" is placed in the `SolverFactory`.
-Code related to the data preparation is implemented in the `AbstractDataPreparator`. All builders and models should be instantiated in a model factory - never outside (e.g. never in a main function).
-
-Code related to the decision variable construction is implemented in the `AbstractVariableBuilder`. I.e. "this dataframe with 10 rows infers the creation of 10 decision variables". Similar principles goes for the constraint and objective builders.
-The idea is that dissimilar variables/constraints/objective terms are built by different builders, e.g. if they are formulated over different sets or serve different purposes. In IAR, this is the case for sink capacity and stock availability constraints - they are related to different types of locations and built over two different location sets - the sink and source locations respectively. Similarly, the order quantity and excess demand variables are build by different variable builders.
-
-Given that you have started your project called "Awesome Stuff", your code should expose an API that can be used in following way:
-```python
-solver = AwesomeStuffSolverFactory().construct(some_settings)
-model = AwesomeStuffModelFactory(solver).construct(some_other_settings)
-model.build(some_df=some_prepared_df, some_other_df=some_other_prepared_df)
-model.solve()
-result = model.get_output_data()
-```
-
-Here is an example of how we used the framework to implement Stock Redistribution:
-```python
-@dataclass
-class InputData(AbstractInputData):
-    sku_location_demand: pl.DataFrame
-    route: pl.DataFrame
-    sku_location: pl.DataFrame
-    sku: pl.DataFrame | None = None
-    collection_group_sku_location: pl.DataFrame | None = None
-    location: pl.DataFrame | None = None
-    location_segment_overstock: pl.DataFrame | None = None
-    overall_parameters: pl.DataFrame | None = None
-
-    
-solver = SolverFactory(logger).construct(SolverType.ORTOOLS_SCIP)
-
-stock_redistribution_model = StockRedistributionModelFactory(
-    solver=solver, logger=logger, settings=settings
-).construct()
-
-stock_redistribution_model.build(
-    input_data=InputData(
-        sku_location_demand=demand,
-        sku_location=sku_location,
-        route=route,
-        sku=sku,
-        location=location,
-        location_segment_overstock=location_segment,
-        collection_group_sku_location=collection_group_sku_location,
-        overall_parameters=overall_parameters,
-    )
-)
-
-stock_redistribution_model.solve()
-
-result = stock_redistribution_model.get_output_data()
-```
-
-Deciding which solver to use is done in `SolverFactory` in the call to `construct()`. 
-Deciding what model components (constraints, variables, objectives) to use and how to construct them is done in `StockRedistributionModelFactory` in the call to `construct()`.
-Building the components and preparing the model is done by calling `build()` on the model.
-Finally, the model is solved by calling `solve()` on the model and the results are returned upon calling `get_output_data()`.
-
-### Suggested first steps
-You can implement the above classes by following the below steps. However, you can use any approach you like. Let this serve as a help if you do not know where to start.
-
-* Start by creating empty implementations of the builders (one of each to begin with), the data preparator and the mip model. You can add some print statements to the empty methods to see and understand when they are called.
-* Instantiate the model and provide the solver, the builders and data preparator and build the model to it to see that all the code runs and look at the print statements in the console.
-* Now that you can see the code runs, start by translating _some_ of the decision variables into the empty decision variable builder. For this you need to establish some dataframes that are passed to the model and the builders. For now, you can prepare the data outside the model, i.e. transform it to format you need. The decision variables need to be returned either as a new dataframe or as a column in an existing dataframe. The decision variables are created by calling the solver instance.
-* Run the code again to see the variables are built correctly.
-* Now translate _some_ constraints that use these decision variables into the empty constraint builder. The variables should be accessible in a dataframe. You can use the dataframes that were passed to the model and the builders to fetch the parameters you need. The constraints are created by calling the solver instance.
-* Run the code again to see the constraints are built correctly.
-* Now translate _some_ objective terms that use the decision variables into the empty objective builder. You can use the dataframes that were passed to the model and the builders to fetch the parameters you need. The objective terms are created by calling the solver instance.
-* Run the code again to see the objective are built correctly and try to solve the model.
-* Now you can start implementing the data preparation logic in the data preparator.
-* After all above is done, you can start implementing the factories. Here you can start with a version that always returns the same instance. Later you can pass a settings object that decides how to construct the model and the solver.
-* By now you can implement the rest of the decision variables, constraints and objectives in the model.
-* Finally, you can polish the API of you model and return the results and print useful info to the caller. The optimisation solution for each variable can be obtained by calling the solver instance.
