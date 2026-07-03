@@ -279,9 +279,10 @@ class AbstractDecisionVariableBuilder(ABC):
             .then(
                 pl.struct(
                     [self.lower_bound_column_name, self.upper_bound_column_name, self.variable_name_column_name]
-                ).map_elements(build_variables)
+                ).map_elements(build_variables, return_dtype=pl.datatypes.Object)
             )
             .otherwise(None)
+            .cast(pl.datatypes.Object)
             .alias(destination_column)
         )
 
