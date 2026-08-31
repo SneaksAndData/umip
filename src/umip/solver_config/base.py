@@ -2,9 +2,7 @@
 
 from dataclasses import dataclass
 
-from dataclasses_json import DataClassJsonMixin
-from dataclasses_json import Undefined
-from dataclasses_json import dataclass_json
+from dataclasses_json import DataClassJsonMixin, Undefined, dataclass_json
 
 
 @dataclass_json(undefined=Undefined.RAISE)

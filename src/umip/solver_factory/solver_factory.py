@@ -2,19 +2,22 @@
 """Solver factory for obtaining a implementation of a solver."""
 
 from adapta.logs import LoggerInterface
+
 from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums.solver_type import SolverType
-from umip.solver_config import CplexSolverConfig
-from umip.solver_config import GurobiSolverConfig
-from umip.solver_config import HighsSolverConfig
-from umip.solver_config import OrToolsCbcSolverConfig
-from umip.solver_config import OrToolsCplexSolverConfig
-from umip.solver_config import OrToolsGlpkSolverConfig
-from umip.solver_config import OrToolsGurobiSolverConfig
-from umip.solver_config import OrToolsScipSolverConfig
-from umip.solver_config import OrToolsXpressSolverConfig
-from umip.solver_config import ScipSolverConfig
-from umip.solver_config import SolverConfig
+from umip.solver_config import (
+    CplexSolverConfig,
+    GurobiSolverConfig,
+    HighsSolverConfig,
+    OrToolsCbcSolverConfig,
+    OrToolsCplexSolverConfig,
+    OrToolsGlpkSolverConfig,
+    OrToolsGurobiSolverConfig,
+    OrToolsScipSolverConfig,
+    OrToolsXpressSolverConfig,
+    ScipSolverConfig,
+    SolverConfig,
+)
 
 ORTOOLS_SOLVERS = [
     SolverType.ORTOOLS_SCIP,

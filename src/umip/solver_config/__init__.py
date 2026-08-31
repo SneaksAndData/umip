@@ -3,10 +3,12 @@
 from umip.solver_config.base import SolverConfig
 from umip.solver_config.cplex import CplexSolverConfig
 from umip.solver_config.gurobi import GurobiSolverConfig
-from umip.solver_config.highs import HighsParallelOption
-from umip.solver_config.highs import HighsPresolveOption
-from umip.solver_config.highs import HighsSolverConfig
-from umip.solver_config.highs import HighsSolverOption
+from umip.solver_config.highs import (
+    HighsParallelOption,
+    HighsPresolveOption,
+    HighsSolverConfig,
+    HighsSolverOption,
+)
 from umip.solver_config.local_solver import LocalSolverConfig
 from umip.solver_config.or_tools.base import OrToolsSolverConfig
 from umip.solver_config.or_tools.cbc import OrToolsCbcSolverConfig

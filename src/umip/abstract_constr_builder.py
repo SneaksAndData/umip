@@ -1,9 +1,11 @@
 """Abstract definition of a constraint builder."""
 
 from abc import ABC, abstractmethod
+
 from adapta.logs import LoggerInterface
-from umip.abstract_solver import AbstractOptimizationSolver
+
 from umip.abstract_dataclasses import AbstractInternalData
+from umip.abstract_solver import AbstractOptimizationSolver
 
 
 class AbstractConstraintBuilder(ABC):

@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from unittest.mock import MagicMock
-import pytest
-import polars as pl
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
+
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 from umip import DataFrameArgumentType, IndexColumnsArgumentType
 

@@ -1,21 +1,22 @@
 """Abstract definition of a variable builder."""
 
 from abc import ABC, abstractmethod
-from adapta.logs import LoggerInterface
+
+import numpy as np
 import pandas as pd
 import polars as pl
-import numpy as np
+from adapta.logs import LoggerInterface
 
+from umip.abstract_dataclasses import AbstractInternalData
+from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums import (
-    VariableDomain,
+    BoundArgumentType,
     BoundType,
     DataFrameArgumentType,
-    BoundArgumentType,
     FilterColumnArgumentType,
     IndexColumnsArgumentType,
+    VariableDomain,
 )
-from umip.abstract_solver import AbstractOptimizationSolver
-from umip.abstract_dataclasses import AbstractInternalData
 
 
 class AbstractDecisionVariableBuilder(ABC):
@@ -820,7 +821,7 @@ class AbstractDecisionVariableBuilder(ABC):
         if index_name_columns_type == IndexColumnsArgumentType.NONE:
             return np.array(
                 [
-                    f"{variable_name}[{str(index)}]"
+                    f"{variable_name}[{index!s}]"
                     for index in range(self._get_row_count(data=data))
                 ]
             )

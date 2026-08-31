@@ -1,20 +1,19 @@
 """A solver implemented in the Gurobi library."""
 
-from typing import Iterable
-
-from docplex.mp.model import Model
-from docplex.mp.linear import Var, LinearExpr
-from docplex.mp.constr import LinearConstraint
-from docplex.mp.constants import ObjectiveSense
-from docplex.mp.model_reader import ModelReader
+from collections.abc import Iterable
 
 import numpy as np
 import numpy.typing as npt
-
 from adapta.logs import LoggerInterface
+from docplex.mp.constants import ObjectiveSense
+from docplex.mp.constr import LinearConstraint
+from docplex.mp.linear import LinearExpr, Var
+from docplex.mp.model import Model
+from docplex.mp.model_reader import ModelReader
+
 from umip.abstract_solver import AbstractOptimizationSolver
-from umip.solver.cplex.enum import CplexStatus
 from umip.enums.variable_domain import VariableDomain
+from umip.solver.cplex.enum import CplexStatus
 from umip.solver_config import CplexSolverConfig
 
 
@@ -36,7 +35,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self.status = None
         self.solution = None
 
-    def set_variable_hint(self, variable: Var, hint: float | int | bool) -> None:
+    def set_variable_hint(self, variable: Var, hint: float | bool) -> None:
         raise NotImplementedError()
 
     def set_multiple_variable_hints(
@@ -67,8 +66,8 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> npt.NDArray[Var]:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -129,13 +128,10 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[Var] | Var,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
         name: str | None = None,
     ) -> int | None:
         coefficients = self._to_float(value=coefficients)
@@ -178,8 +174,8 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> int:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -208,7 +204,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
 
     def add_objective_term(
         self,
-        coefficient: float | int | bool,
+        coefficient: float | bool,
         variable: Var,
         overwrite: bool = True,
         name: str = None,
@@ -324,7 +320,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
             return self.infinity()
         return self._solver.solve_details.mip_relative_gap
 
-    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | bool, overwrite: bool = True):
         offset = self._to_float(value=offset)
         if overwrite:
             self._objective.constant = 0

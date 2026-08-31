@@ -1,8 +1,10 @@
-import numpy as np
 import sys
+
+import numpy as np
 from adapta.logs import SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
+
 from umip import VariableDomain
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory

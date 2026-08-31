@@ -1,33 +1,33 @@
 """Abstract definition of a MIP model."""
 
-import time
 import sys
-from abc import abstractmethod, ABC
+import time
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Any
+
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from adapta.metrics import MetricsProvider
 from adapta.metrics.providers.void_provider import VoidMetricsProvider
 
-from umip.abstract_solver import AbstractOptimizationSolver
-
-from umip.enums.variable_domain import VariableDomain
 from umip.abstract_constr_builder import AbstractConstraintBuilder
-from umip.abstract_var_builder import AbstractDecisionVariableBuilder
-from umip.abstract_obj_builder import AbstractObjectiveBuilder
 from umip.abstract_data_prep import AbstractDataPreparator
-from umip.exception import (
-    OptimizationException,
-    AbnormalException,
-    InfeasibleException,
-    UnboundedException,
-)
 from umip.abstract_dataclasses import (
     AbstractInputData,
-    AbstractOutputData,
     AbstractInternalData,
+    AbstractOutputData,
+)
+from umip.abstract_obj_builder import AbstractObjectiveBuilder
+from umip.abstract_solver import AbstractOptimizationSolver
+from umip.abstract_var_builder import AbstractDecisionVariableBuilder
+from umip.enums.variable_domain import VariableDomain
+from umip.exception import (
+    AbnormalException,
+    InfeasibleException,
+    OptimizationException,
+    UnboundedException,
 )
 
 
@@ -218,7 +218,7 @@ class AbstractMipModel(ABC):
             else:
                 self._unpack_variables()
 
-            return None
+            return
 
         if self._solver.is_infeasible():
             raise InfeasibleException("The model is infeasible.")

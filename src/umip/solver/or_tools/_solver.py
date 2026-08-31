@@ -1,13 +1,15 @@
 """A solver implemented in the Google OR-Tools library."""
 
-from typing import Iterable
-from ortools.linear_solver import pywraplp
-import numpy.typing as npt
+from collections.abc import Iterable
+
 import numpy as np
+import numpy.typing as npt
 from adapta.logs import LoggerInterface
+from ortools.linear_solver import pywraplp
+
 from umip.abstract_solver import AbstractOptimizationSolver
-from umip.solver.or_tools._solver_engine import OrToolsSolverEngine
 from umip.enums.variable_domain import VariableDomain
+from umip.solver.or_tools._solver_engine import OrToolsSolverEngine
 from umip.solver_config import OrToolsSolverConfig
 
 
@@ -34,7 +36,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         self.status = None
 
     def set_variable_hint(
-        self, variable: pywraplp.Variable, hint: float | int | bool
+        self, variable: pywraplp.Variable, hint: float | bool
     ) -> None:
         hint = self._to_float(value=hint)
         self._solver.SetHint([variable], [hint])
@@ -51,8 +53,8 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> npt.NDArray[pywraplp.Variable]:
         lower_bound = lower_bound if lower_bound is not None else -self.infinity()
         upper_bound = upper_bound if upper_bound is not None else self.infinity()
@@ -118,13 +120,10 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[pywraplp.Variable] | pywraplp.Variable,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
         name: str | None = None,
     ) -> pywraplp.Constraint | None:
         if lower_bound is None and upper_bound is None:
@@ -160,8 +159,8 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> pywraplp.Variable:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -189,7 +188,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
 
     def add_objective_term(
         self,
-        coefficient: float | int | bool,
+        coefficient: float | bool,
         variable: pywraplp.Variable,
         overwrite: bool = True,
         name: str = None,
@@ -319,7 +318,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         return abs(bound - objective_value) / abs(objective_value)
 
     def add_objective_offset(
-        self, offset: float | int | bool, overwrite: bool = True
+        self, offset: float | bool, overwrite: bool = True
     ) -> None:
         offset = self._to_float(value=offset)
         if overwrite:

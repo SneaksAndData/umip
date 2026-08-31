@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass
 
-from dataclasses_json import Undefined
-from dataclasses_json import dataclass_json
+from dataclasses_json import Undefined, dataclass_json
 
 from umip.solver_config.base import SolverConfig
 

@@ -1,14 +1,12 @@
 from unittest.mock import MagicMock
 
-import pytest
 import pandas as pd
 import polars as pl
+import pytest
 from polars.testing import assert_frame_equal
 
-from umip.enums import DataFrameArgumentType
-from umip import VariableDomain
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
-
+from umip import VariableDomain
 
 variables_column = "vars"
 unpacked_values_column = "unpacked_val"

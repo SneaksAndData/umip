@@ -1,9 +1,9 @@
-from unittest.mock import MagicMock
-import pytest
 from dataclasses import dataclass
+from unittest.mock import MagicMock
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
 
 from tests.mock_classes_and_data import MockDecisionVariableBuilder

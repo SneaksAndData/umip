@@ -1,16 +1,11 @@
 import sys
+
 import pytest
-from adapta.logs import SemanticLogger, LoggerInterface
+from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from umip import SolverType
-from umip.solver.cplex import CplexSolver
-from umip.solver.gurobi import GurobiSolver
-from umip.solver.highs import HighsSolver
-from umip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
-from umip.solver.local_solver import LocalSolver
-from umip import SolverFactory
+from umip import SolverFactory, SolverType
 
 
 @pytest.fixture(scope="session")

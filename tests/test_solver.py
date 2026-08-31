@@ -3,12 +3,11 @@ Generally, Gurobi and LocalSolver are not tested because they are not open sourc
 Open source implementations are tested below.
 """
 
-import pytest
 import numpy as np
+import pytest
 
-from umip import AbstractOptimizationSolver
+from umip import AbstractOptimizationSolver, VariableDomain
 from umip.enums.constraint_type import ConstraintType
-from umip import VariableDomain
 from umip.solver_config import OrToolsScipSolverConfig
 
 
@@ -592,7 +591,7 @@ def test__get_gap__time_limit_reached__gap_greater_than_zero(
     """
     # Arrange
     number_of_cities = 200
-    cities = list(range(0, number_of_cities))
+    cities = list(range(number_of_cities))
 
     c = [[10.0 for _ in cities] for _ in cities]
     x = [
@@ -676,7 +675,7 @@ def test_get_gap__gap_limit_reached__gap_equal_to_limit(
     """
     # Arrange
     number_of_cities = 100
-    cities = list(range(0, number_of_cities))
+    cities = list(range(number_of_cities))
 
     np.random.seed(number_of_cities)
     c = [[np.random.rand() for _ in cities] for _ in cities]

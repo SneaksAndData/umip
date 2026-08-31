@@ -4,9 +4,11 @@ import base64
 import os
 from abc import ABC, abstractmethod
 from typing import Any
+
 from adapta.logs import LoggerInterface
-from umip.abstract_solver import AbstractOptimizationSolver
+
 from umip.abstract_dataclasses import AbstractInternalData
+from umip.abstract_solver import AbstractOptimizationSolver
 
 
 class AbstractObjectiveBuilder(ABC):

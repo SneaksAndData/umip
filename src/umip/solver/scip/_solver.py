@@ -1,10 +1,11 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 import numpy.typing as npt
 import pyscipopt
-from pyscipopt import Model
 from adapta.logs import LoggerInterface
+from pyscipopt import Model
+
 from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums.variable_domain import VariableDomain
 
@@ -25,13 +26,10 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[pyscipopt.Variable] | pyscipopt.Variable,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
         name: str | None = None,
     ) -> pyscipopt.Constraint | None:
         coefficients = self._to_float(value=coefficients)
@@ -111,8 +109,8 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> pyscipopt.Variable:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -145,8 +143,8 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> npt.NDArray[pyscipopt.Variable]:
         return np.array(
             [
@@ -161,7 +159,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         )
 
     def set_variable_hint(
-        self, variable: pyscipopt.Variable, hint: float | int | bool
+        self, variable: pyscipopt.Variable, hint: float | bool
     ) -> None:
         hint = self._to_float(value=hint)
         partial_solution = self._solver.createPartialSol()
@@ -180,7 +178,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
 
     def add_objective_term(
         self,
-        coefficient: float | int | bool,
+        coefficient: float | bool,
         variable: pyscipopt.Variable,
         overwrite: bool = True,
         name: str = None,
@@ -319,7 +317,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         return self._solver.getGap()
 
     def add_objective_offset(
-        self, offset: float | int | bool, overwrite: bool = True
+        self, offset: float | bool, overwrite: bool = True
     ) -> None:
         offset = self._to_float(value=offset)
         if overwrite:

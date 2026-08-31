@@ -14,8 +14,8 @@ variable builder, which uses build_column_variables and unpack_column_variables 
 of manually creating and unpacking solver variable objects.
 """
 
-from dataclasses import dataclass
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -24,18 +24,22 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from generic_mip import AbstractConstraintBuilder
-from generic_mip import AbstractDataPreparator
-from generic_mip import AbstractDecisionVariableBuilder
-from generic_mip import AbstractMipModel
-from generic_mip import AbstractObjectiveBuilder
-from generic_mip import AbstractOptimizationSolver
-from generic_mip import VariableDomain
-from umip import AbstractInputData
-from umip import AbstractInternalData
-from umip import AbstractOutputData
-from umip import SolverType
-from umip import SolverFactory
+from umip import (
+    AbstractConstraintBuilder,
+    AbstractDataPreparator,
+    AbstractDecisionVariableBuilder,
+    AbstractMipModel,
+    AbstractObjectiveBuilder,
+    AbstractOptimizationSolver,
+    VariableDomain,
+)
+from umip.abstract_dataclasses import (
+    AbstractInputData,
+    AbstractInternalData,
+    AbstractOutputData,
+)
+from umip.enums import SolverType
+from umip.solver_factory import SolverFactory
 
 VARIABLE_NAME = "variable_name"
 UPPER_BOUND = "upper_bound"

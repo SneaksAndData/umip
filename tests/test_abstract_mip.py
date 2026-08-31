@@ -2,14 +2,13 @@
 Tests of the AbstractMipModel class. Tests do not cover the solver classes and simple wrappers.
 """
 
-from unittest import mock
-from unittest.mock import call, MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 from adapta.logs import LoggerInterface
-from umip import SolverFactory
 
 from tests.mock_classes_and_data import *
+from umip import SolverFactory
 
 
 def _construct_solver(

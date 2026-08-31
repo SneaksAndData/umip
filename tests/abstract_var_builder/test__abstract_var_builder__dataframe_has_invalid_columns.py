@@ -1,10 +1,11 @@
-import pytest
-import pandas as pd
-import polars as pl
 from unittest.mock import MagicMock
 
-from umip.enums import DataFrameArgumentType
+import pandas as pd
+import polars as pl
+import pytest
+
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+from umip.enums import DataFrameArgumentType
 
 
 def test__dataframe_has_invalid_columns__pandas_with_invalid__returns_true():

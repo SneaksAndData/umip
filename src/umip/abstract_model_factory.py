@@ -5,8 +5,8 @@ from typing import Any
 
 from adapta.logs import LoggerInterface
 
-from umip.abstract_solver import AbstractOptimizationSolver
 from umip.abstract_mip import AbstractMipModel
+from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums import SolverType
 from umip.solver_config import SolverConfig
 from umip.solver_factory import SolverFactory

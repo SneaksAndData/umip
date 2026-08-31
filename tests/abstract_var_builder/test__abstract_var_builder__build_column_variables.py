@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock, call
-import pytest
 
 import pandas as pd
 import polars as pl
+import pytest
 
+from tests.mock_classes_and_data import MockDecisionVariableBuilder
 from umip import VariableDomain
 from umip.enums import DataFrameArgumentType
 from umip.enums.bound_type import BoundType
-from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 
 def test__build_column_variables__pandas_dataframe__pandas_method_is_called():

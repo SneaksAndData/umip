@@ -1,7 +1,7 @@
 """Example showing settings-driven model composition via a model factory."""
 
-from dataclasses import dataclass
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -9,17 +9,21 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from umip import AbstractConstraintBuilder
-from umip import AbstractDataPreparator
-from umip import AbstractDecisionVariableBuilder
-from umip import AbstractMipModel
-from umip import AbstractMipModelFactory
-from umip import AbstractObjectiveBuilder
-from umip import AbstractOptimizationSolver
-from umip import VariableDomain
-from umip.abstract_dataclasses import AbstractInputData
-from umip.abstract_dataclasses import AbstractInternalData
-from umip.abstract_dataclasses import AbstractOutputData
+from umip import (
+    AbstractConstraintBuilder,
+    AbstractDataPreparator,
+    AbstractDecisionVariableBuilder,
+    AbstractMipModel,
+    AbstractMipModelFactory,
+    AbstractObjectiveBuilder,
+    AbstractOptimizationSolver,
+    VariableDomain,
+)
+from umip.abstract_dataclasses import (
+    AbstractInputData,
+    AbstractInternalData,
+    AbstractOutputData,
+)
 from umip.enums import SolverType
 
 

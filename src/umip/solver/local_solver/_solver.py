@@ -1,8 +1,10 @@
 import math
-import numpy.typing as npt
-import numpy as np
-from adapta.logs import LoggerInterface
+
 import localsolver as ls
+import numpy as np
+import numpy.typing as npt
+from adapta.logs import LoggerInterface
+
 from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums.variable_domain import VariableDomain
 from umip.solver_config import LocalSolverConfig
@@ -29,13 +31,10 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[ls.LSExpression] | ls.LSExpression,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
         name: str | None = None,
     ) -> ls.LSExpression | None:
         if lower_bound is None and upper_bound is None:
@@ -102,8 +101,8 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> ls.LSExpression:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -137,8 +136,8 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> npt.NDArray[ls.LSExpression]:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -163,7 +162,7 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
         )
 
     def set_variable_hint(
-        self, variable: ls.LSExpression, hint: float | int | bool
+        self, variable: ls.LSExpression, hint: float | bool
     ) -> None:
         raise NotImplementedError()
 
@@ -176,7 +175,7 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
 
     def add_objective_term(
         self,
-        coefficient: float | int | bool,
+        coefficient: float | bool,
         variable: ls.LSExpression,
         overwrite: bool = True,
         name: str = None,

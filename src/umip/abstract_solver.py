@@ -1,11 +1,12 @@
 """Abstract definition of a solver."""
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
+from typing import Generic, TypeVar
 
 import numpy as np
 import numpy.typing as npt
 from adapta.logs import LoggerInterface
+
 from umip.enums.constraint_type import ConstraintType
 from umip.enums.variable_domain import VariableDomain
 from umip.solver_config import SolverConfig
@@ -34,11 +35,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @staticmethod
     def _to_float(
-        value: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
-        | npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        value: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]] | npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
     ) -> float | npt.NDArray[float]:
         """
         Converts a numeric value, 1D numpy array or numpy array of numpy arrays to float representations.
@@ -87,13 +84,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[VT] | VT,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
         name: str | None = None,
     ) -> CT | None:
         """
@@ -156,12 +150,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def add_constraint_of_type(
         self,
         constraint_type: ConstraintType,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[VT] | VT,
-        right_hand_side: float | int | bool | None = None,
+        right_hand_side: float | bool | None = None,
         name: str | None = None,
     ) -> CT | None:
         """
@@ -260,8 +251,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> VT:
         """
         Adds variable to the model.
@@ -278,8 +269,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> npt.NDArray[VT]:
         """
         Adds multiple variables to the model.
@@ -292,7 +283,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def set_variable_hint(self, variable: VT, hint: float | int | bool) -> None:
+    def set_variable_hint(self, variable: VT, hint: float | bool) -> None:
         """
         Adds solution hint to decision variable.
 
@@ -316,7 +307,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     @abstractmethod
     def add_objective_term(
         self,
-        coefficient: float | int | bool,
+        coefficient: float | bool,
         variable: VT,
         overwrite: bool = True,
         name: str = None,
@@ -555,7 +546,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | bool, overwrite: bool = True):
         """
         Set the objective offset.
         :param offset: The offset to set.

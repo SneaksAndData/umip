@@ -1,9 +1,11 @@
 from unittest.mock import MagicMock
+
 import pytest
+
+from tests.mock_classes_and_data import MockDecisionVariableBuilder
 from umip.enums.data_types import (
     FilterColumnArgumentType,
 )
-from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 
 @pytest.mark.parametrize(

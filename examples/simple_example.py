@@ -13,8 +13,8 @@ For a DataFrame-backed version using build_column_variables and unpack_column_va
 see dataframe_example.py.
 """
 
-from dataclasses import dataclass
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -22,16 +22,20 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from umip import AbstractConstraintBuilder
-from umip import AbstractDataPreparator
-from umip import AbstractDecisionVariableBuilder
-from umip import AbstractMipModel
-from umip import AbstractObjectiveBuilder
-from umip import AbstractOptimizationSolver
-from umip import VariableDomain
-from umip.abstract_dataclasses import AbstractInputData
-from umip.abstract_dataclasses import AbstractInternalData
-from umip.abstract_dataclasses import AbstractOutputData
+from umip import (
+    AbstractConstraintBuilder,
+    AbstractDataPreparator,
+    AbstractDecisionVariableBuilder,
+    AbstractMipModel,
+    AbstractObjectiveBuilder,
+    AbstractOptimizationSolver,
+    VariableDomain,
+)
+from umip.abstract_dataclasses import (
+    AbstractInputData,
+    AbstractInternalData,
+    AbstractOutputData,
+)
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
 

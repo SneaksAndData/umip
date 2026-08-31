@@ -4,10 +4,12 @@ from dataclasses import dataclass
 
 import pytest
 
-from umip.solver_config import HighsParallelOption
-from umip.solver_config import HighsPresolveOption
-from umip.solver_config import HighsSolverConfig
-from umip.solver_config import HighsSolverOption
+from umip.solver_config import (
+    HighsParallelOption,
+    HighsPresolveOption,
+    HighsSolverConfig,
+    HighsSolverOption,
+)
 
 
 @dataclass

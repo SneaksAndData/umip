@@ -1,9 +1,10 @@
 """A solver implemented in the HiGHS library."""
 
 import highspy
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 from adapta.logs import LoggerInterface
+
 from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums.variable_domain import VariableDomain
 from umip.solver_config import HighsSolverConfig
@@ -33,7 +34,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self.status: highspy.HighsModelStatus | None = None
         self._solution: list[float] | None = None
 
-    def set_variable_hint(self, variable: str, hint: float | int | bool) -> None:
+    def set_variable_hint(self, variable: str, hint: float | bool) -> None:
         raise NotImplementedError()
 
     def _get_var_by_name(self, name: str) -> int:
@@ -90,8 +91,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self,
         names: npt.NDArray[str],
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> npt.NDArray[str]:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -192,13 +193,10 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
-        | float
-        | int
-        | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
         variables: npt.NDArray[str] | str,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
         name: str | None = None,
     ) -> str | None:
         coefficients = self._to_float(value=coefficients)
@@ -254,8 +252,8 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         self,
         name: str,
         variable_domain: VariableDomain,
-        lower_bound: float | int | bool | None = None,
-        upper_bound: float | int | bool | None = None,
+        lower_bound: float | bool | None = None,
+        upper_bound: float | bool | None = None,
     ) -> str:
         lower_bound = (
             self._to_float(value=lower_bound)
@@ -297,7 +295,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
 
     def add_objective_term(
         self,
-        coefficient: float | int | bool,
+        coefficient: float | bool,
         variable: str,
         overwrite: bool = True,
         name: str = None,
@@ -449,7 +447,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
             return 0
         return abs(bound - objective_value) / abs(objective_value)
 
-    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True):
+    def add_objective_offset(self, offset: float | bool, overwrite: bool = True):
         offset = self._to_float(value=offset)
         if overwrite:
             self._solver.changeObjectiveOffset(offset)

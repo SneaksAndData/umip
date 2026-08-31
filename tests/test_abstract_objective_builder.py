@@ -1,8 +1,8 @@
 from typing import Any
 
 from adapta.logs import LoggerInterface
-
 from generic_mip import AbstractObjectiveBuilder
+
 from umip import AbstractOptimizationSolver
 
 

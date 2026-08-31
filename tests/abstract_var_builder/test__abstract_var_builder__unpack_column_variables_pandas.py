@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from unittest.mock import MagicMock
-import pytest
-import pandas as pd
+
 import numpy as np
-from umip import VariableDomain
+import pandas as pd
+import pytest
+
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+from umip import VariableDomain
 
 
 @dataclass
@@ -155,7 +157,7 @@ def test__unpack_column_variables_pandas__has_invalid_columns__raises_value_erro
     # Act & Assert
     with pytest.raises(
         ValueError,
-        match=f"DataFrame must not contain column names from the following list: ",
+        match="DataFrame must not contain column names from the following list: ",
     ):
         var_builder._unpack_column_variables_pandas(
             data=MagicMock(),
