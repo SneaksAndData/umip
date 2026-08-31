@@ -1,5 +1,5 @@
 """Abstract definition of a variable builder."""
-
+import typing
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -28,14 +28,14 @@ class AbstractDecisionVariableBuilder(ABC):
     indicator_column_name = "indicators"
     variable_information_column_name = "var_information"
 
-    invalid_column_names_build = [
+    invalid_column_names_build: typing.ClassVar[list[str]] = [
         lower_bound_column_name,
         upper_bound_column_name,
         variable_name_column_name,
         indicator_column_name,
         variable_information_column_name,
     ]
-    invalid_column_names_unpack = [
+    invalid_column_names_unpack: typing.ClassVar[list[str]] = [
         indicator_column_name,
         variable_information_column_name,
     ]

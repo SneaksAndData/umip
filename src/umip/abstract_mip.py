@@ -44,13 +44,8 @@ class AbstractMipModel(ABC):
         constraint_builders: list[AbstractConstraintBuilder],
         variable_builders: list[AbstractDecisionVariableBuilder],
         objective_builders: list[AbstractObjectiveBuilder],
-        logger: LoggerInterface = SemanticLogger().add_log_source(
-            log_source_name="AbstractMipModel",
-            min_log_level=LogLevel.INFO,
-            log_handlers=[SafeStreamHandler(sys.stdout)],
-            is_default=True,
-        ),
-        metrics_provider: MetricsProvider = VoidMetricsProvider(),
+        logger: LoggerInterface,
+        metrics_provider: MetricsProvider,
     ):
         """
         Initialize the MIP model.
@@ -73,8 +68,13 @@ class AbstractMipModel(ABC):
         self._output_data: AbstractOutputData | None = None
         self._built = False
         self._solved = False
-        self._logger = logger
-        self._metrics_provider = metrics_provider
+        self._logger = logger or SemanticLogger().add_log_source(
+            log_source_name="AbstractMipModel",
+            min_log_level=LogLevel.INFO,
+            log_handlers=[SafeStreamHandler(sys.stdout)],
+            is_default=True,
+        )
+        self._metrics_provider = metrics_provider or VoidMetricsProvider()
         self._objective_builder_names = []
 
     def build(self, input_data: AbstractInputData, redirect_solver_log: bool = True, **_) -> None:

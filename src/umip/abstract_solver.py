@@ -306,7 +306,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         coefficient: float | bool,
         variable: VT,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         """
         Adds a single objective term.
@@ -323,7 +323,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[VT],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         """
         Adds multiple objective terms at once: c_1x_1 + c_2x_2 + ...
