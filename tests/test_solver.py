@@ -5,10 +5,10 @@ Open source implementations are tested below.
 import pytest
 import numpy as np
 
-from generic_mip.abstract_solver import AbstractOptimizationSolver
-from generic_mip.enums.constraint_type import ConstraintType
-from generic_mip.enums.variable_domain import VariableDomain
-from generic_mip.solver_config import OrToolsScipSolverConfig
+from umip.abstract_solver import AbstractOptimizationSolver
+from umip.enums.constraint_type import ConstraintType
+from umip.enums.variable_domain import VariableDomain
+from umip.solver_config import OrToolsScipSolverConfig
 
 
 @pytest.mark.parametrize(

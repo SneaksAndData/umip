@@ -6,9 +6,9 @@ import pandas as pd
 import numpy as np
 
 from generic_mip import VariableDomain
-from generic_mip.enums import BoundArgumentType, SolverType
-from generic_mip.enums.bound_type import BoundType
-from generic_mip.solver_factory import SolverFactory
+from umip.enums import BoundArgumentType, SolverType
+from umip.enums.bound_type import BoundType
+from umip.solver_factory import SolverFactory
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 bound_col = "bound"

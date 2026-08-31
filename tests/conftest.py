@@ -4,14 +4,14 @@ from adapta.logs import SemanticLogger, LoggerInterface
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from generic_mip.enums import SolverType
-from generic_mip.solver.cplex import CplexSolver
-from generic_mip.solver.gurobi import GurobiSolver
-from generic_mip.solver.highs import HighsSolver
-from generic_mip.solver.scip import ScipSolver
-from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
-from generic_mip.solver.local_solver import LocalSolver
-from generic_mip.solver_factory import SolverFactory
+from umip.enums import SolverType
+from umip.solver.cplex import CplexSolver
+from umip.solver.gurobi import GurobiSolver
+from umip.solver.highs import HighsSolver
+from umip.solver.scip import ScipSolver
+from umip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
+from umip.solver.local_solver import LocalSolver
+from umip.solver_factory import SolverFactory
 
 
 @pytest.fixture(scope="session")

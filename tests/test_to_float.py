@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 
-from generic_mip.abstract_solver import AbstractOptimizationSolver
+from umip.abstract_solver import AbstractOptimizationSolver
 
 
 @dataclass

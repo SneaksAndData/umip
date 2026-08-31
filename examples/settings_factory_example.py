@@ -16,10 +16,10 @@ from generic_mip import AbstractMipModelFactory
 from generic_mip import AbstractObjectiveBuilder
 from generic_mip import AbstractOptimizationSolver
 from generic_mip import VariableDomain
-from generic_mip.abstract_dataclasses import AbstractInputData
-from generic_mip.abstract_dataclasses import AbstractInternalData
-from generic_mip.abstract_dataclasses import AbstractOutputData
-from generic_mip.enums import SolverType
+from umip.abstract_dataclasses import AbstractInputData
+from umip.abstract_dataclasses import AbstractInternalData
+from umip.abstract_dataclasses import AbstractOutputData
+from umip.enums import SolverType
 
 
 @dataclass
