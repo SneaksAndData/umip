@@ -1,7 +1,6 @@
-# generic-mip
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+# Universal MIP
 
-`generic-mip` is both:
+`umip` is both:
 - a **MIP modeling package** with a unified solver API
 - a **framework for structuring optimization systems** into explicit, reusable building blocks
 
@@ -17,7 +16,8 @@ The aim of this repository is to:
 - Treat objective analytics as a native framework capability, where each objective function builder can expose named analytics and/or granularity analytics.
 - Abstract the solver layer to enable fast switching between solver engines such as OR-Tools, Gurobi, and SCIP.
 
-## Installation
+## Poetry - transitioning to `uv` - to be updated
+## Installation (Deprecated)
 This project uses Poetry.
 
 ```bash
