@@ -3,7 +3,7 @@ import pandas as pd
 import polars as pl
 from unittest.mock import MagicMock
 
-from src.umip import DataFrameArgumentType
+from umip import DataFrameArgumentType
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 

@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 import pytest
-from src.umip.enums.data_types import (
+from umip.enums.data_types import (
     FilterColumnArgumentType,
 )
 from tests.mock_classes_and_data import MockDecisionVariableBuilder

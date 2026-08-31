@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import polars as pl
 from unittest.mock import MagicMock
-from src.umip.enums.data_types import (
+from umip.enums.data_types import (
     DataFrameArgumentType,
 )
 from tests.mock_classes_and_data import MockDecisionVariableBuilder

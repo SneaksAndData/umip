@@ -3,7 +3,7 @@ from typing import Any
 from adapta.logs import LoggerInterface
 
 from generic_mip import AbstractObjectiveBuilder
-from src.umip import AbstractOptimizationSolver
+from umip import AbstractOptimizationSolver
 
 
 def test__abstract_objective_builder__get_analytics__general(logger):

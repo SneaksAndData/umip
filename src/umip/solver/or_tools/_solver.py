@@ -1,0 +1,294 @@
+"""A solver implemented in the Google OR-Tools library."""
+from typing import Iterable
+from ortools.linear_solver import pywraplp
+import numpy.typing as npt
+import numpy as np
+from adapta.logs import LoggerInterface
+from umip.abstract_solver import AbstractOptimizationSolver
+from umip.solver.or_tools._solver_engine import OrToolsSolverEngine
+from umip.enums.variable_domain import VariableDomain
+from umip.solver_config import OrToolsSolverConfig
+
+
+class OrToolsSolver(
+    AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Constraint]
+):  # pylint: disable=too-many-public-methods
+    """A solver implemented in the Google OR-Tools library."""
+
+    def __init__(self, solver_engine: OrToolsSolverEngine, logger: LoggerInterface):
+        """
+        Initialize the solver.
+
+        :param solver_engine: The solver engine to use.
+        :param logger: The logger to use.
+        """
+        super().__init__(logger)
+        self._solver_engine = solver_engine
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
+        self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
+        self._solver.EnableOutput()
+        self._objective: pywraplp.Objective = self._solver.Objective()
+        self.status = None
+
+    def set_variable_hint(self, variable: pywraplp.Variable, hint: float | int | bool) -> None:
+        hint = self._to_float(value=hint)
+        self._solver.SetHint([variable], [hint])
+
+    def set_multiple_variable_hints(
+        self, variables: npt.NDArray[pywraplp.Variable], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+    ) -> None:
+        hints = self._to_float(value=hints)
+        self._solver.SetHint(variables, hints)
+
+    def add_multiple_variables(
+        self,
+        names: npt.NDArray[str],
+        variable_domain: VariableDomain,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
+    ) -> npt.NDArray[pywraplp.Variable]:
+        lower_bound = lower_bound if lower_bound is not None else -self.infinity()
+        upper_bound = upper_bound if upper_bound is not None else self.infinity()
+
+        return np.array(
+            [
+                self.add_variable(
+                    lower_bound=lower_bound,
+                    upper_bound=upper_bound,
+                    name=f"{name}",
+                    variable_domain=variable_domain,
+                )
+                for name in names
+            ]
+        )
+
+    def add_multiple_constraints(
+        self,
+        coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[npt.NDArray[pywraplp.Variable]] | npt.NDArray[pywraplp.Variable],
+        lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        names: npt.NDArray[str] | None = None,
+    ) -> None:
+        if coefficients.size == 0:
+            return
+
+        coefficients = self._to_float(value=coefficients)
+
+        num_constrs = len(coefficients)
+        for i in range(num_constrs):
+            lower_bound = (
+                self._to_float(value=lower_bounds[i]) if lower_bounds is not None else -self._solver.infinity()
+            )
+            upper_bound = self._to_float(value=upper_bounds[i]) if upper_bounds is not None else self._solver.infinity()
+            constr: pywraplp.Constraint = (
+                self._solver.Constraint(
+                    lower_bound,
+                    upper_bound,
+                    names[i],
+                )
+                if names is not None
+                else self._solver.Constraint(
+                    lower_bound,
+                    upper_bound,
+                )
+            )
+            if coefficients.ndim == 1 and not isinstance(coefficients[0], (np.ndarray, list, set)):
+                constr.SetCoefficient(variables[i], coefficients[i])
+            else:
+                for j in range(len(coefficients[i])):
+                    constr.SetCoefficient(variables[i][j], coefficients[i][j])
+
+    def add_constraint(
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+        variables: npt.NDArray[pywraplp.Variable] | pywraplp.Variable,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
+        name: str | None = None,
+    ) -> pywraplp.Constraint | None:
+        if lower_bound is None and upper_bound is None:
+            return None
+
+        coefficients = self._to_float(value=coefficients)
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+
+        constr: pywraplp.Constraint = (
+            self._solver.Constraint(lower_bound, upper_bound, name)
+            if name is not None
+            else self._solver.Constraint(lower_bound, upper_bound)
+        )
+
+        if isinstance(variables, Iterable):
+            for coeff, var in zip(coefficients, variables):
+                constr.SetCoefficient(var, coeff)
+        else:
+            constr.SetCoefficient(variables, coefficients)
+
+        return constr
+
+    def add_variable(
+        self,
+        name: str,
+        variable_domain: VariableDomain,
+        lower_bound: float | int | bool | None = None,
+        upper_bound: float | int | bool | None = None,
+    ) -> pywraplp.Variable:
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+        self.number_of_variables_of_type[variable_domain] += 1
+        if variable_domain == VariableDomain.INTEGER:
+            self._integer_problem = True
+            return self._solver.IntVar(lower_bound, upper_bound, name)
+        if variable_domain == VariableDomain.CONTINUOUS:
+            return self._solver.NumVar(lower_bound, upper_bound, name)
+        if variable_domain == VariableDomain.BINARY:
+            self._integer_problem = True
+            return self._solver.BoolVar(name)
+        raise ValueError("Unsupported variable data type")
+
+    def get_variable_value(self, var: pywraplp.Variable) -> float:
+        return var.SolutionValue()
+
+    def add_objective_term(
+        self, coefficient: float | int | bool, variable: pywraplp.Variable, overwrite: bool = True, name: str = None
+    ) -> None:
+        coefficient = self._to_float(value=coefficient)
+        if name is not None:
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
+
+        if overwrite:
+            self._objective.SetCoefficient(variable, float(coefficient))
+        else:
+            self._objective.SetCoefficient(variable, self._objective.GetCoefficient(variable) + float(coefficient))
+
+    def add_multiple_objective_terms(
+        self,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
+        variables: npt.NDArray[pywraplp.Variable],
+        overwrite: bool = True,
+        name: str = None,
+    ) -> None:
+        coefficients = self._to_float(value=coefficients)
+        if name is not None:
+            self.add_named_objective(coefficients, variables, overwrite, name)
+
+        for i in range(len(coefficients)):  # pylint: disable=consider-using-enumerate
+            self.add_objective_term(coefficients[i], variables[i], overwrite=overwrite, name=None)
+
+    def set_optimization_direction(self, maximization: bool) -> None:
+        self._objective.SetOptimizationDirection(maximization)
+
+    def get_objective_value(self) -> float:
+        return self._objective.Value()
+
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
+        solver_params = pywraplp.MPSolverParameters()
+        if time_limit is not None:
+            self._solver.SetTimeLimit(round(time_limit * 1000))
+        if mip_gap_limit is not None:
+            solver_params.SetDoubleParam(solver_params.RELATIVE_MIP_GAP, mip_gap_limit)
+        self.status = self._solver.Solve(solver_params)
+        return self.status
+
+    def get_constraint(self, name: str) -> pywraplp.Constraint:
+        return self._solver.LookupConstraint(name)
+
+    def infinity(self) -> float:
+        return self._solver.infinity()
+
+    def is_optimal(self) -> bool:
+        return self.status == pywraplp.Solver.OPTIMAL
+
+    def is_feasible(self) -> bool:
+        return self.status in (pywraplp.Solver.FEASIBLE, pywraplp.Solver.OPTIMAL)
+
+    def is_infeasible(self) -> bool:
+        return self.status == pywraplp.Solver.INFEASIBLE
+
+    def is_unbounded(self) -> bool:
+        return self.status == pywraplp.Solver.UNBOUNDED
+
+    def is_abnormal(self) -> bool:
+        return self.status == pywraplp.Solver.ABNORMAL
+
+    def is_not_solved(self) -> bool:
+        return self.status == pywraplp.Solver.NOT_SOLVED
+
+    def set_solver_setting(self, setting: OrToolsSolverConfig) -> None:
+        if self._solver_engine == OrToolsSolverEngine.SCIP:
+            self._solver.SetSolverSpecificParametersAsString(setting.to_scip_parameters_string())
+
+    def export_to_file(self, path: str) -> None:
+        if path.lower().endswith(".lp"):
+            file_content = self._solver.ExportModelAsLpFormat(False)
+        elif path.lower().endswith(".mps"):
+            file_content = self._solver.ExportModelAsMpsFormat(False, False)
+        else:
+            raise ValueError("Unsupported file format")
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(file_content)
+
+    def set_verbose(self, verbose: bool) -> None:
+        if verbose:
+            self._solver.EnableOutput()
+        else:
+            self._solver.SuppressOutput()
+
+    def get_variable_count(self):
+        return self._solver.NumVariables()
+
+    def get_variable_count_of_type(self, variable_domain: VariableDomain):
+        return self.number_of_variables_of_type[variable_domain]
+
+    def get_constraint_count(self):
+        return self._solver.NumConstraints()
+
+    def get_objective_terms_count(self):
+        return len([coeff for var in self._solver.variables() if (coeff := self._objective.GetCoefficient(var)) != 0])
+
+    def force_update(self):
+        # OR Tools uses eager updates.
+        pass
+
+    def get_gap(self) -> float:
+        bound = self._solver.Objective().BestBound()
+        objective_value = self._solver.Objective().Value()
+        if objective_value == 0 and self.is_not_solved():
+            return self.infinity()
+        if objective_value == 0 and bound == 0:
+            return 0
+        return abs(bound - objective_value) / abs(objective_value)
+
+    def add_objective_offset(self, offset: float | int | bool, overwrite: bool = True) -> None:
+        offset = self._to_float(value=offset)
+        if overwrite:
+            self._objective.SetOffset(offset)
+        else:
+            self._objective.SetOffset(self._objective.Offset() + offset)
+
+    def get_dual_value(self, constraint: pywraplp.Constraint) -> float:
+        # constraint.dual_value() only works if you specifically use an LP solver.
+        # SCIP is a MIP solver, thus it does not work.
+        raise NotImplementedError("Dual values are not supported by the MIP solvers in OR Tools")
+
+    # pylint: disable=duplicate-code
+    def get_named_objective(self, name: str) -> float:
+        if name in self._named_objectives:
+            return float(
+                np.sum(
+                    [
+                        (
+                            0.0
+                            if abs(item.objective_coefficient) <= 1e-9
+                            else item.objective_coefficient * self.get_variable_value(item.variable)
+                        )
+                        for item in self._named_objectives[name]
+                        if item.objective_coefficient
+                    ]
+                )
+            )
+        return 0.0

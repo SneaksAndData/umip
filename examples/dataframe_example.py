@@ -30,11 +30,11 @@ from generic_mip import AbstractMipModel
 from generic_mip import AbstractObjectiveBuilder
 from generic_mip import AbstractOptimizationSolver
 from generic_mip import VariableDomain
-from src.umip import AbstractInputData
-from src.umip import AbstractInternalData
-from src.umip import AbstractOutputData
-from src.umip import SolverType
-from src.umip import SolverFactory
+from umip import AbstractInputData
+from umip import AbstractInternalData
+from umip import AbstractOutputData
+from umip import SolverType
+from umip import SolverFactory
 
 VARIABLE_NAME = "variable_name"
 UPPER_BOUND = "upper_bound"
