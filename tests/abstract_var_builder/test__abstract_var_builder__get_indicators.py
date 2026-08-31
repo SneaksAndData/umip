@@ -4,7 +4,7 @@ import polars as pl
 import numpy as np
 from unittest.mock import MagicMock
 
-from generic_mip.enums import FilterColumnArgumentType, DataFrameArgumentType
+from umip.enums import FilterColumnArgumentType, DataFrameArgumentType
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 

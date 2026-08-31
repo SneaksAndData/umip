@@ -6,7 +6,6 @@ _Give a reason for your changes. It should allow the reviewer to understand the 
 
 ### Checklist
 - [ ] Self-review done
-- [ ] Story ID added to the title
 - [ ] Short, descriptive title
 - [ ] Unit tests added
 - [ ] Change is verified

@@ -3,15 +3,15 @@
 import pytest
 
 from generic_mip import AbstractOptimizationSolver
-from generic_mip.enums.solver_type import SolverType
-from generic_mip.solver.cplex import CplexSolver
-from generic_mip.solver.highs import HighsSolver
-from generic_mip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
-from generic_mip.solver_config import GurobiSolverConfig
-from generic_mip.solver_config import HighsPresolveOption
-from generic_mip.solver_config import HighsSolverConfig
-from generic_mip.solver_config import OrToolsScipSolverConfig
-from generic_mip.solver_factory.solver_factory import SolverFactory
+from umip.enums.solver_type import SolverType
+from umip.solver.cplex import CplexSolver
+from umip.solver.highs import HighsSolver
+from umip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
+from umip.solver_config import GurobiSolverConfig
+from umip.solver_config import HighsPresolveOption
+from umip.solver_config import HighsSolverConfig
+from umip.solver_config import OrToolsScipSolverConfig
+from umip.solver_factory.solver_factory import SolverFactory
 
 
 @pytest.mark.parametrize(

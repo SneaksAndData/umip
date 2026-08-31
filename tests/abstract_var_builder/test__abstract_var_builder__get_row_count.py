@@ -4,7 +4,7 @@ import polars as pl
 from unittest.mock import MagicMock
 
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
-from generic_mip.enums.data_types import DataFrameArgumentType
+from umip.enums.data_types import DataFrameArgumentType
 
 
 @pytest.mark.parametrize(

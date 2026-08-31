@@ -5,7 +5,7 @@ import polars as pl
 import pandas as pd
 import numpy as np
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
-from generic_mip.enums import DataFrameArgumentType, IndexColumnsArgumentType
+from umip.enums import DataFrameArgumentType, IndexColumnsArgumentType
 
 
 @dataclass
