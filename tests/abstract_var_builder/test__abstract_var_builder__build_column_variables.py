@@ -4,8 +4,8 @@ import pytest
 import pandas as pd
 import polars as pl
 
-from generic_mip import VariableDomain
-from umip import DataFrameArgumentType
+from umip import VariableDomain
+from umip.enums import DataFrameArgumentType
 from umip.enums.bound_type import BoundType
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 

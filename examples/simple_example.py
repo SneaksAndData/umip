@@ -21,18 +21,18 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from generic_mip import AbstractConstraintBuilder
-from generic_mip import AbstractDataPreparator
-from generic_mip import AbstractDecisionVariableBuilder
-from generic_mip import AbstractMipModel
-from generic_mip import AbstractObjectiveBuilder
-from generic_mip import AbstractOptimizationSolver
-from generic_mip import VariableDomain
-from umip import AbstractInputData
-from umip import AbstractInternalData
-from umip import AbstractOutputData
-from umip import SolverType
-from umip import SolverFactory
+from umip import AbstractConstraintBuilder
+from umip import AbstractDataPreparator
+from umip import AbstractDecisionVariableBuilder
+from umip import AbstractMipModel
+from umip import AbstractObjectiveBuilder
+from umip import AbstractOptimizationSolver
+from umip import VariableDomain
+from umip.abstract_dataclasses import AbstractInputData
+from umip.abstract_dataclasses import AbstractInternalData
+from umip.abstract_dataclasses import AbstractOutputData
+from umip.enums import SolverType
+from umip.solver_factory import SolverFactory
 
 
 @dataclass
