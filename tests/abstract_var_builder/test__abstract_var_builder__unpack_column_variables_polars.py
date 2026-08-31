@@ -4,7 +4,7 @@ import pytest
 import polars as pl
 from polars.testing import assert_frame_equal
 import numpy as np
-from umip.enums.variable_domain import VariableDomain
+from src.umip import VariableDomain
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 

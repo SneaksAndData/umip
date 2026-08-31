@@ -16,23 +16,28 @@ The aim of this repository is to:
 - Treat objective analytics as a native framework capability, where each objective function builder can expose named analytics and/or granularity analytics.
 - Abstract the solver layer to enable fast switching between solver engines such as OR-Tools, Gurobi, and SCIP.
 
-## Poetry - transitioning to `uv` - to be updated
-## Installation (Deprecated)
-This project uses Poetry.
+## Installation
+This project uses `uv` for Python version and dependency management.
 
+Prepare environment with default version (always minimum, currently 3.11):
 ```bash
-poetry install
+uv sync
 ```
+For a different Python version, use `uv sync --python {version}`.
 
 Install optional solver extras as needed:
 
 ```bash
-poetry install --extras ortools
-poetry install --extras highs
-poetry install --extras gurobi
-poetry install --extras docplex
-poetry install --extras pyscipopt
-poetry install --extras localsolver
+uv sync --extra ortools
+uv sync --extra highs
+uv sync --extra gurobi
+uv sync --extra docplex
+uv sync --extra pyscipopt
+uv sync --extra localsolver
+```
+or /yolo:
+```bash
+uv sync --all-extras
 ```
 
 ## Solver support

@@ -4,8 +4,8 @@ from adapta.logs import SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from generic_mip import VariableDomain
-from umip.enums import SolverType
-from umip.solver_factory import SolverFactory
+from src.umip import SolverType
+from src.umip import SolverFactory
 
 """
 Model to implement:

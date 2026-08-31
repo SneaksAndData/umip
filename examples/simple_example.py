@@ -28,11 +28,11 @@ from generic_mip import AbstractMipModel
 from generic_mip import AbstractObjectiveBuilder
 from generic_mip import AbstractOptimizationSolver
 from generic_mip import VariableDomain
-from umip.abstract_dataclasses import AbstractInputData
-from umip.abstract_dataclasses import AbstractInternalData
-from umip.abstract_dataclasses import AbstractOutputData
-from umip.enums import SolverType
-from umip.solver_factory import SolverFactory
+from src.umip import AbstractInputData
+from src.umip import AbstractInternalData
+from src.umip import AbstractOutputData
+from src.umip import SolverType
+from src.umip import SolverFactory
 
 
 @dataclass

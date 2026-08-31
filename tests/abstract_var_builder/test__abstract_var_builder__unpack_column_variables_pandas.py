@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 import pandas as pd
 import numpy as np
-from umip.enums.variable_domain import VariableDomain
+from src.umip import VariableDomain
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 

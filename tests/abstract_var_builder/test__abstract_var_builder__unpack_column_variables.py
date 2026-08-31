@@ -5,8 +5,8 @@ import pandas as pd
 import polars as pl
 from polars.testing import assert_frame_equal
 
-from umip.enums import DataFrameArgumentType
-from umip.enums.variable_domain import VariableDomain
+from src.umip import DataFrameArgumentType
+from src.umip import VariableDomain
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 

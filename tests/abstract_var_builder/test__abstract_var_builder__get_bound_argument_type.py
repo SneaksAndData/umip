@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from umip.enums.data_types import (
+from src.umip.enums.data_types import (
     BoundArgumentType,
 )
 from tests.mock_classes_and_data import MockDecisionVariableBuilder

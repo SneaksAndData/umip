@@ -5,14 +5,14 @@ Mock classes for use in tests
 from dataclasses import dataclass
 from typing import Any
 
-from umip.abstract_constr_builder import AbstractConstraintBuilder
-from umip.enums import SolverType
-from umip.abstract_var_builder import AbstractDecisionVariableBuilder
-from umip.abstract_obj_builder import AbstractObjectiveBuilder
-from umip.abstract_data_prep import AbstractDataPreparator
-from umip.abstract_solver import AbstractOptimizationSolver
-from umip.abstract_mip import AbstractMipModel
-from umip.abstract_dataclasses import AbstractInternalData, AbstractInputData, AbstractOutputData
+from src.umip.abstract_constr_builder import AbstractConstraintBuilder
+from src.umip import SolverType
+from src.umip.abstract_var_builder import AbstractDecisionVariableBuilder
+from src.umip import AbstractObjectiveBuilder
+from src.umip import AbstractDataPreparator
+from src.umip import AbstractOptimizationSolver
+from src.umip import AbstractMipModel
+from src.umip import AbstractInternalData, AbstractInputData, AbstractOutputData
 
 
 @dataclass

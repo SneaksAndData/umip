@@ -6,7 +6,7 @@ from unittest.mock import call, MagicMock
 
 import pytest
 from adapta.logs import LoggerInterface
-from umip.solver_factory import SolverFactory
+from src.umip import SolverFactory
 
 from tests.mock_classes_and_data import *
 

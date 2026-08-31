@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from umip.solver_config import OrToolsScipSolverConfig
+from src.umip.solver_config import OrToolsScipSolverConfig
 
 
 @dataclass

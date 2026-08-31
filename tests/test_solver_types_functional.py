@@ -6,10 +6,10 @@ import pytest
 from adapta.logs import LoggerInterface
 
 from generic_mip import VariableDomain
-from umip.solver.cplex import CplexSolver
-from umip.solver.gurobi import GurobiSolver
-from umip.solver.highs import HighsSolver
-from umip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
+from src.umip.solver.cplex import CplexSolver
+from src.umip.solver.gurobi import GurobiSolver
+from src.umip.solver.highs import HighsSolver
+from src.umip.solver.or_tools import OrToolsSolverEngine, OrToolsSolver
 
 
 def create_solver(solver_type: str, logger: LoggerInterface):
