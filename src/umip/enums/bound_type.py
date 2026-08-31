@@ -1,4 +1,5 @@
 """Bound types."""
+
 from enum import Enum
 
 

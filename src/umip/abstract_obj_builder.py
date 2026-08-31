@@ -1,4 +1,5 @@
 """Abstract definition of an objective builder."""
+
 import base64
 import os
 from abc import ABC, abstractmethod
@@ -22,7 +23,9 @@ class AbstractObjectiveBuilder(ABC):
         self._cached__analytics_granularity_results: dict[str, Any] = {}
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> None:
+    def build(
+        self, solver: AbstractOptimizationSolver, data: AbstractInternalData
+    ) -> None:
         """
         Builds the objective terms on the given model and the given data.
 
@@ -30,7 +33,9 @@ class AbstractObjectiveBuilder(ABC):
         :param data: The data (e.g. dataframes) providing variables and parameters for the objective terms.
         """
 
-    def add_analytics_granularity(self, granularity_name: str, analytics_calculator: callable) -> None:
+    def add_analytics_granularity(
+        self, granularity_name: str, analytics_calculator: callable
+    ) -> None:
         """
         Register an analytics calculator for a specific granularity.
 
@@ -38,7 +43,9 @@ class AbstractObjectiveBuilder(ABC):
         :param analytics_calculator: The function that calculates analytics for this granularity
         """
         if granularity_name in self._analytics_granularity_functions:
-            raise ValueError(f"Analytics granularity '{granularity_name}' is already registered.")
+            raise ValueError(
+                f"Analytics granularity '{granularity_name}' is already registered."
+            )
 
         self._analytics_granularity_functions[granularity_name] = analytics_calculator
 
@@ -66,8 +73,8 @@ class AbstractObjectiveBuilder(ABC):
         )
 
         if not cache_key in self._cached__analytics_granularity_results:
-            self._cached__analytics_granularity_results[cache_key] = self._analytics_granularity_functions[granularity](
-                analytics_data
+            self._cached__analytics_granularity_results[cache_key] = (
+                self._analytics_granularity_functions[granularity](analytics_data)
             )
 
         return self._cached__analytics_granularity_results[cache_key]

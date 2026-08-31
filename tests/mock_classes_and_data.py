@@ -10,7 +10,11 @@ from umip import AbstractMipModel
 from umip import AbstractObjectiveBuilder
 from umip import AbstractOptimizationSolver
 from umip.abstract_constr_builder import AbstractConstraintBuilder
-from umip.abstract_dataclasses import AbstractInternalData, AbstractInputData, AbstractOutputData
+from umip.abstract_dataclasses import (
+    AbstractInternalData,
+    AbstractInputData,
+    AbstractOutputData,
+)
 from umip.abstract_var_builder import AbstractDecisionVariableBuilder
 
 
@@ -31,7 +35,9 @@ class MockOutputData(MockInternalData, AbstractOutputData):
 
 class MockMipModel(AbstractMipModel):
     @staticmethod
-    def _convert_internal_to_output_data(internal_unpacked_data: MockInternalData) -> MockOutputData:
+    def _convert_internal_to_output_data(
+        internal_unpacked_data: MockInternalData,
+    ) -> MockOutputData:
         pass
 
 
@@ -41,10 +47,14 @@ class MockConstraintBuilder(AbstractConstraintBuilder):
 
 
 class MockDecisionVariableBuilder(AbstractDecisionVariableBuilder):
-    def build(self, solver: AbstractOptimizationSolver, data: MockInternalData) -> MockInternalData:
+    def build(
+        self, solver: AbstractOptimizationSolver, data: MockInternalData
+    ) -> MockInternalData:
         return data
 
-    def unpack(self, solver: AbstractOptimizationSolver, data: MockInternalData) -> MockInternalData:
+    def unpack(
+        self, solver: AbstractOptimizationSolver, data: MockInternalData
+    ) -> MockInternalData:
         return data
 
 

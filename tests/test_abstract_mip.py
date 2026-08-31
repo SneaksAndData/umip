@@ -1,6 +1,7 @@
 """
 Tests of the AbstractMipModel class. Tests do not cover the solver classes and simple wrappers.
 """
+
 from unittest import mock
 from unittest.mock import call, MagicMock
 
@@ -23,10 +24,17 @@ def test__build__general():
     """
     # Arrange
     mock_data_preparator = MagicMock(spec=AbstractDataPreparator, prepare=MagicMock())
-    mock_variable_builder = MagicMock(spec=AbstractDecisionVariableBuilder, build=MagicMock(), unpack=MagicMock())
-    mock_constraint_builder = MagicMock(spec=AbstractConstraintBuilder, build=MagicMock())
+    mock_variable_builder = MagicMock(
+        spec=AbstractDecisionVariableBuilder, build=MagicMock(), unpack=MagicMock()
+    )
+    mock_constraint_builder = MagicMock(
+        spec=AbstractConstraintBuilder, build=MagicMock()
+    )
     mock_objective_builder = MagicMock(
-        spec=AbstractObjectiveBuilder, build=MagicMock(), unpack=MagicMock(), objective_name="test_name"
+        spec=AbstractObjectiveBuilder,
+        build=MagicMock(),
+        unpack=MagicMock(),
+        objective_name="test_name",
     )
     logger = MagicMock(spec=LoggerInterface)
 
@@ -56,7 +64,9 @@ def test__solve__model_built__methods_are_called():
     """
     # Arrange
     mock_objective_builder = MagicMock(spec=AbstractObjectiveBuilder)
-    mock_variable_builder = MagicMock(spec=AbstractDecisionVariableBuilder, unpack=MagicMock())
+    mock_variable_builder = MagicMock(
+        spec=AbstractDecisionVariableBuilder, unpack=MagicMock()
+    )
     mock_constraint_builder = MagicMock(spec=AbstractConstraintBuilder)
     mock_data_preparator = MagicMock(spec=AbstractDataPreparator)
     logger = MagicMock(spec=LoggerInterface)
@@ -106,7 +116,9 @@ def test__solve__model_not_built__raises_value_error():
 
 
 @pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
-def test__abstract_mip__get_analytics__analytics_data_not_provided(solver_type: SolverType, logger):
+def test__abstract_mip__get_analytics__analytics_data_not_provided(
+    solver_type: SolverType, logger
+):
     """
     Tests the get_analytics method for the case when analytics_data is not provided as an argument for
     the method (model._output_data must be used)
@@ -128,7 +140,9 @@ def test__abstract_mip__get_analytics__analytics_data_not_provided(solver_type: 
             self.add_analytics_granularity("sku_location", self._sku_location_analytics)
             self.add_analytics_granularity("aggregated", self._aggregated_analytics)
 
-        def build(self, solver: AbstractOptimizationSolver, data: TestInternalData) -> None:
+        def build(
+            self, solver: AbstractOptimizationSolver, data: TestInternalData
+        ) -> None:
             pass
 
         def _sku_analytics(self, analytics_data: TestInternalData) -> Any:
@@ -168,13 +182,20 @@ def test__abstract_mip__get_analytics__analytics_data_not_provided(solver_type: 
         sku=[1000, 500, 100],
     )
     assert model.get_analytics(granularity="sku") == {"builder_1": [1000, 500, 100]}
-    assert model.get_analytics(granularity="sku_location") == {"builder_1": "something_else"}
-    assert model.get_analytics(granularity="aggregated") == {"builder_1": 1600, "ObjectiveBuilder2": 35}
+    assert model.get_analytics(granularity="sku_location") == {
+        "builder_1": "something_else"
+    }
+    assert model.get_analytics(granularity="aggregated") == {
+        "builder_1": 1600,
+        "ObjectiveBuilder2": 35,
+    }
     assert model.get_analytics(granularity="unknown") == {}
 
 
 @pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
-def test__abstract_mip__get_analytics__analytics_data_provided(solver_type: SolverType, logger):
+def test__abstract_mip__get_analytics__analytics_data_provided(
+    solver_type: SolverType, logger
+):
     """
     Tests the get_analytics method for the case when analytics_data provided as an argument for
     the method. Model is not built and therefore it does not have any data attributes.
@@ -196,7 +217,9 @@ def test__abstract_mip__get_analytics__analytics_data_provided(solver_type: Solv
             self.add_analytics_granularity("sku_location", self._sku_location_analytics)
             self.add_analytics_granularity("aggregated", self._aggregated_analytics)
 
-        def build(self, solver: AbstractOptimizationSolver, data: TestModelInternalData) -> None:
+        def build(
+            self, solver: AbstractOptimizationSolver, data: TestModelInternalData
+        ) -> None:
             pass
 
         def _sku_analytics(self, analytics_data: TestModelOutputData) -> Any:
@@ -233,15 +256,21 @@ def test__abstract_mip__get_analytics__analytics_data_provided(solver_type: Solv
         sku=[1000, 500, 100],
     )
 
-    assert model.get_analytics(granularity="sku", analytics_data=analytics_data) == {"builder_1": [1000, 500, 100]}
-    assert model.get_analytics(granularity="sku_location", analytics_data=analytics_data) == {
-        "builder_1": "something_else"
+    assert model.get_analytics(granularity="sku", analytics_data=analytics_data) == {
+        "builder_1": [1000, 500, 100]
     }
-    assert model.get_analytics(granularity="aggregated", analytics_data=analytics_data) == {
+    assert model.get_analytics(
+        granularity="sku_location", analytics_data=analytics_data
+    ) == {"builder_1": "something_else"}
+    assert model.get_analytics(
+        granularity="aggregated", analytics_data=analytics_data
+    ) == {
         "builder_1": 1600,
         "ObjectiveBuilder2": 35,
     }
-    assert model.get_analytics(granularity="unknown", analytics_data=analytics_data) == {}
+    assert (
+        model.get_analytics(granularity="unknown", analytics_data=analytics_data) == {}
+    )
 
 
 @pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
@@ -284,7 +313,9 @@ def test__abstract_mip__get_analytics__logs_warning(solver_type: SolverType):
 
 
 @pytest.mark.parametrize("solver_type", [SolverType.ORTOOLS_SCIP])
-def test__abstract_mip__duplicate_objective_builder_names(solver_type: SolverType, logger):
+def test__abstract_mip__duplicate_objective_builder_names(
+    solver_type: SolverType, logger
+):
     class ObjectiveBuilder1(AbstractObjectiveBuilder):
         def __init__(self, logger: LoggerInterface):
             super().__init__(logger)
@@ -310,7 +341,9 @@ def test__abstract_mip__duplicate_objective_builder_names(solver_type: SolverTyp
         logger=logger,
     )
 
-    with pytest.raises(ValueError, match="Duplicate objective builder name found: same_as_other"):
+    with pytest.raises(
+        ValueError, match="Duplicate objective builder name found: same_as_other"
+    ):
         model.build(input_data=MagicMock())
 
 
@@ -378,11 +411,15 @@ def test__solve__keep_variables_data__general(
         """
 
     class TestVariableBuilder(AbstractDecisionVariableBuilder):
-        def build(self, solver: AbstractOptimizationSolver, data: TestInternalData) -> TestInternalData:
+        def build(
+            self, solver: AbstractOptimizationSolver, data: TestInternalData
+        ) -> TestInternalData:
             data.variables = {"var1": var1_object, "var2": var2_object}
             return data
 
-        def unpack(self, solver: AbstractOptimizationSolver, data: TestInternalData) -> TestInternalData:
+        def unpack(
+            self, solver: AbstractOptimizationSolver, data: TestInternalData
+        ) -> TestInternalData:
             data.variables = {"var1_unpacked": 1.0, "var2_unpacked": 2.0}
             return data
 

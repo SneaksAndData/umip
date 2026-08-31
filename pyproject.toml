@@ -34,6 +34,7 @@ dev = [
     "pytest-cov>=2.12.1,<3",
     "pandas>=2.2.0,<3",
     "black>=23,<24",
+    "ruff>=0.16.5",
 ]
 
 [tool.uv]

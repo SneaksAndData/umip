@@ -1,4 +1,5 @@
 """Constraint types."""
+
 from enum import Enum
 
 

@@ -46,7 +46,10 @@ def test__abstract_objective_builder__get_analytics__general(logger):
     # First, check that the supported granularities are as expected
     assert builder.get_analytics("location", analytics_data="whatever") == [1, 2, 3]
     assert builder.get_analytics("aggregated", analytics_data="whatever") == 6
-    assert builder.get_analytics("sku_location", analytics_data="whatever") == "something_else"
+    assert (
+        builder.get_analytics("sku_location", analytics_data="whatever")
+        == "something_else"
+    )
 
     # Check that the number of calls to each granularity function is as expected
     assert set(builder.number_of_granularity_calls.values()) == {1}

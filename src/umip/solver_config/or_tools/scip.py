@@ -68,5 +68,7 @@ class OrToolsScipSolverConfig(OrToolsSolverConfig):
         if self.limits_gap is not None:
             setting_lines.append(f"limits/gap = {self.limits_gap}")
         if self.branching_prefer_binary is not None:
-            setting_lines.append(f"branching/preferbinary = {'TRUE' if self.branching_prefer_binary else 'FALSE'}")
+            setting_lines.append(
+                f"branching/preferbinary = {'TRUE' if self.branching_prefer_binary else 'FALSE'}"
+            )
         return "\n".join(setting_lines)

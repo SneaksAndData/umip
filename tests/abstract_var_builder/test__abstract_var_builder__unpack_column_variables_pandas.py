@@ -39,12 +39,22 @@ def mock_get_variable_value(var):
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
             ),
-            TestExpected(expected_data=pd.DataFrame({"result": pd.Series([], dtype="float")})),
+            TestExpected(
+                expected_data=pd.DataFrame({"result": pd.Series([], dtype="float")})
+            ),
             id="Case 1: Empty dataframe",
         ),
         pytest.param(
             TestInputs(
-                data=pd.DataFrame({"vars": ["var_1__value_1.8", "var_2__value_20.1", "var_3__value_4.0"]}),
+                data=pd.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_1.8",
+                            "var_2__value_20.1",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, True, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
@@ -54,7 +64,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pd.DataFrame({"vars": ["var_1__value_1.8", "var_2__value_20.1", "var_3__value_4.0"]}),
+                data=pd.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_1.8",
+                            "var_2__value_20.1",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, False, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
@@ -64,7 +82,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pd.DataFrame({"vars": ["var_1__value_0.01", "var_2__value_0.999999", "var_3__value_1.0000002"]}),
+                data=pd.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_0.01",
+                            "var_2__value_0.999999",
+                            "var_3__value_1.0000002",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, True, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.BINARY,
@@ -74,7 +100,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pd.DataFrame({"vars": ["var_1__value_2.9999", "var_2__value_0.000001", "var_3__value_4.0"]}),
+                data=pd.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_2.9999",
+                            "var_2__value_0.000001",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, True, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.INTEGER,
@@ -119,7 +153,10 @@ def test__unpack_column_variables_pandas__has_invalid_columns__raises_value_erro
     var_builder.invalid_column_names_unpack = ["invalid_col", "another_invalid_col"]
 
     # Act & Assert
-    with pytest.raises(ValueError, match=f"DataFrame must not contain column names from the following list: "):
+    with pytest.raises(
+        ValueError,
+        match=f"DataFrame must not contain column names from the following list: ",
+    ):
         var_builder._unpack_column_variables_pandas(
             data=MagicMock(),
             decision_variable_column=MagicMock(),

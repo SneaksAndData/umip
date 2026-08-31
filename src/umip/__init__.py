@@ -1,4 +1,5 @@
 """Init file."""
+
 from umip.abstract_solver import AbstractOptimizationSolver
 from umip.abstract_mip import AbstractMipModel
 from umip.abstract_data_prep import AbstractDataPreparator

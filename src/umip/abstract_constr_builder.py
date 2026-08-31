@@ -1,4 +1,5 @@
 """Abstract definition of a constraint builder."""
+
 from abc import ABC, abstractmethod
 from adapta.logs import LoggerInterface
 from umip.abstract_solver import AbstractOptimizationSolver
@@ -16,7 +17,9 @@ class AbstractConstraintBuilder(ABC):
         self._logger = logger
 
     @abstractmethod
-    def build(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> None:
+    def build(
+        self, solver: AbstractOptimizationSolver, data: AbstractInternalData
+    ) -> None:
         """
         Builds the constraints on the given model and the given data.
 

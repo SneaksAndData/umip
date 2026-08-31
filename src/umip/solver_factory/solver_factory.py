@@ -1,5 +1,6 @@
 # pylint: disable=import-outside-toplevel
 """Solver factory for obtaining a implementation of a solver."""
+
 from adapta.logs import LoggerInterface
 from umip.abstract_solver import AbstractOptimizationSolver
 from umip.enums.solver_type import SolverType
@@ -59,10 +60,13 @@ class SolverFactory:
         """
         if not isinstance(solver_type, SolverType):
             raise ValueError(
-                f"Unknown solver type: {solver_type}. " f"Supported types: {[solver.value for solver in SolverType]}"
+                f"Unknown solver type: {solver_type}. "
+                f"Supported types: {[solver.value for solver in SolverType]}"
             )
 
-        self._validate_solver_config(solver_type=solver_type, solver_config=solver_config)
+        self._validate_solver_config(
+            solver_type=solver_type, solver_config=solver_config
+        )
 
         self._logger.debug(
             template="Constructing {solver} solver with config: {config}",
@@ -90,7 +94,9 @@ class SolverFactory:
         raise RuntimeError(f'Failed to construct solver for type "{solver_type}". ')
 
     @staticmethod
-    def _validate_solver_config(solver_type: SolverType, solver_config: SolverConfig | None) -> None:
+    def _validate_solver_config(
+        solver_type: SolverType, solver_config: SolverConfig | None
+    ) -> None:
         """
         Validate that the provided solver config matches the requested solver type.
 
@@ -116,7 +122,9 @@ class SolverFactory:
 
             return CplexSolver(logger=logger)
         except (ImportError, ModuleNotFoundError) as exc:
-            raise RuntimeError("CPLEX solver unavailable. Install the 'docplex' extra in generic-mip.") from exc
+            raise RuntimeError(
+                "CPLEX solver unavailable. Install the 'docplex' extra in generic-mip."
+            ) from exc
 
     @staticmethod
     def _get_gurobi_solver(logger: LoggerInterface) -> AbstractOptimizationSolver:
@@ -125,7 +133,9 @@ class SolverFactory:
 
             return GurobiSolver(logger=logger)
         except (ImportError, ModuleNotFoundError) as exc:
-            raise RuntimeError("Gurobi solver unavailable. Install the 'gurobi' extra in generic-mip.") from exc
+            raise RuntimeError(
+                "Gurobi solver unavailable. Install the 'gurobi' extra in generic-mip."
+            ) from exc
 
     @staticmethod
     def _get_highs_solver(
@@ -140,7 +150,9 @@ class SolverFactory:
                 solver.set_solver_setting(setting=solver_config)
             return solver
         except (ImportError, ModuleNotFoundError) as exc:
-            raise RuntimeError("HiGHS solver unavailable. Install the 'highs' extra in generic-mip.") from exc
+            raise RuntimeError(
+                "HiGHS solver unavailable. Install the 'highs' extra in generic-mip."
+            ) from exc
 
     @staticmethod
     def _get_scip_solver(logger: LoggerInterface) -> AbstractOptimizationSolver:
@@ -149,7 +161,9 @@ class SolverFactory:
 
             return ScipSolver(logger=logger)
         except (ImportError, ModuleNotFoundError) as exc:
-            raise RuntimeError("SCIP solver unavailable. Install the 'pyscipopt' extra in generic-mip.") from exc
+            raise RuntimeError(
+                "SCIP solver unavailable. Install the 'pyscipopt' extra in generic-mip."
+            ) from exc
 
     @staticmethod
     def _get_ortools_solver(
@@ -175,7 +189,9 @@ class SolverFactory:
 
             return solver
         except (ImportError, ModuleNotFoundError) as exc:
-            raise RuntimeError("OR-Tools solver unavailable. Install the 'ortools' extra in generic-mip.") from exc
+            raise RuntimeError(
+                "OR-Tools solver unavailable. Install the 'ortools' extra in generic-mip."
+            ) from exc
         except (KeyError, ValueError) as exc:
             raise RuntimeError(
                 f"Invalid OR-Tools solver type: {solver_type}. "

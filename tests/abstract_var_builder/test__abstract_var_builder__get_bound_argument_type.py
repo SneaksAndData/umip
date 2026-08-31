@@ -10,7 +10,9 @@ from tests.mock_classes_and_data import MockDecisionVariableBuilder
     "bound, expected_result",
     [
         pytest.param(1.5, BoundArgumentType.FLOAT, id="Input argument of type float"),
-        pytest.param("col_name", BoundArgumentType.STRING, id="Input argument of type string"),
+        pytest.param(
+            "col_name", BoundArgumentType.STRING, id="Input argument of type string"
+        ),
         pytest.param(None, BoundArgumentType.NONE, id="Input argument is None"),
     ],
 )

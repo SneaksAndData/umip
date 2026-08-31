@@ -47,10 +47,14 @@ def test_construct_raises_for_incompatible_solver_config(logger) -> None:
 
     # Act & Assert
     with pytest.raises(ValueError):
-        sut.construct(solver_type=SolverType.ORTOOLS_SCIP, solver_config=GurobiSolverConfig())
+        sut.construct(
+            solver_type=SolverType.ORTOOLS_SCIP, solver_config=GurobiSolverConfig()
+        )
 
 
-def __isinstance_of_solver(solver: AbstractOptimizationSolver, solver_type: SolverType) -> bool:
+def __isinstance_of_solver(
+    solver: AbstractOptimizationSolver, solver_type: SolverType
+) -> bool:
     if solver_type == SolverType.CPLEX:
         return isinstance(solver, CplexSolver)
 

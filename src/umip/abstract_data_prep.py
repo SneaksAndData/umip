@@ -1,4 +1,5 @@
 """Abstract definition of a data preparator."""
+
 from abc import ABC, abstractmethod
 from adapta.logs import LoggerInterface
 from umip.abstract_dataclasses import AbstractInputData, AbstractInternalData

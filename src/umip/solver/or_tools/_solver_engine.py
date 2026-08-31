@@ -1,5 +1,5 @@
 """
- Solver engine for OR-Tools.
+Solver engine for OR-Tools.
 """
 
 from enum import Enum

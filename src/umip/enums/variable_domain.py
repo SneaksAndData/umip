@@ -1,4 +1,5 @@
 """Variable domains."""
+
 from enum import Enum
 
 

@@ -1,4 +1,5 @@
 """Abstract definition of an optimization model factory."""
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -14,13 +15,20 @@ from umip.solver_factory import SolverFactory
 class AbstractMipModelFactory(ABC):
     """A generic MIP model factory."""
 
-    def __init__(self, logger: LoggerInterface, solver_type: SolverType, solver_config: SolverConfig | None = None):
+    def __init__(
+        self,
+        logger: LoggerInterface,
+        solver_type: SolverType,
+        solver_config: SolverConfig | None = None,
+    ):
         """
         Initialize the model factory.
         :param logger: The logger to use.
         """
         self._logger = logger
-        self._solver = self._get_solver(solver_type=solver_type, solver_config=solver_config)
+        self._solver = self._get_solver(
+            solver_type=solver_type, solver_config=solver_config
+        )
 
     @abstractmethod
     def construct(
@@ -42,4 +50,6 @@ class AbstractMipModelFactory(ABC):
         :param solver_config: Optional typed configuration object for the solver type.
         :return: solver.
         """
-        return SolverFactory(logger=self._logger).construct(solver_type=solver_type, solver_config=solver_config)
+        return SolverFactory(logger=self._logger).construct(
+            solver_type=solver_type, solver_config=solver_config
+        )

@@ -1,4 +1,5 @@
 """Solver types."""
+
 from enum import Enum
 
 

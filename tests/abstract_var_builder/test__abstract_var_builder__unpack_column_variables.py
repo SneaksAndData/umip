@@ -80,12 +80,15 @@ def test__unpack_column_variables__invalid_dataframe__raises_value_error():
     """
     # Arrange
     variable_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    variable_builder._get_dataframe_argument_type = MagicMock(return_value="UNSUPPORTED_TYPE")
+    variable_builder._get_dataframe_argument_type = MagicMock(
+        return_value="UNSUPPORTED_TYPE"
+    )
     variable_builder._get_indicators = MagicMock()
 
     # Act & Assert
     with pytest.raises(
-        ValueError, match="No method for unpacking variables in DataFrame of type UNSUPPORTED_TYPE is defined"
+        ValueError,
+        match="No method for unpacking variables in DataFrame of type UNSUPPORTED_TYPE is defined",
     ):
         variable_builder.unpack_column_variables(
             data="not a dataframe",

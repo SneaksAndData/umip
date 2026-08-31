@@ -28,7 +28,11 @@ class TestExpected:
     ("inputs", "expected"),
     [
         pytest.param(
-            TestInputs(data=pl.DataFrame(), names=np.array(["x", "y", "z"]), indicators=np.array([True, True, True])),
+            TestInputs(
+                data=pl.DataFrame(),
+                names=np.array(["x", "y", "z"]),
+                indicators=np.array([True, True, True]),
+            ),
             TestExpected(
                 expected_data=pl.DataFrame({"destination_column": [None]}),
             ),
@@ -48,7 +52,9 @@ class TestExpected:
                 expected_data=pl.DataFrame(
                     {
                         "index": [1, 2, 3],
-                        "destination_column": pl.Series(["x_var", "y_var", "z_var"], dtype=pl.datatypes.Object),
+                        "destination_column": pl.Series(
+                            ["x_var", "y_var", "z_var"], dtype=pl.datatypes.Object
+                        ),
                     }
                 )
             ),
@@ -113,7 +119,10 @@ def test__build_column_variables_polars__has_invalid_columns__raises_value_error
     var_builder._dataframe_has_invalid_columns = MagicMock(return_value=True)
 
     # Act & Assert
-    with pytest.raises(ValueError, match="DataFrame must not contain column names from the following list: "):
+    with pytest.raises(
+        ValueError,
+        match="DataFrame must not contain column names from the following list: ",
+    ):
         var_builder._build_column_variables_polars(
             solver=MagicMock(),
             data=MagicMock(),

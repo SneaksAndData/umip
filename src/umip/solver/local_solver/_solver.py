@@ -8,9 +8,7 @@ from umip.enums.variable_domain import VariableDomain
 from umip.solver_config import LocalSolverConfig
 
 
-class LocalSolver(
-    AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]
-):  # pylint: disable=too-many-public-methods
+class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):  # pylint: disable=too-many-public-methods
     """A solver implemented in the LocalSolver library."""
 
     def __init__(self, logger: LoggerInterface):
@@ -20,7 +18,9 @@ class LocalSolver(
         self._objective = self._model.create_constant(0)
         self._maximization = True
         self.number_of_variables = 0
-        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
+        self.number_of_variables_of_type = {
+            variable_type: 0 for variable_type in list(VariableDomain)
+        }
         self.number_of_objective_terms = 0
         self._solution = None
 
@@ -29,7 +29,10 @@ class LocalSolver(
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
+        | float
+        | int
+        | bool,
         variables: npt.NDArray[ls.LSExpression] | ls.LSExpression,
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
@@ -46,10 +49,14 @@ class LocalSolver(
             expr.set_name(name)
 
         constr_lb = (
-            self._model.add_constraint(expr >= self._to_float(value=lower_bound)) if lower_bound is not None else None
+            self._model.add_constraint(expr >= self._to_float(value=lower_bound))
+            if lower_bound is not None
+            else None
         )
         constr_ub = (
-            self._model.add_constraint(expr <= self._to_float(value=upper_bound)) if upper_bound is not None else None
+            self._model.add_constraint(expr <= self._to_float(value=upper_bound))
+            if upper_bound is not None
+            else None
         )
 
         return constr_lb or constr_ub
@@ -61,7 +68,8 @@ class LocalSolver(
         self,
         coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
         | npt.NDArray[np.floating | np.integer | np.bool_],
-        variables: npt.NDArray[npt.NDArray[ls.LSExpression]] | npt.NDArray[ls.LSExpression],
+        variables: npt.NDArray[npt.NDArray[ls.LSExpression]]
+        | npt.NDArray[ls.LSExpression],
         lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
@@ -70,8 +78,12 @@ class LocalSolver(
             return
 
         coefficients = self._to_float(value=coefficients)
-        lower_bounds = self._to_float(value=lower_bounds) if lower_bounds is not None else None
-        upper_bounds = self._to_float(value=upper_bounds) if upper_bounds is not None else None
+        lower_bounds = (
+            self._to_float(value=lower_bounds) if lower_bounds is not None else None
+        )
+        upper_bounds = (
+            self._to_float(value=upper_bounds) if upper_bounds is not None else None
+        )
 
         if names is not None and len(names) != len(coefficients):
             raise ValueError("The number of names must match the number of constraints")
@@ -93,8 +105,16 @@ class LocalSolver(
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
     ) -> ls.LSExpression:
-        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
-        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+        lower_bound = (
+            self._to_float(value=lower_bound)
+            if lower_bound is not None
+            else -self.infinity()
+        )
+        upper_bound = (
+            self._to_float(value=upper_bound)
+            if upper_bound is not None
+            else self.infinity()
+        )
         self.number_of_variables += 1
         self.number_of_variables_of_type[variable_domain] += 1
         if variable_domain == VariableDomain.INTEGER:
@@ -120,8 +140,16 @@ class LocalSolver(
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[ls.LSExpression]:
-        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
-        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+        lower_bound = (
+            self._to_float(value=lower_bound)
+            if lower_bound is not None
+            else -self.infinity()
+        )
+        upper_bound = (
+            self._to_float(value=upper_bound)
+            if upper_bound is not None
+            else self.infinity()
+        )
         return np.array(  # pylint: disable=duplicate-code
             [
                 self.add_variable(
@@ -134,20 +162,30 @@ class LocalSolver(
             ]
         )
 
-    def set_variable_hint(self, variable: ls.LSExpression, hint: float | int | bool) -> None:
+    def set_variable_hint(
+        self, variable: ls.LSExpression, hint: float | int | bool
+    ) -> None:
         raise NotImplementedError()
 
     def set_multiple_variable_hints(
-        self, variables: npt.NDArray[ls.LSExpression], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+        self,
+        variables: npt.NDArray[ls.LSExpression],
+        hints: npt.NDArray[np.floating | np.integer | np.bool_],
     ) -> None:
         raise NotImplementedError()
 
     def add_objective_term(
-        self, coefficient: float | int | bool, variable: ls.LSExpression, overwrite: bool = True, name: str = None
+        self,
+        coefficient: float | int | bool,
+        variable: ls.LSExpression,
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:
-            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
+            self.add_named_objective(
+                np.array([coefficient]), np.array([variable]), overwrite, name
+            )
 
         if overwrite:
             self._objective += coefficient * variable
@@ -167,7 +205,9 @@ class LocalSolver(
             self.add_named_objective(coefficients, variables, overwrite, name)
 
         if overwrite:
-            self._objective = self._model.sum(coefficients * variables) + self._objective
+            self._objective = (
+                self._model.sum(coefficients * variables) + self._objective
+            )
             self.number_of_objective_terms += len(coefficients)
         else:
             raise NotImplementedError()
@@ -178,14 +218,18 @@ class LocalSolver(
     def get_objective_value(self) -> float:
         return self._solution.get_value(self._objective)
 
-    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
+    def solve(
+        self, time_limit: float | None = None, mip_gap_limit: float | None = None
+    ) -> int:
         if time_limit is not None:
             self._solver.get_param().set_time_limit(time_limit)
         if mip_gap_limit is not None:
             raise NotImplementedError()
         self._model.add_objective(
             self._objective,
-            ls.LSObjectiveDirection.MAXIMIZE if self._maximization else ls.LSObjectiveDirection.MINIMIZE,
+            ls.LSObjectiveDirection.MAXIMIZE
+            if self._maximization
+            else ls.LSObjectiveDirection.MINIMIZE,
         )
         self._model.close()
         self._solver.solve()
@@ -197,7 +241,8 @@ class LocalSolver(
 
     def is_optimal(self) -> bool:
         return (
-            self._solution.get_status() == ls.LSSolutionStatus.OPTIMAL and self.get_objective_value() <= self.infinity()
+            self._solution.get_status() == ls.LSSolutionStatus.OPTIMAL
+            and self.get_objective_value() <= self.infinity()
         )
 
     def is_feasible(self) -> bool:
@@ -207,14 +252,18 @@ class LocalSolver(
         )
 
     def is_infeasible(self) -> bool:
-        return self._solution.get_status() in [ls.LSSolutionStatus.INFEASIBLE, ls.LSSolutionStatus.INCONSISTENT]
+        return self._solution.get_status() in [
+            ls.LSSolutionStatus.INFEASIBLE,
+            ls.LSSolutionStatus.INCONSISTENT,
+        ]
 
     def is_abnormal(self) -> bool:
         return False
 
     def is_unbounded(self) -> bool:
         return (
-            self._solution.get_status() == ls.LSSolutionStatus.OPTIMAL and self.get_objective_value() >= self.infinity()
+            self._solution.get_status() == ls.LSSolutionStatus.OPTIMAL
+            and self.get_objective_value() >= self.infinity()
         )
 
     def get_variable_value(self, var: ls.LSExpression) -> float:
@@ -258,7 +307,10 @@ class LocalSolver(
             return float(
                 np.sum(
                     [
-                        (item.objective_coefficient * self.get_variable_value(item.variable))
+                        (
+                            item.objective_coefficient
+                            * self.get_variable_value(item.variable)
+                        )
                         for item in self._named_objectives[name]
                         if item.objective_coefficient
                     ]

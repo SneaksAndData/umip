@@ -69,7 +69,9 @@ def test__get_variable_name_with_indices__pandas_dataframe__general(inputs, expe
 
     # Act
     result = var_builder._get_variable_name_with_indices(
-        index_column_names=inputs.index_name_columns, data=data, variable_name=inputs.var_name_prefix
+        index_column_names=inputs.index_name_columns,
+        data=data,
+        variable_name=inputs.var_name_prefix,
     )
 
     # Assert
@@ -126,7 +128,9 @@ def test__get_variable_name_with_indices__polars_dataframe__general(inputs, expe
 
     # Act
     result = var_builder._get_variable_name_with_indices(
-        index_column_names=inputs.index_name_columns, data=data, variable_name=inputs.var_name_prefix
+        index_column_names=inputs.index_name_columns,
+        data=data,
+        variable_name=inputs.var_name_prefix,
     )
 
     # Assert
@@ -140,17 +144,26 @@ def test__get_variable_name_with_indices__unsupported_dataframe_type__raises_val
     """
     # Arrange
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    var_builder._get_dataframe_argument_type = MagicMock(return_value="UNSUPPORTED_TYPE")
-    var_builder._get_index_columns_argument_type = MagicMock(return_value=IndexColumnsArgumentType.LIST_OF_STRINGS)
+    var_builder._get_dataframe_argument_type = MagicMock(
+        return_value="UNSUPPORTED_TYPE"
+    )
+    var_builder._get_index_columns_argument_type = MagicMock(
+        return_value=IndexColumnsArgumentType.LIST_OF_STRINGS
+    )
 
     index_column_names = ["col1"]
     data = MagicMock()
     variable_name = "x"
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Cannot add variable indices from a DataFrame of unsupported type"):
+    with pytest.raises(
+        ValueError,
+        match="Cannot add variable indices from a DataFrame of unsupported type",
+    ):
         var_builder._get_variable_name_with_indices(
-            index_column_names=index_column_names, data=data, variable_name=variable_name
+            index_column_names=index_column_names,
+            data=data,
+            variable_name=variable_name,
         )
 
 
@@ -160,8 +173,12 @@ def test__get_variable_name_with_indices__unsupported_index_columns_type__raises
     """
     # Arrange
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    var_builder._get_dataframe_argument_type = MagicMock(return_value=DataFrameArgumentType.PANDAS)
-    var_builder._get_index_columns_argument_type = MagicMock(return_value="UNKNOWN_ENUM_TYPE")
+    var_builder._get_dataframe_argument_type = MagicMock(
+        return_value=DataFrameArgumentType.PANDAS
+    )
+    var_builder._get_index_columns_argument_type = MagicMock(
+        return_value="UNKNOWN_ENUM_TYPE"
+    )
 
     index_column_names = 123  # Invalid type
     data = pd.DataFrame({"col1": [1, 2]})
@@ -170,5 +187,7 @@ def test__get_variable_name_with_indices__unsupported_index_columns_type__raises
     # Act & Assert
     with pytest.raises(ValueError, match="Handling index_name_columns of type"):
         var_builder._get_variable_name_with_indices(
-            index_column_names=index_column_names, data=data, variable_name=variable_name
+            index_column_names=index_column_names,
+            data=data,
+            variable_name=variable_name,
         )

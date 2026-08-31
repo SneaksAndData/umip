@@ -27,7 +27,9 @@ class TestExpected:
     expected_bound: np.ndarray
 
 
-solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverType.ORTOOLS_SCIP)
+solver_mocked = SolverFactory(logger=MagicMock()).construct(
+    solver_type=SolverType.ORTOOLS_SCIP
+)
 
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
@@ -35,10 +37,16 @@ solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverTy
     "data",
     [
         pytest.param(
-            pd.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}), id="Pandas dataframe"
+            pd.DataFrame(
+                {bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}
+            ),
+            id="Pandas dataframe",
         ),
         pytest.param(
-            pl.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}), id="Polars dataframe"
+            pl.DataFrame(
+                {bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}
+            ),
+            id="Polars dataframe",
         ),
     ],
 )
@@ -107,7 +115,13 @@ solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverTy
                 bound_type=BoundType.UPPER,
             ),
             TestExpected(
-                expected_bound=np.array([solver_mocked.infinity(), solver_mocked.infinity(), solver_mocked.infinity()]),
+                expected_bound=np.array(
+                    [
+                        solver_mocked.infinity(),
+                        solver_mocked.infinity(),
+                        solver_mocked.infinity(),
+                    ]
+                ),
             ),
             id="Case 6: Bound is none, variable domain is continuous and bound type is upper",
         ),
@@ -124,7 +138,12 @@ solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverTy
         ),
     ],
 )
-def test__get_bounds__general(solver, data: pl.DataFrame | pd.DataFrame, inputs: TestInputs, expected: TestExpected):
+def test__get_bounds__general(
+    solver,
+    data: pl.DataFrame | pd.DataFrame,
+    inputs: TestInputs,
+    expected: TestExpected,
+):
     """
     Tests whether the _get_bounds method works as expected with polars and pandas dataframes.
     Case 1: bound is a string and column exists
@@ -159,10 +178,14 @@ def test__get_bounds__invalid_dataframe_type__raises_value_error():
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
     var_builder._get_dataframe_argument_type = MagicMock(return_value="INVALID_TYPE")
     var_builder._get_row_count = MagicMock()
-    var_builder._get_bound_argument_type = MagicMock(return_value=BoundArgumentType.STRING)
+    var_builder._get_bound_argument_type = MagicMock(
+        return_value=BoundArgumentType.STRING
+    )
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Cannot find a bound column in DataFrame of unsupported type"):
+    with pytest.raises(
+        ValueError, match="Cannot find a bound column in DataFrame of unsupported type"
+    ):
         var_builder._get_bounds(
             solver=MagicMock(),
             bound=MagicMock(),
@@ -180,10 +203,14 @@ def test__get_bounds__invalid_bound_type__raises_value_error():
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
     var_builder._get_dataframe_argument_type = MagicMock()
     var_builder._get_row_count = MagicMock()
-    var_builder._get_bound_argument_type = MagicMock(return_value=BoundArgumentType.NONE)
+    var_builder._get_bound_argument_type = MagicMock(
+        return_value=BoundArgumentType.NONE
+    )
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Handling of bound_type=some_invalid_type not supported."):
+    with pytest.raises(
+        ValueError, match="Handling of bound_type=some_invalid_type not supported."
+    ):
         var_builder._get_bounds(
             solver=MagicMock(),
             bound=None,
@@ -204,7 +231,9 @@ def test__get_bounds__invalid_bound__raises_value_error():
     var_builder._get_bound_argument_type = MagicMock(return_value="INVALID_TYPE")
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Handling bound of type INVALID_TYPE not supported."):
+    with pytest.raises(
+        ValueError, match="Handling bound of type INVALID_TYPE not supported."
+    ):
         var_builder._get_bounds(
             solver=MagicMock(),
             bound=MagicMock(),

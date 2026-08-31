@@ -1,4 +1,5 @@
 """Abstract definition of a solver."""
+
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 
@@ -63,21 +64,33 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         if isinstance(value, np.ndarray):
             if value.size > 0 and isinstance(value[0], np.ndarray):
                 try:
-                    return np.array([np.asarray(inner, dtype=float) for inner in value], dtype=object)
+                    return np.array(
+                        [np.asarray(inner, dtype=float) for inner in value],
+                        dtype=object,
+                    )
                 except (ValueError, TypeError) as e:
-                    raise TypeError("Cannot convert nested elements in object array to float.") from e
+                    raise TypeError(
+                        "Cannot convert nested elements in object array to float."
+                    ) from e
             if value.ndim == 1:
                 try:
                     return np.asarray(value, dtype=float)
                 except (ValueError, TypeError) as e:
-                    raise TypeError(f"Cannot convert numpy array of dtype {value.dtype} to float.") from e
+                    raise TypeError(
+                        f"Cannot convert numpy array of dtype {value.dtype} to float."
+                    ) from e
 
-        raise TypeError(f"Type {type(value).__name__} is not supported for conversion to float.")
+        raise TypeError(
+            f"Type {type(value).__name__} is not supported for conversion to float."
+        )
 
     @abstractmethod
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
+        | float
+        | int
+        | bool,
         variables: npt.NDArray[VT] | VT,
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
@@ -143,7 +156,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
     def add_constraint_of_type(
         self,
         constraint_type: ConstraintType,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
+        | float
+        | int
+        | bool,
         variables: npt.NDArray[VT] | VT,
         right_hand_side: float | int | bool | None = None,
         name: str | None = None,
@@ -163,7 +179,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
         if constraint_type == ConstraintType.LESS_THAN_OR_EQUAL:
             return self.add_constraint(
-                coefficients=coefficients, variables=variables, upper_bound=right_hand_side, name=name
+                coefficients=coefficients,
+                variables=variables,
+                upper_bound=right_hand_side,
+                name=name,
             )
         if constraint_type == ConstraintType.EQUAL:
             return self.add_constraint(
@@ -175,7 +194,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             )
         if constraint_type == ConstraintType.GREATER_THAN_OR_EQUAL:
             return self.add_constraint(
-                coefficients=coefficients, variables=variables, lower_bound=right_hand_side, name=name
+                coefficients=coefficients,
+                variables=variables,
+                lower_bound=right_hand_side,
+                name=name,
             )
 
         raise ValueError(f"Unsupported constraint type: {constraint_type}")
@@ -186,7 +208,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
         | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
-        right_hand_sides: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
+        right_hand_sides: npt.NDArray[np.floating | np.integer | np.bool_]
+        | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         """
@@ -209,7 +232,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
         if constraint_type == ConstraintType.LESS_THAN_OR_EQUAL:
             return self.add_multiple_constraints(
-                coefficients=coefficients, variables=variables, upper_bounds=right_hand_sides, names=names
+                coefficients=coefficients,
+                variables=variables,
+                upper_bounds=right_hand_sides,
+                names=names,
             )
         if constraint_type == ConstraintType.EQUAL:
             return self.add_multiple_constraints(
@@ -221,7 +247,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
             )
         if constraint_type == ConstraintType.GREATER_THAN_OR_EQUAL:
             return self.add_multiple_constraints(
-                coefficients=coefficients, variables=variables, lower_bounds=right_hand_sides, names=names
+                coefficients=coefficients,
+                variables=variables,
+                lower_bounds=right_hand_sides,
+                names=names,
             )
 
         raise ValueError(f"Unsupported constraint type: {constraint_type}")
@@ -273,7 +302,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @abstractmethod
     def set_multiple_variable_hints(
-        self, variables: npt.NDArray[VT], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+        self,
+        variables: npt.NDArray[VT],
+        hints: npt.NDArray[np.floating | np.integer | np.bool_],
     ) -> None:
         """
         Adds solution hints to multiple decision variables. Number of variables and hints must be identical.
@@ -284,7 +315,11 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @abstractmethod
     def add_objective_term(
-        self, coefficient: float | int | bool, variable: VT, overwrite: bool = True, name: str = None
+        self,
+        coefficient: float | int | bool,
+        variable: VT,
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
         """
         Adds a single objective term.
@@ -332,10 +367,14 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :param name: The name of the objective term
         """
         if overwrite:
-            raise ValueError("Add_named_objective is not supported with overwrite = true")
+            raise ValueError(
+                "Add_named_objective is not supported with overwrite = true"
+            )
 
         elements_to_add = [
-            VariableWithObjectiveCoefficient(variables[i], self._to_float(coefficients[i]))
+            VariableWithObjectiveCoefficient(
+                variables[i], self._to_float(coefficients[i])
+            )
             for i in range(len(coefficients))
         ]
         if name in self._named_objectives:
@@ -350,7 +389,8 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         aggregated value of the objective terms belonging to that objective.
         """
         return {
-            named_objective: self.get_named_objective(named_objective) for named_objective in self._named_objectives
+            named_objective: self.get_named_objective(named_objective)
+            for named_objective in self._named_objectives
         }
 
     @abstractmethod
@@ -379,7 +419,9 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
+    def solve(
+        self, time_limit: float | None = None, mip_gap_limit: float | None = None
+    ) -> int:
         """
         Solve the optimization problem. If both time_limit and mip_gap_limit are provided, the optimization would stop
         when reach the tighter limit.

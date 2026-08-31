@@ -1,4 +1,5 @@
 """Module for abstract dataclasses"""
+
 from abc import ABC
 from dataclasses import dataclass
 

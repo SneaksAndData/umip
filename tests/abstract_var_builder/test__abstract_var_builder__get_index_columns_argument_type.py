@@ -50,7 +50,9 @@ def test__get_index_columns_argument_type(index_cols, expected_result):
         ),
     ],
 )
-def test__get_index_columns_argument_type__invalid_inputs_raise_value_error(index_cols, expected_exception_message):
+def test__get_index_columns_argument_type__invalid_inputs_raise_value_error(
+    index_cols, expected_exception_message
+):
     """
     Tests that a ValueError is raised when the input to _get_index_columns_argument_type is invalid.
     """

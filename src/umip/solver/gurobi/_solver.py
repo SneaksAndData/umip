@@ -1,4 +1,5 @@
 """A solver implemented in the Gurobi library."""
+
 from typing import Iterable
 import gurobipy as gp
 import numpy.typing as npt
@@ -33,7 +34,9 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         raise NotImplementedError()
 
     def set_multiple_variable_hints(
-        self, variables: npt.NDArray[gp.Var], hints: npt.NDArray[np.floating | np.integer | np.bool_]
+        self,
+        variables: npt.NDArray[gp.Var],
+        hints: npt.NDArray[np.floating | np.integer | np.bool_],
     ) -> None:
         raise NotImplementedError()
 
@@ -60,21 +63,44 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
     ) -> npt.NDArray[gp.Var]:
-        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
-        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+        lower_bound = (
+            self._to_float(value=lower_bound)
+            if lower_bound is not None
+            else -self.infinity()
+        )
+        upper_bound = (
+            self._to_float(value=upper_bound)
+            if upper_bound is not None
+            else self.infinity()
+        )
 
         if variable_domain == VariableDomain.INTEGER:
             vars_ = self._solver.addMVar(
-                shape=(len(names),), lb=lower_bound, ub=upper_bound, obj=0.0, vtype=gp.GRB.INTEGER, name=names
+                shape=(len(names),),
+                lb=lower_bound,
+                ub=upper_bound,
+                obj=0.0,
+                vtype=gp.GRB.INTEGER,
+                name=names,
             )
             self._integer_problem = True
         elif variable_domain == VariableDomain.CONTINUOUS:
             vars_ = self._solver.addMVar(
-                shape=(len(names),), lb=lower_bound, ub=upper_bound, obj=0.0, vtype=gp.GRB.CONTINUOUS, name=names
+                shape=(len(names),),
+                lb=lower_bound,
+                ub=upper_bound,
+                obj=0.0,
+                vtype=gp.GRB.CONTINUOUS,
+                name=names,
             )
         elif variable_domain == VariableDomain.BINARY:
             vars_ = self._solver.addMVar(
-                shape=(len(names),), lb=lower_bound, ub=upper_bound, obj=0.0, vtype=gp.GRB.BINARY, name=names
+                shape=(len(names),),
+                lb=lower_bound,
+                ub=upper_bound,
+                obj=0.0,
+                vtype=gp.GRB.BINARY,
+                name=names,
             )
             self._integer_problem = True
         else:
@@ -102,33 +128,51 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         coeff_list = np.concatenate(coefficients)
         var_vector = np.concatenate(variables)
 
-        matrix_rows = [j for i, coeff in enumerate(coefficients) for j in [i] * len(coeff)]
+        matrix_rows = [
+            j for i, coeff in enumerate(coefficients) for j in [i] * len(coeff)
+        ]
         matrix_cols = list(range(len(var_vector)))
         matrix_data = coeff_list
 
         coeff_matrix = coo_matrix(
-            (matrix_data.astype(float), (matrix_rows, matrix_cols)), shape=(len(coefficients), len(var_vector))
+            (matrix_data.astype(float), (matrix_rows, matrix_cols)),
+            shape=(len(coefficients), len(var_vector)),
         )
         var_vector = var_vector.tolist()
 
         if lower_bounds is not None:
             lower_bounds = self._to_float(value=lower_bounds)
-            self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.GREATER_EQUAL, lower_bounds.tolist())
+            self._solver.addMConstr(
+                coeff_matrix, var_vector, gp.GRB.GREATER_EQUAL, lower_bounds.tolist()
+            )
         if upper_bounds is not None:
             upper_bounds = self._to_float(value=upper_bounds)
-            self._solver.addMConstr(coeff_matrix, var_vector, gp.GRB.LESS_EQUAL, upper_bounds.tolist())
+            self._solver.addMConstr(
+                coeff_matrix, var_vector, gp.GRB.LESS_EQUAL, upper_bounds.tolist()
+            )
 
     def add_constraint(
         self,
-        coefficients: npt.NDArray[np.floating | np.integer | np.bool_] | float | int | bool,
+        coefficients: npt.NDArray[np.floating | np.integer | np.bool_]
+        | float
+        | int
+        | bool,
         variables: npt.NDArray[gp.Var] | gp.Var,
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
         name: str | None = None,
     ) -> gp.Constr | None:
         coefficients = self._to_float(value=coefficients)
-        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
-        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+        lower_bound = (
+            self._to_float(value=lower_bound)
+            if lower_bound is not None
+            else -self.infinity()
+        )
+        upper_bound = (
+            self._to_float(value=upper_bound)
+            if upper_bound is not None
+            else self.infinity()
+        )
 
         constr_expr = gp.LinExpr()
         if isinstance(variables, Iterable):
@@ -142,9 +186,13 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
 
         constr_lb, constr_ub = None, None
         if lower_bound != -self.infinity():
-            constr_lb: gp.Constr = self._solver.addConstr(lower_bound <= constr_expr, name)
+            constr_lb: gp.Constr = self._solver.addConstr(
+                lower_bound <= constr_expr, name
+            )
         if upper_bound != self.infinity():
-            constr_ub: gp.Constr = self._solver.addConstr(constr_expr <= upper_bound, name)
+            constr_ub: gp.Constr = self._solver.addConstr(
+                constr_expr <= upper_bound, name
+            )
 
         return constr_lb or constr_ub
 
@@ -155,15 +203,29 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         lower_bound: float | int | bool | None = None,
         upper_bound: float | int | bool | None = None,
     ) -> gp.Var:
-        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
-        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
+        lower_bound = (
+            self._to_float(value=lower_bound)
+            if lower_bound is not None
+            else -self.infinity()
+        )
+        upper_bound = (
+            self._to_float(value=upper_bound)
+            if upper_bound is not None
+            else self.infinity()
+        )
         if variable_domain == VariableDomain.INTEGER:
-            var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.INTEGER, name, None)
+            var = self._solver.addVar(
+                lower_bound, upper_bound, 0, gp.GRB.INTEGER, name, None
+            )
             self._integer_problem = True
         elif variable_domain == VariableDomain.CONTINUOUS:
-            var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.CONTINUOUS, name, None)
+            var = self._solver.addVar(
+                lower_bound, upper_bound, 0, gp.GRB.CONTINUOUS, name, None
+            )
         elif variable_domain == VariableDomain.BINARY:
-            var = self._solver.addVar(lower_bound, upper_bound, 0, gp.GRB.BINARY, name, None)
+            var = self._solver.addVar(
+                lower_bound, upper_bound, 0, gp.GRB.BINARY, name, None
+            )
             self._integer_problem = True
         else:
             raise ValueError("Unsupported variable domain")
@@ -173,7 +235,11 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         return var.x
 
     def add_objective_term(
-        self, coefficient: float | int | bool, variable: gp.Var, overwrite: bool = True, name: str = None
+        self,
+        coefficient: float | int | bool,
+        variable: gp.Var,
+        overwrite: bool = True,
+        name: str = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if overwrite:
@@ -181,17 +247,23 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
             self._objective.remove(variable)
 
         if name is not None:
-            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
+            self.add_named_objective(
+                np.array([coefficient]), np.array([variable]), overwrite, name
+            )
 
         self._objective.addTerms([coefficient], [variable])
 
     def set_optimization_direction(self, maximization: bool) -> None:
-        self._solver.setAttr(gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE)
+        self._solver.setAttr(
+            gp.GRB.Attr.ModelSense, gp.GRB.MAXIMIZE if maximization else gp.GRB.MINIMIZE
+        )
 
     def get_objective_value(self) -> float:
         return self._solver.getObjective().getValue()
 
-    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
+    def solve(
+        self, time_limit: float | None = None, mip_gap_limit: float | None = None
+    ) -> int:
         if time_limit is not None:
             self._solver.setParam(gp.GRB.Param.TimeLimit, time_limit)
         if mip_gap_limit is not None:
@@ -294,7 +366,10 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
             return float(
                 np.sum(
                     [
-                        (item.objective_coefficient * self.get_variable_value(item.variable))
+                        (
+                            item.objective_coefficient
+                            * self.get_variable_value(item.variable)
+                        )
                         for item in self._named_objectives[name]
                         if item.objective_coefficient
                     ]
