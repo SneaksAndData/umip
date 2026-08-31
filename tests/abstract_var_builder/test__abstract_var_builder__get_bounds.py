@@ -6,8 +6,8 @@ import pandas as pd
 import polars as pl
 import pytest
 from generic_mip import VariableDomain
-
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
 from umip import BoundArgumentType, SolverFactory, SolverType
 from umip.enums.bound_type import BoundType
 

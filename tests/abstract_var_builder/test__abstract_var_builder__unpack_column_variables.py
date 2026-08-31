@@ -4,8 +4,8 @@ import pandas as pd
 import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
-
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
 from umip import VariableDomain
 
 variables_column = "vars"

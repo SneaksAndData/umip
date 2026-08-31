@@ -5,8 +5,8 @@ import numpy as np
 import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
-
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
 from umip import VariableDomain
 
 

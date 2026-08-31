@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 import numpy as np
 import polars as pl
 import pytest
-
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 

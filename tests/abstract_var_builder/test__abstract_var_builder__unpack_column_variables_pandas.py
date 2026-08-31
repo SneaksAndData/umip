@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 import pytest
-
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
 from umip import VariableDomain
 
 
