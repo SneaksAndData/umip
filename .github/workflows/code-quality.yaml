@@ -6,7 +6,7 @@ on:
 
 jobs:
   validate_code:
-    name: Validate code format
+    name: Lint and format
     runs-on: ubuntu-latest
 
     permissions:
