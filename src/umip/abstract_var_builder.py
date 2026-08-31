@@ -1,4 +1,5 @@
 """Abstract definition of a variable builder."""
+
 import typing
 from abc import ABC, abstractmethod
 
