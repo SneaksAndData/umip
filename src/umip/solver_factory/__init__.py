@@ -1,1 +1,1 @@
-from umip.solver_factory.solver_factory import SolverFactory
+from umip.solver_factory.solver_factory import SolverFactory as SolverFactory

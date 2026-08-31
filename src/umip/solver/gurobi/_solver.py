@@ -47,7 +47,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[gp.Var],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficients = self._to_float(value=coefficients)
         if overwrite:
@@ -198,7 +198,7 @@ class GurobiSolver(AbstractOptimizationSolver[gp.Var, gp.Constr]):  # pylint: di
         coefficient: float | bool,
         variable: gp.Var,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if overwrite:

@@ -50,7 +50,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[Var],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficients = self._to_float(value=coefficients)
         if name is not None:
@@ -169,7 +169,7 @@ class CplexSolver(AbstractOptimizationSolver[Var, LinearConstraint]):  # pylint:
         coefficient: float | bool,
         variable: Var,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:

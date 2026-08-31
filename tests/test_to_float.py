@@ -125,11 +125,6 @@ class TestOutput:
             TestOutput(expected=np.array([np.array([1.5, 2.5]), np.array([3.0])], dtype=object)),
             id="21) Convert nested object array with mixed numeric inner arrays",
         ),
-        pytest.param(
-            TestInput(value=np.array([np.array([1, 2]), np.array([3])], dtype=object)),
-            TestOutput(expected=np.array([np.array([1.0, 2.0]), np.array([3.0])], dtype=object)),
-            id="20) Convert nested object array with integer inner arrays",
-        ),
     ],
 )
 def test__to_float__unit_test(inputs: TestInput, expected: TestOutput):

@@ -149,7 +149,7 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
         coefficient: float | bool,
         variable: ls.LSExpression,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:
@@ -166,7 +166,7 @@ class LocalSolver(AbstractOptimizationSolver[ls.LSExpression, ls.LSExpression]):
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[ls.LSExpression],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficients = self._to_float(value=coefficients)
         if name is not None:

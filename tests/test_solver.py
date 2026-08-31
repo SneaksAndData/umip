@@ -209,7 +209,7 @@ def test_add_objectives_with_names__raises_error_when_overwrite(
     )
 
     # Act & Assert
-    with pytest.raises(ValueError) as valueError:
+    with pytest.raises(ValueError) as _:
         solver.add_multiple_objective_terms(
             coefficients=np.array([1.0, 1.0, 1.0]),
             variables=vars_,
@@ -328,7 +328,7 @@ def test__set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
     solver.set_verbose(verbose=verbose)
     solver.solve()
 
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
 
     # Assert
     if verbose:

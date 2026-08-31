@@ -72,7 +72,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[str],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficients = self._to_float(value=coefficients)
         if name is not None:
@@ -250,7 +250,7 @@ class HighsSolver(AbstractOptimizationSolver[int, int]):  # pylint: disable=too-
         coefficient: float | bool,
         variable: str,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         _, old_coeff, _, _, _ = self._solver.getCol(self._get_var_by_name(variable))  # status, cost, lb, ub, index

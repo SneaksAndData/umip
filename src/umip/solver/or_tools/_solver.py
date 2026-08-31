@@ -160,7 +160,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         coefficient: float | bool,
         variable: pywraplp.Variable,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:
@@ -176,7 +176,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[pywraplp.Variable],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficients = self._to_float(value=coefficients)
         if name is not None:

@@ -148,7 +148,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         coefficient: float | bool,
         variable: pyscipopt.Variable,
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:
@@ -166,7 +166,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         coefficients: npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[pyscipopt.Variable],
         overwrite: bool = True,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         coefficients = self._to_float(value=coefficients)
         if name is not None:

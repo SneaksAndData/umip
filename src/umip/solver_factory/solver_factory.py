@@ -62,7 +62,7 @@ class SolverFactory:
         :raises ValueError: If the solver type or solver config is invalid.
         """
         if not isinstance(solver_type, SolverType):
-            raise ValueError(
+            raise TypeError(
                 f"Unknown solver type: {solver_type}. Supported types: {[solver.value for solver in SolverType]}"
             )
 
@@ -108,7 +108,7 @@ class SolverFactory:
 
         expected_config_type = SOLVER_CONFIG_TYPE_BY_SOLVER_TYPE[solver_type]
         if not isinstance(solver_config, expected_config_type):
-            raise ValueError(
+            raise TypeError(
                 f"Invalid solver config for solver type {solver_type.value}. "
                 f"Expected {expected_config_type.__name__}, got {type(solver_config).__name__}."
             )
