@@ -174,36 +174,36 @@ If you specifically want a minimal settings-driven factory composition example, 
 ## Class overview
 The Generic MIP framework is a collection of classes that can be used to construct a MIP model.
 The classes are:
-* [`AbstractMipModel`](./generic_mip/abstract_mip.py) - Represents a MIP model.
-* [`AbstractOptimizationSolver`](./generic_mip/abstract_solver.py) - Represents a MIP solver regardless of implementation.
-  * [`OrToolsSolver`](./generic_mip/solver/or_tools/_solver.py) - Represents a MIP solver implemented with Google OR Tools.
-  * [`GurobiSolver`](./generic_mip/solver/gurobi/_solver.py) - Represents a MIP solver implemented with Gurobi.
-  * [`CplexSolver`](./generic_mip/solver/cplex/_solver.py) - Represents a MIP solver implemented with CPLEX.
-  * [`ScipSolver`](./generic_mip/solver/scip/_solver.py) - Represents a MIP solver implemented with SCIP.
-  * [`HighsSolver`](./generic_mip/solver/highs/_solver.py) - Represents a MIP solver implemented with HiGHS.
-  * [`LocalSolver`](./generic_mip/solver/local_solver/_solver.py) - Represents a MIP solver implemented with LocalSolver.
-* [`AbstractDataPreparator`](./generic_mip/abstract_data_prep.py) - A class used to prepare data for the model - this is used by the `AbstractMipModel`.
-* [`AbstractDecisionVariableBuilder`](./generic_mip/abstract_var_builder.py) - A class used to construct decision variables - this is used by the `AbstractMipModel`.
-* [`AbstractConstraintBuilder`](./generic_mip/abstract_constr_builder.py) - A class used to construct constraints - this is used by the `AbstractMipModel`.
-* [`AbstractObjectiveBuilder`](./generic_mip/abstract_obj_builder.py) - A class used to construct objective function terms - this is used by the `AbstractMipModel`.
-* [`AbstractMipModelFactory`](./generic_mip/abstract_model_factory.py) - A class used to construct a model and injects the necessary builders based on given context or settings.
-* [`SolverFactory`](./generic_mip/solver_factory/solver_factory.py) - A class used to construct a solver based on given context or settings.
-* [`VariableWithObjectiveCoefficient`](./generic_mip/variable_with_objective_coefficient.py) - A class containing a decision variable and its objective coefficient.
+* [`AbstractMipModel`](./umip/abstract_mip.py) - Represents a MIP model.
+* [`AbstractOptimizationSolver`](./umip/abstract_solver.py) - Represents a MIP solver regardless of implementation.
+  * [`OrToolsSolver`](./umip/solver/or_tools/_solver.py) - Represents a MIP solver implemented with Google OR Tools.
+  * [`GurobiSolver`](./umip/solver/gurobi/_solver.py) - Represents a MIP solver implemented with Gurobi.
+  * [`CplexSolver`](./umip/solver/cplex/_solver.py) - Represents a MIP solver implemented with CPLEX.
+  * [`ScipSolver`](./umip/solver/scip/_solver.py) - Represents a MIP solver implemented with SCIP.
+  * [`HighsSolver`](./umip/solver/highs/_solver.py) - Represents a MIP solver implemented with HiGHS.
+  * [`LocalSolver`](./umip/solver/local_solver/_solver.py) - Represents a MIP solver implemented with LocalSolver.
+* [`AbstractDataPreparator`](./umip/abstract_data_prep.py) - A class used to prepare data for the model - this is used by the `AbstractMipModel`.
+* [`AbstractDecisionVariableBuilder`](./umip/abstract_var_builder.py) - A class used to construct decision variables - this is used by the `AbstractMipModel`.
+* [`AbstractConstraintBuilder`](./umip/abstract_constr_builder.py) - A class used to construct constraints - this is used by the `AbstractMipModel`.
+* [`AbstractObjectiveBuilder`](./umip/abstract_obj_builder.py) - A class used to construct objective function terms - this is used by the `AbstractMipModel`.
+* [`AbstractMipModelFactory`](./umip/abstract_model_factory.py) - A class used to construct a model and injects the necessary builders based on given context or settings.
+* [`SolverFactory`](./umip/solver_factory/solver_factory.py) - A class used to construct a solver based on given context or settings.
+* [`VariableWithObjectiveCoefficient`](./umip/variable_with_objective_coefficient.py) - A class containing a decision variable and its objective coefficient.
 
 Abstract data classes:
-* [`AbstractInputData`](generic_mip/abstract_dataclasses.py) - A class containing input data.
-* [`AbstractInternalData`](generic_mip/abstract_dataclasses.py) - A class containing internal data.
-* [`AbstractOutputData`](generic_mip/abstract_dataclasses.py) - A class containing output data.
+* [`AbstractInputData`](umip/abstract_dataclasses.py) - A class containing input data.
+* [`AbstractInternalData`](umip/abstract_dataclasses.py) - A class containing internal data.
+* [`AbstractOutputData`](umip/abstract_dataclasses.py) - A class containing output data.
 
 Enums:
-* [`VariableDataType`](generic_mip/enums/variable_domain.py) - An enum used to represent the data type of a decision variable.
-* [`SolverType`](generic_mip/enums/solver_type.py) - An enum of solver types.
-* [`BoundType`](generic_mip/enums/bound_type.py) - An enum of bound types (lower/upper)
-* [`ConstraintType`](generic_mip/enums/constraint_type.py) - An enum of constraint types.
-* [`DataFrameArgumentType`](generic_mip/enums/data_types.py) - An enum of dataframe argument types.
-* [`BoundArgumentType`](generic_mip/enums/data_types.py) - An enum of bound argument types.
-* [`FilterColumnArgumentType`](generic_mip/enums/data_types.py) - An enum of filter column argument types.
-* [`IndexColumnsArgumentType`](generic_mip/enums/data_types.py) - An enum of index column argument types.
+* [`VariableDataType`](umip/enums/variable_domain.py) - An enum used to represent the data type of a decision variable.
+* [`SolverType`](umip/enums/solver_type.py) - An enum of solver types.
+* [`BoundType`](umip/enums/bound_type.py) - An enum of bound types (lower/upper)
+* [`ConstraintType`](umip/enums/constraint_type.py) - An enum of constraint types.
+* [`DataFrameArgumentType`](umip/enums/data_types.py) - An enum of dataframe argument types.
+* [`BoundArgumentType`](umip/enums/data_types.py) - An enum of bound argument types.
+* [`FilterColumnArgumentType`](umip/enums/data_types.py) - An enum of filter column argument types.
+* [`IndexColumnsArgumentType`](umip/enums/data_types.py) - An enum of index column argument types.
 
 Above classes is visualised ín the below UML class diagram. For an explanation of UML diagrams, please go to [https://www.uml-diagrams.org](https://www.uml-diagrams.org).
 

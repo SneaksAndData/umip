@@ -5,7 +5,8 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from umip import SolverFactory, SolverType
+from umip.enums import SolverType
+from umip.solver_factory import SolverFactory
 
 
 @pytest.fixture(scope="session")

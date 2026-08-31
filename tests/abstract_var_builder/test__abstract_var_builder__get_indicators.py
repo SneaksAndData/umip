@@ -6,7 +6,7 @@ import polars as pl
 import pytest
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
-from umip import DataFrameArgumentType, FilterColumnArgumentType
+from umip.enums import DataFrameArgumentType, FilterColumnArgumentType
 
 
 @pytest.mark.parametrize(

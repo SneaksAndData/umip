@@ -8,7 +8,8 @@ import pytest
 from adapta.logs import LoggerInterface
 
 from tests.mock_classes_and_data import *
-from umip import SolverFactory
+from umip.enums import SolverType
+from umip.solver_factory import SolverFactory
 
 
 def _construct_solver(

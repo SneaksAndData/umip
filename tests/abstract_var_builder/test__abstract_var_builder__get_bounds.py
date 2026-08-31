@@ -5,11 +5,13 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
-from generic_mip import VariableDomain
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
-from umip import BoundArgumentType, SolverFactory, SolverType
+from umip import VariableDomain
+from umip.abstract_var_builder import BoundArgumentType
+from umip.enums import SolverType
 from umip.enums.bound_type import BoundType
+from umip.solver_factory import SolverFactory
 
 bound_col = "bound"
 bound_col_none = "bound_none"
