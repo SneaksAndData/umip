@@ -35,9 +35,7 @@ def side_effect_add_variable(lower_bound, upper_bound, name, variable_domain):
                 indicators=np.array([True, True, True]),
             ),
             TestExpected(
-                expected_data=pd.DataFrame(
-                    {"destination_column": pd.Series(dtype="object")}
-                ),
+                expected_data=pd.DataFrame({"destination_column": pd.Series(dtype="object")}),
             ),
             id="Case 1: empty dataframe",
         ),

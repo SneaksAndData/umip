@@ -41,9 +41,7 @@ def mock_get_variable_value(var):
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
             ),
-            TestExpected(
-                expected_data=pd.DataFrame({"result": pd.Series([], dtype="float")})
-            ),
+            TestExpected(expected_data=pd.DataFrame({"result": pd.Series([], dtype="float")})),
             id="Case 1: Empty dataframe",
         ),
         pytest.param(

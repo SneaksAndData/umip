@@ -44,13 +44,9 @@ def test__get_row_count__unsupported_type__raises_value_error():
     """Test that _get_row_count raises ValueError for unsupported types."""
     # Arrange
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    var_builder._get_dataframe_argument_type = MagicMock(
-        return_value="UNSUPPORTED_TYPE"
-    )
+    var_builder._get_dataframe_argument_type = MagicMock(return_value="UNSUPPORTED_TYPE")
     data = MagicMock()
 
     # Act & Assert
-    with pytest.raises(
-        ValueError, match="Cannot get row count for unsupported data type"
-    ):
+    with pytest.raises(ValueError, match="Cannot get row count for unsupported data type"):
         var_builder._get_row_count(data)

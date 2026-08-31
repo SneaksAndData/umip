@@ -77,9 +77,7 @@ class AbstractMipModel(ABC):
         self._metrics_provider = metrics_provider
         self._objective_builder_names = []
 
-    def build(
-        self, input_data: AbstractInputData, redirect_solver_log: bool = True, **_
-    ) -> None:
+    def build(self, input_data: AbstractInputData, redirect_solver_log: bool = True, **_) -> None:
         """
         Builds the model using the given variable, constraint and objective builders.
         :param input_data: Input data to the variables, constraints and objectives.
@@ -90,9 +88,7 @@ class AbstractMipModel(ABC):
 
         self._internal_data = self._data_preparator.prepare(input_data=input_data)
 
-        self._logger.info(
-            template="Spent {time}s preparing data", time=time.time() - start_time
-        )
+        self._logger.info(template="Spent {time}s preparing data", time=time.time() - start_time)
         start_time = time.time()
 
         if redirect_solver_log:
@@ -103,9 +99,7 @@ class AbstractMipModel(ABC):
 
         self._log_variables()
 
-        self._logger.info(
-            template="Spent {time}s building variables", time=time.time() - start_time
-        )
+        self._logger.info(template="Spent {time}s building variables", time=time.time() - start_time)
         start_time = time.time()
 
         if redirect_solver_log:
@@ -119,9 +113,7 @@ class AbstractMipModel(ABC):
             number_of_constraints=self._solver.get_constraint_count(),
         )
 
-        self._logger.info(
-            template="Spent {time}s building constraints", time=time.time() - start_time
-        )
+        self._logger.info(template="Spent {time}s building constraints", time=time.time() - start_time)
         start_time = time.time()
 
         if redirect_solver_log:
@@ -130,9 +122,7 @@ class AbstractMipModel(ABC):
         else:
             self._build_objectives()
 
-        self._logger.info(
-            template="Spent {time}s building objective", time=time.time() - start_time
-        )
+        self._logger.info(template="Spent {time}s building objective", time=time.time() - start_time)
         self._built = True
 
     def _build_variables(self) -> None:
@@ -140,9 +130,7 @@ class AbstractMipModel(ABC):
         Method to build variables
         """
         for variable_builder in self._variable_builders:
-            self._internal_data = variable_builder.build(
-                solver=self._solver, data=self._internal_data
-            )
+            self._internal_data = variable_builder.build(solver=self._solver, data=self._internal_data)
 
     def _log_variables(self):
         self._logger.info(
@@ -151,21 +139,15 @@ class AbstractMipModel(ABC):
         )
         self._logger.info(
             template="Number of continuous variables: {number_of_continuous_variables}",
-            number_of_continuous_variables=self._solver.get_variable_count_of_type(
-                VariableDomain.CONTINUOUS
-            ),
+            number_of_continuous_variables=self._solver.get_variable_count_of_type(VariableDomain.CONTINUOUS),
         )
         self._logger.info(
             template="Number of binary variables: {number_of_binary_variables}",
-            number_of_binary_variables=self._solver.get_variable_count_of_type(
-                VariableDomain.BINARY
-            ),
+            number_of_binary_variables=self._solver.get_variable_count_of_type(VariableDomain.BINARY),
         )
         self._logger.info(
             template="Number of integer variables: {number_of_integer_variables}",
-            number_of_integer_variables=self._solver.get_variable_count_of_type(
-                VariableDomain.INTEGER
-            ),
+            number_of_integer_variables=self._solver.get_variable_count_of_type(VariableDomain.INTEGER),
         )
 
     def _build_constraints(self):
@@ -176,9 +158,7 @@ class AbstractMipModel(ABC):
         for objective_builder in self._objective_builders:
             objective_builder.build(solver=self._solver, data=self._internal_data)
             if objective_builder.objective_name in self._objective_builder_names:
-                raise ValueError(
-                    f"Duplicate objective builder name found: {objective_builder.objective_name}"
-                )
+                raise ValueError(f"Duplicate objective builder name found: {objective_builder.objective_name}")
             self._objective_builder_names.append(objective_builder.objective_name)
 
     def solve(
@@ -261,9 +241,7 @@ class AbstractMipModel(ABC):
         Gets the objective value of the model.
         """
         if not self._solved:
-            raise ValueError(
-                "Model must be solved before calling .get_objective_value()"
-            )
+            raise ValueError("Model must be solved before calling .get_objective_value()")
         return self._solver.get_objective_value()
 
     def get_named_objectives(self) -> dict[str, float]:
@@ -271,9 +249,7 @@ class AbstractMipModel(ABC):
         Gets the named objectives of the model.
         """
         if not self._solved:
-            raise ValueError(
-                "Model must be solved before calling .get_named_objectives()"
-            )
+            raise ValueError("Model must be solved before calling .get_named_objectives()")
         return self._solver.get_named_objectives()
 
     def get_named_objective(self, name: str) -> float:
@@ -281,9 +257,7 @@ class AbstractMipModel(ABC):
         Gets the named objective of the model.
         """
         if not self._solved:
-            raise ValueError(
-                "Model must be solved before calling .get_named_objective()"
-            )
+            raise ValueError("Model must be solved before calling .get_named_objective()")
         return self._solver.get_named_objective(name=name)
 
     def get_gap(self) -> float:
@@ -304,9 +278,7 @@ class AbstractMipModel(ABC):
 
         return self._solver.is_optimal()
 
-    def get_analytics(
-        self, granularity: str, analytics_data: Any | None = None
-    ) -> dict[str, Any]:
+    def get_analytics(self, granularity: str, analytics_data: Any | None = None) -> dict[str, Any]:
         """
         Get analytics for the specified granularity from the objective builders. If analytics_data is not provided,
         the model must have been solved already and must contain the necessary data in self._output_data.
@@ -314,33 +286,25 @@ class AbstractMipModel(ABC):
         Returns a dictionary where each key is an objective builder name and the value is its analytics.
         """
         if not self._solved and not analytics_data:
-            raise ValueError(
-                "Model must be solved or analytics data must be provided before calling .get_analytics()"
-            )
+            raise ValueError("Model must be solved or analytics data must be provided before calling .get_analytics()")
 
         analytics_results = {}
 
-        analytics_data = (
-            analytics_data if analytics_data is not None else self.get_output_data()
-        )
+        analytics_data = analytics_data if analytics_data is not None else self.get_output_data()
 
         for objective_builder in self._objective_builders:
             if granularity in objective_builder.get_supported_analytics_granularities():
                 objective_analytics = objective_builder.get_analytics(
                     granularity=granularity, analytics_data=analytics_data
                 )
-                analytics_results[objective_builder.objective_name] = (
-                    objective_analytics
-                )
+                analytics_results[objective_builder.objective_name] = objective_analytics
 
         if not analytics_results:
             self._logger.warning(
                 template="No analytics found for granularity '{granularity}' in objective builders: "
                 "{objective_builders}",
                 granularity=granularity,
-                objective_builders=[
-                    builder.objective_name for builder in self._objective_builders
-                ],
+                objective_builders=[builder.objective_name for builder in self._objective_builders],
             )
 
         return analytics_results
@@ -355,9 +319,7 @@ class AbstractMipModel(ABC):
         granularities = {}
 
         for objective_builder in self._objective_builders:
-            granularities[objective_builder.objective_name] = (
-                objective_builder.get_supported_analytics_granularities()
-            )
+            granularities[objective_builder.objective_name] = objective_builder.get_supported_analytics_granularities()
 
         return granularities
 
@@ -380,9 +342,7 @@ class AbstractMipModel(ABC):
         Get the internal unpacked data after solving the model.
         """
         if not self._solved:
-            raise ValueError(
-                "Model must be solved before calling .get_internal_unpacked_data()"
-            )
+            raise ValueError("Model must be solved before calling .get_internal_unpacked_data()")
         return self._internal_unpacked_data
 
     def get_output_data(self, **kwargs) -> AbstractOutputData:

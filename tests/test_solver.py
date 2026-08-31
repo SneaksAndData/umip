@@ -27,9 +27,7 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
         variable_domain=VariableDomain.CONTINUOUS,
     )
     # Notice that setting both lb and ub may result in 2 constraints in some implementations
-    solver.add_constraint(
-        lower_bound=0, upper_bound=None, coefficients=1, variables=var, name="c1"
-    )
+    solver.add_constraint(lower_bound=0, upper_bound=None, coefficients=1, variables=var, name="c1")
     solver.add_objective_term(coefficient=1, variable=var, overwrite=False)
     solver.force_update()
 
@@ -47,9 +45,7 @@ def test_add_var_and_constr(solver: AbstractOptimizationSolver):
         ConstraintType.GREATER_THAN_OR_EQUAL,
     ],
 )
-def test_add_constraint_of_type(
-    solver: AbstractOptimizationSolver, ctype: ConstraintType
-):
+def test_add_constraint_of_type(solver: AbstractOptimizationSolver, ctype: ConstraintType):
     """
     Testing that adding a constraint of a constraint type is reflected in the solver.
     """
@@ -98,9 +94,7 @@ def test_add_multiple_var_and_constr(solver: AbstractOptimizationSolver):
         variables=np.array([vars_] * 3),
         names=np.array(["c1", "c2", "c3"]),
     )
-    solver.add_multiple_objective_terms(
-        coefficients=np.array([1.0, 1.0, 1.0]), variables=vars_, overwrite=False
-    )
+    solver.add_multiple_objective_terms(coefficients=np.array([1.0, 1.0, 1.0]), variables=vars_, overwrite=False)
     solver.force_update()
 
     assert len(vars_) == 3
@@ -145,10 +139,7 @@ def test_add_multiple_objectives_with_names__named_objectives_is_as_expected(
     assert solver.get_named_objectives()[objective1] == 3.0
     assert solver.get_named_objective(objective2) == 6.0
     assert solver.get_named_objectives()[objective2] == 6.0
-    assert (
-        sum(list(solver.get_named_objectives().values()))
-        == solver.get_objective_value()
-    )
+    assert sum(list(solver.get_named_objectives().values())) == solver.get_objective_value()
     assert solver.get_objective_value() == 9.0
 
 
@@ -172,10 +163,7 @@ def test_add_multiple_objectives_with_names__named_objectives_with_no_term_added
     # Act & Assert
     assert solver.get_named_objective(objective1) == 0.0
     assert solver.get_named_objectives()[objective1] == 0.0
-    assert (
-        sum(list(solver.get_named_objectives().values()))
-        == solver.get_objective_value()
-    )
+    assert sum(list(solver.get_named_objectives().values())) == solver.get_objective_value()
     assert solver.get_objective_value() == 0.0
 
 
@@ -195,12 +183,8 @@ def test_add_objectives_with_names__named_objectives_is_as_expected(
     objective2 = "Objective2"
 
     for var in vars_:
-        solver.add_objective_term(
-            coefficient=1, variable=var, overwrite=False, name=objective1
-        )
-        solver.add_objective_term(
-            coefficient=2, variable=var, overwrite=False, name=objective2
-        )
+        solver.add_objective_term(coefficient=1, variable=var, overwrite=False, name=objective1)
+        solver.add_objective_term(coefficient=2, variable=var, overwrite=False, name=objective2)
 
     solver.force_update()
     solver.set_optimization_direction(True)
@@ -235,9 +219,7 @@ def test_add_objectives_with_names__raises_error_when_overwrite(
 
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
-@pytest.mark.parametrize(
-    "dtype", [VariableDomain.CONTINUOUS, VariableDomain.INTEGER, VariableDomain.BINARY]
-)
+@pytest.mark.parametrize("dtype", [VariableDomain.CONTINUOUS, VariableDomain.INTEGER, VariableDomain.BINARY])
 @pytest.mark.parametrize("maximisation", [True, False])
 def test__solver_functional__optimal_solution(
     solver: AbstractOptimizationSolver, dtype: VariableDomain, maximisation: bool
@@ -247,9 +229,7 @@ def test__solver_functional__optimal_solution(
     """
     # Arrange
     solver.set_optimization_direction(maximization=maximisation)
-    var = solver.add_variable(
-        lower_bound=0.0, upper_bound=100.0, name="x", variable_domain=dtype
-    )
+    var = solver.add_variable(lower_bound=0.0, upper_bound=100.0, name="x", variable_domain=dtype)
     solver.add_constraint(
         lower_bound=0.0,
         upper_bound=1.0,
@@ -275,17 +255,13 @@ def test__solver_functional__optimal_solution(
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDomain.CONTINUOUS, VariableDomain.INTEGER])
-def test_solver_functional__unbounded_problem(
-    solver: AbstractOptimizationSolver, dtype: VariableDomain
-):
+def test_solver_functional__unbounded_problem(solver: AbstractOptimizationSolver, dtype: VariableDomain):
     """
     Testing that the solver recognises an unbounded solution, and it is reflected in the optimisation status.
     """
     # Arrange
     solver.set_optimization_direction(maximization=True)
-    var = solver.add_variable(
-        lower_bound=0.0, upper_bound=solver.infinity(), name="x", variable_domain=dtype
-    )
+    var = solver.add_variable(lower_bound=0.0, upper_bound=solver.infinity(), name="x", variable_domain=dtype)
     solver.add_objective_term(coefficient=1.0, variable=var, overwrite=False)
 
     # Act
@@ -300,16 +276,12 @@ def test_solver_functional__unbounded_problem(
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs", "Scip"], indirect=True)
 @pytest.mark.parametrize("dtype", [VariableDomain.CONTINUOUS, VariableDomain.INTEGER])
-def test_solver_functional__infeasible_problem(
-    solver: AbstractOptimizationSolver, dtype: VariableDomain
-):
+def test_solver_functional__infeasible_problem(solver: AbstractOptimizationSolver, dtype: VariableDomain):
     """
     Testing that the solver recognises an infeasible solution, and it is reflected in the optimisation status.
     """
     # Arrange
-    var = solver.add_variable(
-        lower_bound=0.0, upper_bound=1.0, name="x", variable_domain=dtype
-    )
+    var = solver.add_variable(lower_bound=0.0, upper_bound=1.0, name="x", variable_domain=dtype)
     solver.add_constraint(
         lower_bound=5.0,
         upper_bound=6.0,
@@ -367,15 +339,11 @@ def test__set_verbose(capfd, solver: AbstractOptimizationSolver, verbose: bool):
 
 @pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("overwrite", [True, False])
-def test__add_objective_term__overwrite_term_when_desired(
-    solver: AbstractOptimizationSolver, overwrite: bool
-):
+def test__add_objective_term__overwrite_term_when_desired(solver: AbstractOptimizationSolver, overwrite: bool):
     """
     Testing that the solver setting for OrTools overwrite in objective function is set correctly.
     """
-    x = solver.add_variable(
-        lower_bound=0, upper_bound=100, name="x", variable_domain=VariableDomain.INTEGER
-    )
+    x = solver.add_variable(lower_bound=0, upper_bound=100, name="x", variable_domain=VariableDomain.INTEGER)
 
     solver.add_objective_term(coefficient=1.0, variable=x, overwrite=overwrite)
     solver.add_objective_term(coefficient=0.0, variable=x, overwrite=overwrite)
@@ -395,9 +363,7 @@ def test__add_objective_term__overwrite_term_when_desired(
 @pytest.mark.parametrize("solver", ["OrTools", "Highs"], indirect=True)
 @pytest.mark.parametrize("offset", [0, 1])
 @pytest.mark.parametrize("overwrite", [False, True])
-def test__add_objective_offset__overwrite_if_desired(
-    solver: AbstractOptimizationSolver, offset: int, overwrite: bool
-):
+def test__add_objective_offset__overwrite_if_desired(solver: AbstractOptimizationSolver, offset: int, overwrite: bool):
     """
     Testing that offset in objective function is set correctly both when overwriting and adding.
     """
@@ -429,9 +395,7 @@ def test__add_objective_offset__overwrite_if_desired(
 
 @pytest.mark.parametrize("solver", ["Scip"], indirect=True)
 @pytest.mark.parametrize("offset", [1])
-def test__add_objective_offset__for_scip__overwrite_false(
-    solver: AbstractOptimizationSolver, offset: int
-):
+def test__add_objective_offset__for_scip__overwrite_false(solver: AbstractOptimizationSolver, offset: int):
     """
     Testing that offset in objective function is set correctly both when overwriting and adding.
     """
@@ -529,11 +493,7 @@ def test_get_variable_count_of_type(solver: AbstractOptimizationSolver):
     number_of_continuous_variables = 5
     number_of_binary_variables = 7
     number_of_integer_variables = 10
-    total_variables_count = (
-        number_of_continuous_variables
-        + number_of_binary_variables
-        + number_of_integer_variables
-    )
+    total_variables_count = number_of_continuous_variables + number_of_binary_variables + number_of_integer_variables
     [
         solver.add_variable(
             lower_bound=0,
@@ -563,18 +523,9 @@ def test_get_variable_count_of_type(solver: AbstractOptimizationSolver):
     ]
 
     # Act & Assert
-    assert (
-        solver.get_variable_count_of_type(VariableDomain.CONTINUOUS)
-        == number_of_continuous_variables
-    )
-    assert (
-        solver.get_variable_count_of_type(VariableDomain.BINARY)
-        == number_of_binary_variables
-    )
-    assert (
-        solver.get_variable_count_of_type(VariableDomain.INTEGER)
-        == number_of_integer_variables
-    )
+    assert solver.get_variable_count_of_type(VariableDomain.CONTINUOUS) == number_of_continuous_variables
+    assert solver.get_variable_count_of_type(VariableDomain.BINARY) == number_of_binary_variables
+    assert solver.get_variable_count_of_type(VariableDomain.INTEGER) == number_of_integer_variables
     assert solver.get_variable_count() == total_variables_count
 
 
@@ -617,9 +568,7 @@ def test__get_gap__time_limit_reached__gap_greater_than_zero(
     ]
 
     for i in cities:
-        solver.add_multiple_objective_terms(
-            coefficients=np.array(c[i]), variables=np.array(x[i]), overwrite=False
-        )
+        solver.add_multiple_objective_terms(coefficients=np.array(c[i]), variables=np.array(x[i]), overwrite=False)
 
     for i in cities:
         solver.add_constraint(
@@ -704,9 +653,7 @@ def test_get_gap__gap_limit_reached__gap_equal_to_limit(
     for i in cities:
         for j in cities:
             if i != j:
-                solver.add_objective_term(
-                    coefficient=c[i][j], variable=x[i][j], overwrite=False
-                )
+                solver.add_objective_term(coefficient=c[i][j], variable=x[i][j], overwrite=False)
 
     for i in cities:
         solver.add_constraint(
@@ -770,7 +717,4 @@ def test_objective_terms_with_low_coefficient__expected_objective_analytics_to_b
     solver.solve()
 
     # Act & Assert
-    assert (
-        sum(list(solver.get_named_objectives().values()))
-        == solver.get_objective_value()
-    )
+    assert sum(list(solver.get_named_objectives().values())) == solver.get_objective_value()

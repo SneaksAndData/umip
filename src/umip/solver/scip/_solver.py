@@ -18,9 +18,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         self._solver = Model()
         if model_path is not None:
             self._solver = self._solver.readProblem(model_path)
-        self.number_of_variables_of_type = {
-            variable_type: 0 for variable_type in list(VariableDomain)
-        }
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
         self._objective = 0
         self._objective_term_count = 0
 
@@ -33,16 +31,8 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         name: str | None = None,
     ) -> pyscipopt.Constraint | None:
         coefficients = self._to_float(value=coefficients)
-        lower_bound = (
-            self._to_float(value=lower_bound)
-            if lower_bound is not None
-            else -self.infinity()
-        )
-        upper_bound = (
-            self._to_float(value=upper_bound)
-            if upper_bound is not None
-            else self.infinity()
-        )
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         name = name if name is not None else ""
 
         if isinstance(coefficients, Iterable):
@@ -55,9 +45,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         if lower_bound == upper_bound:
             return self._solver.addCons(cons=(constr_expr == lower_bound), name=name)
         if lower_bound != -self.infinity() and upper_bound != self.infinity():
-            return self._solver.addCons(
-                cons=lower_bound <= (constr_expr <= upper_bound), name=name
-            )
+            return self._solver.addCons(cons=lower_bound <= (constr_expr <= upper_bound), name=name)
         if lower_bound != -self.infinity():
             return self._solver.addCons(cons=(constr_expr >= lower_bound), name=name)
 
@@ -67,8 +55,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         self,
         coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
         | npt.NDArray[np.floating | np.integer | np.bool_],
-        variables: npt.NDArray[npt.NDArray[pyscipopt.Variable]]
-        | npt.NDArray[pyscipopt.Variable],
+        variables: npt.NDArray[npt.NDArray[pyscipopt.Variable]] | npt.NDArray[pyscipopt.Variable],
         lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
@@ -79,16 +66,8 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         coefficients = self._to_float(value=coefficients)
 
         for i, coeff in enumerate(coefficients):
-            lowerbound = (
-                self._to_float(value=lower_bounds[i])
-                if lower_bounds is not None
-                else None
-            )
-            upperbound = (
-                self._to_float(value=upper_bounds[i])
-                if upper_bounds is not None
-                else None
-            )
+            lowerbound = self._to_float(value=lower_bounds[i]) if lower_bounds is not None else None
+            upperbound = self._to_float(value=upper_bounds[i]) if upper_bounds is not None else None
             name = names[i] if names is not None else None
             self.add_constraint(
                 coeff,
@@ -112,16 +91,8 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         lower_bound: float | bool | None = None,
         upper_bound: float | bool | None = None,
     ) -> pyscipopt.Variable:
-        lower_bound = (
-            self._to_float(value=lower_bound)
-            if lower_bound is not None
-            else -self.infinity()
-        )
-        upper_bound = (
-            self._to_float(value=upper_bound)
-            if upper_bound is not None
-            else self.infinity()
-        )
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         self.number_of_variables_of_type[variable_domain] += 1
 
         if variable_domain == VariableDomain.INTEGER:
@@ -135,9 +106,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         else:
             raise ValueError("Unsupported variable data type")
 
-        return self._solver.addVar(
-            name=name, lb=lower_bound, ub=upper_bound, vtype=variable_type
-        )
+        return self._solver.addVar(name=name, lb=lower_bound, ub=upper_bound, vtype=variable_type)
 
     def add_multiple_variables(
         self,
@@ -158,9 +127,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
             ]
         )
 
-    def set_variable_hint(
-        self, variable: pyscipopt.Variable, hint: float | bool
-    ) -> None:
+    def set_variable_hint(self, variable: pyscipopt.Variable, hint: float | bool) -> None:
         hint = self._to_float(value=hint)
         partial_solution = self._solver.createPartialSol()
         self._solver.setSolVal(partial_solution, variable, hint)
@@ -185,16 +152,12 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:
-            self.add_named_objective(
-                np.array([coefficient]), np.array([variable]), overwrite, name
-            )
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
         self._objective_term_count += 1 if coefficient != 0 else 0
 
         if overwrite:
-            raise ValueError(
-                "ScipSolver.add_objective_term() is not supported with overwrite = true "
-            )
+            raise ValueError("ScipSolver.add_objective_term() is not supported with overwrite = true ")
 
         self._objective += coefficient * variable
 
@@ -212,9 +175,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
         for coeff, var in zip(coefficients, variables):
             self._objective_term_count += 1 if coeff != 0 else 0
             if overwrite:
-                raise ValueError(
-                    "ScipSolver.add_objective_term() is not supported with overwrite = true "
-                )
+                raise ValueError("ScipSolver.add_objective_term() is not supported with overwrite = true ")
 
             self._objective += coeff * var
 
@@ -227,18 +188,14 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
     def get_objective_value(self) -> float:
         return self._solver.getObjVal()
 
-    def solve(
-        self, time_limit: float | None = None, mip_gap_limit: float | None = None
-    ) -> str:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> str:
         if time_limit is not None:
             self._solver.setParam("limits/time", time_limit)
         if mip_gap_limit is not None:
             self._solver.setParam("limits/gap", mip_gap_limit)
 
         offset = self._solver.getObjoffset()
-        self._solver.setObjective(
-            expr=self._objective, sense=self._solver.getObjectiveSense()
-        )
+        self._solver.setObjective(expr=self._objective, sense=self._solver.getObjectiveSense())
         self._solver.addObjoffset(offset)
         self._solver.optimize()
 
@@ -316,9 +273,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
     def get_gap(self) -> float:
         return self._solver.getGap()
 
-    def add_objective_offset(
-        self, offset: float | bool, overwrite: bool = True
-    ) -> None:
+    def add_objective_offset(self, offset: float | bool, overwrite: bool = True) -> None:
         offset = self._to_float(value=offset)
         if overwrite:
             offset -= self._solver.getObjoffset()
@@ -336,8 +291,7 @@ class ScipSolver(AbstractOptimizationSolver[pyscipopt.Variable, pyscipopt.Constr
                         (
                             0.0
                             if abs(item.objective_coefficient) <= 1e-9
-                            else item.objective_coefficient
-                            * self.get_variable_value(item.variable)
+                            else item.objective_coefficient * self.get_variable_value(item.variable)
                         )
                         for item in self._named_objectives[name]
                         if item.objective_coefficient

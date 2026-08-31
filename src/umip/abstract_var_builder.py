@@ -48,9 +48,7 @@ class AbstractDecisionVariableBuilder(ABC):
         self._logger = logger
 
     @abstractmethod
-    def build(
-        self, solver: AbstractOptimizationSolver, data: AbstractInternalData
-    ) -> AbstractInternalData:
+    def build(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> AbstractInternalData:
         """
         Builds the decision variables on the given model and the given data.
 
@@ -60,9 +58,7 @@ class AbstractDecisionVariableBuilder(ABC):
         """
 
     @abstractmethod
-    def unpack(
-        self, solver: AbstractOptimizationSolver, data: AbstractInternalData
-    ) -> AbstractInternalData:
+    def unpack(self, solver: AbstractOptimizationSolver, data: AbstractInternalData) -> AbstractInternalData:
         """
         Unpacks the decision variables after optimization and inserts variable values in the dataframes.
 
@@ -112,9 +108,7 @@ class AbstractDecisionVariableBuilder(ABC):
         if isinstance(filter_column, str):
             return FilterColumnArgumentType.STRING
 
-        raise ValueError(
-            f"Unsupported filter column argument type {type(filter_column)}"
-        )
+        raise ValueError(f"Unsupported filter column argument type {type(filter_column)}")
 
     @staticmethod
     def _get_index_columns_argument_type(
@@ -125,14 +119,10 @@ class AbstractDecisionVariableBuilder(ABC):
         """
         if index_name_columns is None:
             return IndexColumnsArgumentType.NONE
-        if isinstance(index_name_columns, list) and all(
-            isinstance(item, str) for item in index_name_columns
-        ):
+        if isinstance(index_name_columns, list) and all(isinstance(item, str) for item in index_name_columns):
             return IndexColumnsArgumentType.LIST_OF_STRINGS
 
-        raise ValueError(
-            f"Unsupported index columns argument type {type(index_name_columns)}"
-        )
+        raise ValueError(f"Unsupported index columns argument type {type(index_name_columns)}")
 
     def _get_row_count(self, data: pd.DataFrame | pl.DataFrame) -> int:
         """Returns the number of rows in the DataFrame."""
@@ -141,13 +131,9 @@ class AbstractDecisionVariableBuilder(ABC):
             return len(data)
         if dataframe_type == DataFrameArgumentType.POLARS:
             return data.height
-        raise ValueError(
-            f"Cannot get row count for unsupported data type: {type(data)}"
-        )
+        raise ValueError(f"Cannot get row count for unsupported data type: {type(data)}")
 
-    def _dataframe_has_column(
-        self, data: pd.DataFrame | pl.DataFrame, column_name: str
-    ) -> bool:
+    def _dataframe_has_column(self, data: pd.DataFrame | pl.DataFrame, column_name: str) -> bool:
         """Returns whether the DataFrame contains the specified column."""
         dataframe_type = self._get_dataframe_argument_type(data=data)
         if dataframe_type == DataFrameArgumentType.PANDAS:
@@ -158,9 +144,7 @@ class AbstractDecisionVariableBuilder(ABC):
             if not column_name in data.columns:
                 raise ValueError(f"DataFrame does not contain column {column_name}.")
             return True
-        raise ValueError(
-            f"Cannot check for column existence for unsupported dataframe type: {dataframe_type}"
-        )
+        raise ValueError(f"Cannot check for column existence for unsupported dataframe type: {dataframe_type}")
 
     def _dataframe_has_invalid_columns(
         self, data: pd.DataFrame | pl.DataFrame, invalid_column_names: list[str]
@@ -173,9 +157,7 @@ class AbstractDecisionVariableBuilder(ABC):
             return any(column in data.columns for column in invalid_column_names)
         if dataframe_type == DataFrameArgumentType.POLARS:
             return any(column in data.columns for column in invalid_column_names)
-        raise ValueError(
-            f"Cannot check for invalid column existence for unsupported dataframe type: {dataframe_type}"
-        )
+        raise ValueError(f"Cannot check for invalid column existence for unsupported dataframe type: {dataframe_type}")
 
     def _build_column_variables_pandas(
         self,
@@ -202,9 +184,7 @@ class AbstractDecisionVariableBuilder(ABC):
         :param indicators: The indicator for whether variables should be created or not.
         :return: The updated pandas DataFrame with the decision variable values in the destination_column.
         """
-        if self._dataframe_has_invalid_columns(
-            data=data, invalid_column_names=self.invalid_column_names_build
-        ):
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_build):
             raise ValueError(
                 f"DataFrame must not contain column names from the following list: {self.invalid_column_names_build}."
             )
@@ -233,9 +213,7 @@ class AbstractDecisionVariableBuilder(ABC):
         # Building variables, where y[0] is lb, y[1] is ub, y[2] is var_name and y[3] is indicators
         data = data.assign(
             **{
-                destination_column: lambda x: x[
-                    self.variable_information_column_name
-                ].apply(
+                destination_column: lambda x: x[self.variable_information_column_name].apply(
                     lambda y: (
                         solver.add_variable(
                             lower_bound=y[0],
@@ -287,9 +265,7 @@ class AbstractDecisionVariableBuilder(ABC):
         :param indicators: The indicator for whether variables should be created or not.
         :return: The updated polars DataFrame with the decision variable values in the destination_column.
         """
-        if self._dataframe_has_invalid_columns(
-            data=data, invalid_column_names=self.invalid_column_names_build
-        ):
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_build):
             raise ValueError(
                 f"DataFrame must not contain column names from the following list: {self.invalid_column_names_build}."
             )
@@ -376,9 +352,7 @@ class AbstractDecisionVariableBuilder(ABC):
         """
         dataframe_type = self._get_dataframe_argument_type(data=data)
 
-        variable_name = self._get_variable_name(
-            variable_name=variable_name, destination_column=destination_column
-        )
+        variable_name = self._get_variable_name(variable_name=variable_name, destination_column=destination_column)
 
         lower_bound_values = self._get_bounds(
             bound=lower_bound,
@@ -431,9 +405,7 @@ class AbstractDecisionVariableBuilder(ABC):
 
             return data
 
-        raise ValueError(
-            f"No method for building variables in DataFrame {dataframe_type} type is defined."
-        )
+        raise ValueError(f"No method for building variables in DataFrame {dataframe_type} type is defined.")
 
     def _unpack_column_variables_pandas(
         self,
@@ -460,17 +432,15 @@ class AbstractDecisionVariableBuilder(ABC):
         to (optional, default is float).
         :return: The updated pandas DataFrame with the unpacked decision variable values.
         """
-        if self._dataframe_has_invalid_columns(
-            data=data, invalid_column_names=self.invalid_column_names_unpack
-        ):
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_unpack):
             raise ValueError(
                 f"DataFrame must not contain column names from the following list: {self.invalid_column_names_unpack}."
             )
 
         if data.empty:
-            data = data.assign(
-                **{decision_variable_value_column: np.array(None, dtype="float")}
-            ).drop(columns=[decision_variable_column])
+            data = data.assign(**{decision_variable_value_column: np.array(None, dtype="float")}).drop(
+                columns=[decision_variable_column]
+            )
         else:
             data = data.assign(
                 **{
@@ -484,14 +454,8 @@ class AbstractDecisionVariableBuilder(ABC):
 
             data = data.assign(
                 **{
-                    decision_variable_value_column: lambda x: x[
-                        self.variable_information_column_name
-                    ].apply(
-                        lambda y: (
-                            solver.get_variable_value(y[0])
-                            if y[1]
-                            else default_unpack_value
-                        )
+                    decision_variable_value_column: lambda x: x[self.variable_information_column_name].apply(
+                        lambda y: solver.get_variable_value(y[0]) if y[1] else default_unpack_value
                     )
                 }
             ).drop(
@@ -506,15 +470,11 @@ class AbstractDecisionVariableBuilder(ABC):
             return data
 
         if variable_domain == VariableDomain.BINARY:
-            data[decision_variable_value_column] = (
-                data[decision_variable_value_column].round(decimals=0).astype("bool")
-            )
+            data[decision_variable_value_column] = data[decision_variable_value_column].round(decimals=0).astype("bool")
             return data
 
         if variable_domain == VariableDomain.INTEGER:
-            data[decision_variable_value_column] = (
-                data[decision_variable_value_column].round(decimals=0).astype("int")
-            )
+            data[decision_variable_value_column] = data[decision_variable_value_column].round(decimals=0).astype("int")
             return data
 
         raise ValueError(f"Unsupported variable data type {variable_domain}")
@@ -544,17 +504,15 @@ class AbstractDecisionVariableBuilder(ABC):
         to (optional, default is float).
         :return: The updated polars DataFrame with the unpacked decision variable values.
         """
-        if self._dataframe_has_invalid_columns(
-            data=data, invalid_column_names=self.invalid_column_names_unpack
-        ):
+        if self._dataframe_has_invalid_columns(data=data, invalid_column_names=self.invalid_column_names_unpack):
             raise ValueError(
                 f"DataFrame must not contain column names from the following list: {self.invalid_column_names_unpack}."
             )
 
         if data.is_empty():
-            data = data.with_columns(
-                pl.lit(None).cast(pl.Float64).alias(decision_variable_value_column)
-            ).drop(decision_variable_column)
+            data = data.with_columns(pl.lit(None).cast(pl.Float64).alias(decision_variable_value_column)).drop(
+                decision_variable_column
+            )
         else:
             data = data.with_columns(
                 **{
@@ -564,11 +522,7 @@ class AbstractDecisionVariableBuilder(ABC):
 
             data = data.with_columns(
                 pl.when(pl.col(self.indicator_column_name))
-                .then(
-                    pl.col(decision_variable_column).map_elements(
-                        solver.get_variable_value, return_dtype=pl.Float64
-                    )
-                )
+                .then(pl.col(decision_variable_column).map_elements(solver.get_variable_value, return_dtype=pl.Float64))
                 .otherwise(default_unpack_value)
                 .alias(decision_variable_value_column)
             ).drop([decision_variable_column, self.indicator_column_name])
@@ -578,19 +532,13 @@ class AbstractDecisionVariableBuilder(ABC):
 
         if variable_domain == VariableDomain.BINARY:
             data = data.with_columns(
-                pl.col(decision_variable_value_column)
-                .round(decimals=0)
-                .cast(pl.datatypes.Boolean)
+                pl.col(decision_variable_value_column).round(decimals=0).cast(pl.datatypes.Boolean)
             )
 
             return data
 
         if variable_domain == VariableDomain.INTEGER:
-            data = data.with_columns(
-                pl.col(decision_variable_value_column)
-                .round(decimals=0)
-                .cast(pl.datatypes.Int64)
-            )
+            data = data.with_columns(pl.col(decision_variable_value_column).round(decimals=0).cast(pl.datatypes.Int64))
 
             return data
 
@@ -651,14 +599,10 @@ class AbstractDecisionVariableBuilder(ABC):
 
             return data
 
-        raise ValueError(
-            f"No method for unpacking variables in DataFrame of type {dataframe_type} is defined."
-        )
+        raise ValueError(f"No method for unpacking variables in DataFrame of type {dataframe_type} is defined.")
 
     @staticmethod
-    def _get_variable_name(
-        destination_column: str, variable_name: str | None = None
-    ) -> str:
+    def _get_variable_name(destination_column: str, variable_name: str | None = None) -> str:
         """
         Find the variable name. If variable_name is None, we simply use the destination column name.
 
@@ -667,9 +611,7 @@ class AbstractDecisionVariableBuilder(ABC):
         :return: The prefix of the variable name.
         """
         if variable_name is not None and not isinstance(variable_name, str):
-            raise ValueError(
-                f"Handling variable_name of type {type(variable_name)} not supported."
-            )
+            raise ValueError(f"Handling variable_name of type {type(variable_name)} not supported.")
 
         return variable_name or destination_column
 
@@ -697,40 +639,24 @@ class AbstractDecisionVariableBuilder(ABC):
         number_of_variables = self._get_row_count(data=data)
 
         if bound_argument_type == BoundArgumentType.STRING:
-            if (
-                dataframe_type == DataFrameArgumentType.PANDAS
-                and self._dataframe_has_column(data=data, column_name=bound)
+            if dataframe_type == DataFrameArgumentType.PANDAS and self._dataframe_has_column(
+                data=data, column_name=bound
             ):
                 return data[bound].fillna(value=solver.infinity()).to_numpy()
-            if (
-                dataframe_type == DataFrameArgumentType.POLARS
-                and self._dataframe_has_column(data=data, column_name=bound)
+            if dataframe_type == DataFrameArgumentType.POLARS and self._dataframe_has_column(
+                data=data, column_name=bound
             ):
-                return (
-                    data.get_column(name=bound)
-                    .fill_null(value=solver.infinity())
-                    .to_numpy()
-                )
-            raise ValueError(
-                f"Cannot find a bound column in DataFrame of unsupported type {dataframe_type}."
-            )
+                return data.get_column(name=bound).fill_null(value=solver.infinity()).to_numpy()
+            raise ValueError(f"Cannot find a bound column in DataFrame of unsupported type {dataframe_type}.")
 
         if bound_argument_type == BoundArgumentType.FLOAT:
             return np.full(number_of_variables, fill_value=bound)
 
         if bound_argument_type == BoundArgumentType.NONE:
             if bound_type == BoundType.LOWER:
-                bound = (
-                    0.0
-                    if variable_domain == VariableDomain.BINARY
-                    else -solver.infinity()
-                )
+                bound = 0.0 if variable_domain == VariableDomain.BINARY else -solver.infinity()
             elif bound_type == BoundType.UPPER:
-                bound = (
-                    1.0
-                    if variable_domain == VariableDomain.BINARY
-                    else solver.infinity()
-                )
+                bound = 1.0 if variable_domain == VariableDomain.BINARY else solver.infinity()
             else:
                 raise ValueError(f"Handling of bound_type={bound_type} not supported.")
 
@@ -751,33 +677,25 @@ class AbstractDecisionVariableBuilder(ABC):
         :param data: The DataFrame containing the data.
         :return: The indicator numpy array.
         """
-        filter_column_type = self._get_filter_column_argument_type(
-            filter_column=filter_column
-        )
+        filter_column_type = self._get_filter_column_argument_type(filter_column=filter_column)
         dataframe_type = self._get_dataframe_argument_type(data=data)
         number_of_variables = self._get_row_count(data=data)
 
         if filter_column_type == FilterColumnArgumentType.STRING:
-            if (
-                dataframe_type == DataFrameArgumentType.POLARS
-                and self._dataframe_has_column(data=data, column_name=filter_column)
+            if dataframe_type == DataFrameArgumentType.POLARS and self._dataframe_has_column(
+                data=data, column_name=filter_column
             ):
                 return data[filter_column].to_numpy()
-            if (
-                dataframe_type == DataFrameArgumentType.PANDAS
-                and self._dataframe_has_column(data=data, column_name=filter_column)
+            if dataframe_type == DataFrameArgumentType.PANDAS and self._dataframe_has_column(
+                data=data, column_name=filter_column
             ):
                 return data[filter_column].to_numpy()
-            raise ValueError(
-                f"Cannot find a filter column in DataFrame of unsupported type {dataframe_type}."
-            )
+            raise ValueError(f"Cannot find a filter column in DataFrame of unsupported type {dataframe_type}.")
 
         if filter_column_type == FilterColumnArgumentType.NONE:
             return np.ones(number_of_variables, dtype=bool)
 
-        raise ValueError(
-            f"Handling filter_column of type {filter_column_type} not supported."
-        )
+        raise ValueError(f"Handling filter_column of type {filter_column_type} not supported.")
 
     def _get_variable_name_with_indices(
         self,
@@ -794,9 +712,7 @@ class AbstractDecisionVariableBuilder(ABC):
         :param variable_name: The prefix of the variable name.
         :return: The names numpy array.
         """
-        index_name_columns_type = self._get_index_columns_argument_type(
-            index_name_columns=index_column_names
-        )
+        index_name_columns_type = self._get_index_columns_argument_type(index_name_columns=index_column_names)
         dataframe_type = self._get_dataframe_argument_type(data=data)
 
         if index_name_columns_type == IndexColumnsArgumentType.LIST_OF_STRINGS:
@@ -814,18 +730,9 @@ class AbstractDecisionVariableBuilder(ABC):
                         for index in data[index_column_names].to_numpy().astype(str)
                     ]
                 )
-            raise ValueError(
-                f"Cannot add variable indices from a DataFrame of unsupported type {dataframe_type}."
-            )
+            raise ValueError(f"Cannot add variable indices from a DataFrame of unsupported type {dataframe_type}.")
 
         if index_name_columns_type == IndexColumnsArgumentType.NONE:
-            return np.array(
-                [
-                    f"{variable_name}[{index!s}]"
-                    for index in range(self._get_row_count(data=data))
-                ]
-            )
+            return np.array([f"{variable_name}[{index!s}]" for index in range(self._get_row_count(data=data))])
 
-        raise ValueError(
-            f"Handling index_name_columns of type {index_name_columns_type} not supported."
-        )
+        raise ValueError(f"Handling index_name_columns of type {index_name_columns_type} not supported.")

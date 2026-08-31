@@ -15,9 +15,7 @@ from umip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
 def create_solver(solver_type: str, logger: LoggerInterface):
     """Helper to instantiate the appropriate solver."""
     solvers = {
-        "ortools": lambda: OrToolsSolver(
-            solver_engine=OrToolsSolverEngine.SCIP, logger=logger
-        ),
+        "ortools": lambda: OrToolsSolver(solver_engine=OrToolsSolverEngine.SCIP, logger=logger),
         "gurobi": lambda: GurobiSolver(logger=logger),
         "highs": lambda: HighsSolver(logger=logger),
         "cplex": lambda: CplexSolver(logger=logger),
@@ -50,12 +48,8 @@ class TestOutput:
     [
         pytest.param("ortools", id="ortools"),
         pytest.param("highs", id="highs"),
-        pytest.param(
-            "gurobi", id="gurobi", marks=pytest.mark.skip(reason="Not available")
-        ),
-        pytest.param(
-            "cplex", id="cplex", marks=pytest.mark.skip(reason="Not available")
-        ),
+        pytest.param("gurobi", id="gurobi", marks=pytest.mark.skip(reason="Not available")),
+        pytest.param("cplex", id="cplex", marks=pytest.mark.skip(reason="Not available")),
     ],
 )
 @pytest.mark.parametrize(
@@ -213,6 +207,4 @@ def test__solver_numeric_type_handling__functional(
     # Assert
     assert solver.get_variable_value(x) == pytest.approx(expected.expected_x, abs=1e-6)
     assert solver.get_variable_value(y) == pytest.approx(expected.expected_y, abs=1e-6)
-    assert solver.get_objective_value() == pytest.approx(
-        expected.expected_objective, abs=1e-6
-    )
+    assert solver.get_objective_value() == pytest.approx(expected.expected_objective, abs=1e-6)

@@ -146,12 +146,8 @@ def test__get_variable_name_with_indices__unsupported_dataframe_type__raises_val
     """
     # Arrange
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    var_builder._get_dataframe_argument_type = MagicMock(
-        return_value="UNSUPPORTED_TYPE"
-    )
-    var_builder._get_index_columns_argument_type = MagicMock(
-        return_value=IndexColumnsArgumentType.LIST_OF_STRINGS
-    )
+    var_builder._get_dataframe_argument_type = MagicMock(return_value="UNSUPPORTED_TYPE")
+    var_builder._get_index_columns_argument_type = MagicMock(return_value=IndexColumnsArgumentType.LIST_OF_STRINGS)
 
     index_column_names = ["col1"]
     data = MagicMock()
@@ -175,12 +171,8 @@ def test__get_variable_name_with_indices__unsupported_index_columns_type__raises
     """
     # Arrange
     var_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    var_builder._get_dataframe_argument_type = MagicMock(
-        return_value=DataFrameArgumentType.PANDAS
-    )
-    var_builder._get_index_columns_argument_type = MagicMock(
-        return_value="UNKNOWN_ENUM_TYPE"
-    )
+    var_builder._get_dataframe_argument_type = MagicMock(return_value=DataFrameArgumentType.PANDAS)
+    var_builder._get_index_columns_argument_type = MagicMock(return_value="UNKNOWN_ENUM_TYPE")
 
     index_column_names = 123  # Invalid type
     data = pd.DataFrame({"col1": [1, 2]})

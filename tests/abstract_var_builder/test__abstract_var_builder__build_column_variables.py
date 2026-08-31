@@ -20,9 +20,7 @@ def test__build_column_variables__pandas_dataframe__pandas_method_is_called():
     variable_builder = MockDecisionVariableBuilder(logger=MagicMock())
     solver = MagicMock()
 
-    variable_builder._get_dataframe_argument_type = MagicMock(
-        return_value=DataFrameArgumentType.PANDAS
-    )
+    variable_builder._get_dataframe_argument_type = MagicMock(return_value=DataFrameArgumentType.PANDAS)
     variable_builder._get_variable_name = MagicMock()
     variable_builder._get_bounds = MagicMock()
     variable_builder._get_indicators = MagicMock()
@@ -81,9 +79,7 @@ def test__build_column_variables__polars_dataframe__polars_method_is_called():
     variable_builder = MockDecisionVariableBuilder(logger=MagicMock())
     solver = MagicMock()
 
-    variable_builder._get_dataframe_argument_type = MagicMock(
-        return_value=DataFrameArgumentType.POLARS
-    )
+    variable_builder._get_dataframe_argument_type = MagicMock(return_value=DataFrameArgumentType.POLARS)
     variable_builder._get_variable_name = MagicMock()
     variable_builder._get_bounds = MagicMock()
     variable_builder._get_indicators = MagicMock()

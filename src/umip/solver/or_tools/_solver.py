@@ -25,19 +25,13 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         """
         super().__init__(logger)
         self._solver_engine = solver_engine
-        self.number_of_variables_of_type = {
-            variable_type: 0 for variable_type in list(VariableDomain)
-        }
-        self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(
-            solver_engine.value
-        )
+        self.number_of_variables_of_type = {variable_type: 0 for variable_type in list(VariableDomain)}
+        self._solver: pywraplp.Solver = pywraplp.Solver.CreateSolver(solver_engine.value)
         self._solver.EnableOutput()
         self._objective: pywraplp.Objective = self._solver.Objective()
         self.status = None
 
-    def set_variable_hint(
-        self, variable: pywraplp.Variable, hint: float | bool
-    ) -> None:
+    def set_variable_hint(self, variable: pywraplp.Variable, hint: float | bool) -> None:
         hint = self._to_float(value=hint)
         self._solver.SetHint([variable], [hint])
 
@@ -75,8 +69,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         self,
         coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
         | npt.NDArray[np.floating | np.integer | np.bool_],
-        variables: npt.NDArray[npt.NDArray[pywraplp.Variable]]
-        | npt.NDArray[pywraplp.Variable],
+        variables: npt.NDArray[npt.NDArray[pywraplp.Variable]] | npt.NDArray[pywraplp.Variable],
         lower_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         upper_bounds: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
@@ -89,15 +82,9 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         num_constrs = len(coefficients)
         for i in range(num_constrs):
             lower_bound = (
-                self._to_float(value=lower_bounds[i])
-                if lower_bounds is not None
-                else -self._solver.infinity()
+                self._to_float(value=lower_bounds[i]) if lower_bounds is not None else -self._solver.infinity()
             )
-            upper_bound = (
-                self._to_float(value=upper_bounds[i])
-                if upper_bounds is not None
-                else self._solver.infinity()
-            )
+            upper_bound = self._to_float(value=upper_bounds[i]) if upper_bounds is not None else self._solver.infinity()
             constr: pywraplp.Constraint = (
                 self._solver.Constraint(
                     lower_bound,
@@ -110,9 +97,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
                     upper_bound,
                 )
             )
-            if coefficients.ndim == 1 and not isinstance(
-                coefficients[0], (np.ndarray, list, set)
-            ):
+            if coefficients.ndim == 1 and not isinstance(coefficients[0], (np.ndarray, list, set)):
                 constr.SetCoefficient(variables[i], coefficients[i])
             else:
                 for j in range(len(coefficients[i])):
@@ -130,16 +115,8 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
             return None
 
         coefficients = self._to_float(value=coefficients)
-        lower_bound = (
-            self._to_float(value=lower_bound)
-            if lower_bound is not None
-            else -self.infinity()
-        )
-        upper_bound = (
-            self._to_float(value=upper_bound)
-            if upper_bound is not None
-            else self.infinity()
-        )
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
 
         constr: pywraplp.Constraint = (
             self._solver.Constraint(lower_bound, upper_bound, name)
@@ -162,16 +139,8 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         lower_bound: float | bool | None = None,
         upper_bound: float | bool | None = None,
     ) -> pywraplp.Variable:
-        lower_bound = (
-            self._to_float(value=lower_bound)
-            if lower_bound is not None
-            else -self.infinity()
-        )
-        upper_bound = (
-            self._to_float(value=upper_bound)
-            if upper_bound is not None
-            else self.infinity()
-        )
+        lower_bound = self._to_float(value=lower_bound) if lower_bound is not None else -self.infinity()
+        upper_bound = self._to_float(value=upper_bound) if upper_bound is not None else self.infinity()
         self.number_of_variables_of_type[variable_domain] += 1
         if variable_domain == VariableDomain.INTEGER:
             self._integer_problem = True
@@ -195,16 +164,12 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
     ) -> None:
         coefficient = self._to_float(value=coefficient)
         if name is not None:
-            self.add_named_objective(
-                np.array([coefficient]), np.array([variable]), overwrite, name
-            )
+            self.add_named_objective(np.array([coefficient]), np.array([variable]), overwrite, name)
 
         if overwrite:
             self._objective.SetCoefficient(variable, float(coefficient))
         else:
-            self._objective.SetCoefficient(
-                variable, self._objective.GetCoefficient(variable) + float(coefficient)
-            )
+            self._objective.SetCoefficient(variable, self._objective.GetCoefficient(variable) + float(coefficient))
 
     def add_multiple_objective_terms(
         self,
@@ -218,9 +183,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
             self.add_named_objective(coefficients, variables, overwrite, name)
 
         for i in range(len(coefficients)):  # pylint: disable=consider-using-enumerate
-            self.add_objective_term(
-                coefficients[i], variables[i], overwrite=overwrite, name=None
-            )
+            self.add_objective_term(coefficients[i], variables[i], overwrite=overwrite, name=None)
 
     def set_optimization_direction(self, maximization: bool) -> None:
         self._objective.SetOptimizationDirection(maximization)
@@ -228,9 +191,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
     def get_objective_value(self) -> float:
         return self._objective.Value()
 
-    def solve(
-        self, time_limit: float | None = None, mip_gap_limit: float | None = None
-    ) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         solver_params = pywraplp.MPSolverParameters()
         if time_limit is not None:
             self._solver.SetTimeLimit(round(time_limit * 1000))
@@ -265,9 +226,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
 
     def set_solver_setting(self, setting: OrToolsSolverConfig) -> None:
         if self._solver_engine == OrToolsSolverEngine.SCIP:
-            self._solver.SetSolverSpecificParametersAsString(
-                setting.to_scip_parameters_string()
-            )
+            self._solver.SetSolverSpecificParametersAsString(setting.to_scip_parameters_string())
 
     def export_to_file(self, path: str) -> None:
         if path.lower().endswith(".lp"):
@@ -296,13 +255,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
         return self._solver.NumConstraints()
 
     def get_objective_terms_count(self):
-        return len(
-            [
-                coeff
-                for var in self._solver.variables()
-                if (coeff := self._objective.GetCoefficient(var)) != 0
-            ]
-        )
+        return len([coeff for var in self._solver.variables() if (coeff := self._objective.GetCoefficient(var)) != 0])
 
     def force_update(self):
         # OR Tools uses eager updates.
@@ -317,9 +270,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
             return 0
         return abs(bound - objective_value) / abs(objective_value)
 
-    def add_objective_offset(
-        self, offset: float | bool, overwrite: bool = True
-    ) -> None:
+    def add_objective_offset(self, offset: float | bool, overwrite: bool = True) -> None:
         offset = self._to_float(value=offset)
         if overwrite:
             self._objective.SetOffset(offset)
@@ -329,9 +280,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
     def get_dual_value(self, constraint: pywraplp.Constraint) -> float:
         # constraint.dual_value() only works if you specifically use an LP solver.
         # SCIP is a MIP solver, thus it does not work.
-        raise NotImplementedError(
-            "Dual values are not supported by the MIP solvers in OR Tools"
-        )
+        raise NotImplementedError("Dual values are not supported by the MIP solvers in OR Tools")
 
     # pylint: disable=duplicate-code
     def get_named_objective(self, name: str) -> float:
@@ -342,8 +291,7 @@ class OrToolsSolver(AbstractOptimizationSolver[pywraplp.Variable, pywraplp.Const
                         (
                             0.0
                             if abs(item.objective_coefficient) <= 1e-9
-                            else item.objective_coefficient
-                            * self.get_variable_value(item.variable)
+                            else item.objective_coefficient * self.get_variable_value(item.variable)
                         )
                         for item in self._named_objectives[name]
                         if item.objective_coefficient

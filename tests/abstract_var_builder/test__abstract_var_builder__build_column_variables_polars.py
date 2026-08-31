@@ -52,9 +52,7 @@ class TestExpected:
                 expected_data=pl.DataFrame(
                     {
                         "index": [1, 2, 3],
-                        "destination_column": pl.Series(
-                            ["x_var", "y_var", "z_var"], dtype=pl.datatypes.Object
-                        ),
+                        "destination_column": pl.Series(["x_var", "y_var", "z_var"], dtype=pl.datatypes.Object),
                     }
                 )
             ),

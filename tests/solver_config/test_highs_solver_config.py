@@ -78,9 +78,7 @@ class OutputHighsTest:
         ),
     ],
 )
-def test__HighsSolverConfig__to_highs_options__unit_test(
-    inputs: InputHighsTest, expected: OutputHighsTest
-) -> None:
+def test__HighsSolverConfig__to_highs_options__unit_test(inputs: InputHighsTest, expected: OutputHighsTest) -> None:
     """
     Test HighsSolverConfig.to_highs_options logic:
 

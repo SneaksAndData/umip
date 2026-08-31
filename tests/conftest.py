@@ -22,9 +22,7 @@ def logger() -> LoggerInterface:
 @pytest.fixture(scope="function")
 def solver(logger, request):
     if request.param == "OrTools":
-        return SolverFactory(logger=logger).construct(
-            solver_type=SolverType.ORTOOLS_SCIP
-        )
+        return SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP)
     elif request.param == "Gurobi":
         return SolverFactory(logger=logger).construct(solver_type=SolverType.GUROBI)
     elif request.param == "LocalSolver":

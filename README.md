@@ -54,9 +54,7 @@ Select a backend via `SolverType` and create it through `SolverFactory`.
 At a high level, production usage should look like this:
 
 ```python
-model = MyModelFactory(logger=logger, solver_type=SolverType.ORTOOLS_SCIP).construct(
-    settings=settings
-)
+model = MyModelFactory(logger=logger, solver_type=SolverType.ORTOOLS_SCIP).construct(settings=settings)
 
 model.build(input_data=input_data)
 model.solve(time_limit=60.0)

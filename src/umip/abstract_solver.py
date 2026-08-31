@@ -35,7 +35,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
 
     @staticmethod
     def _to_float(
-        value: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]] | npt.NDArray[np.floating | np.integer | np.bool_] | float | bool,
+        value: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
+        | npt.NDArray[np.floating | np.integer | np.bool_]
+        | float
+        | bool,
     ) -> float | npt.NDArray[float]:
         """
         Converts a numeric value, 1D numpy array or numpy array of numpy arrays to float representations.
@@ -66,20 +69,14 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
                         dtype=object,
                     )
                 except (ValueError, TypeError) as e:
-                    raise TypeError(
-                        "Cannot convert nested elements in object array to float."
-                    ) from e
+                    raise TypeError("Cannot convert nested elements in object array to float.") from e
             if value.ndim == 1:
                 try:
                     return np.asarray(value, dtype=float)
                 except (ValueError, TypeError) as e:
-                    raise TypeError(
-                        f"Cannot convert numpy array of dtype {value.dtype} to float."
-                    ) from e
+                    raise TypeError(f"Cannot convert numpy array of dtype {value.dtype} to float.") from e
 
-        raise TypeError(
-            f"Type {type(value).__name__} is not supported for conversion to float."
-        )
+        raise TypeError(f"Type {type(value).__name__} is not supported for conversion to float.")
 
     @abstractmethod
     def add_constraint(
@@ -199,8 +196,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         coefficients: npt.NDArray[npt.NDArray[np.floating | np.integer | np.bool_]]
         | npt.NDArray[np.floating | np.integer | np.bool_],
         variables: npt.NDArray[npt.NDArray[VT]] | npt.NDArray[VT],
-        right_hand_sides: npt.NDArray[np.floating | np.integer | np.bool_]
-        | None = None,
+        right_hand_sides: npt.NDArray[np.floating | np.integer | np.bool_] | None = None,
         names: npt.NDArray[str] | None = None,
     ) -> None:
         """
@@ -358,14 +354,10 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         :param name: The name of the objective term
         """
         if overwrite:
-            raise ValueError(
-                "Add_named_objective is not supported with overwrite = true"
-            )
+            raise ValueError("Add_named_objective is not supported with overwrite = true")
 
         elements_to_add = [
-            VariableWithObjectiveCoefficient(
-                variables[i], self._to_float(coefficients[i])
-            )
+            VariableWithObjectiveCoefficient(variables[i], self._to_float(coefficients[i]))
             for i in range(len(coefficients))
         ]
         if name in self._named_objectives:
@@ -380,8 +372,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         aggregated value of the objective terms belonging to that objective.
         """
         return {
-            named_objective: self.get_named_objective(named_objective)
-            for named_objective in self._named_objectives
+            named_objective: self.get_named_objective(named_objective) for named_objective in self._named_objectives
         }
 
     @abstractmethod
@@ -410,9 +401,7 @@ class AbstractOptimizationSolver(ABC, Generic[VT, CT]):  # pylint: disable=too-m
         """
 
     @abstractmethod
-    def solve(
-        self, time_limit: float | None = None, mip_gap_limit: float | None = None
-    ) -> int:
+    def solve(self, time_limit: float | None = None, mip_gap_limit: float | None = None) -> int:
         """
         Solve the optimization problem. If both time_limit and mip_gap_limit are provided, the optimization would stop
         when reach the tighter limit.

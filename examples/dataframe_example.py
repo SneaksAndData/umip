@@ -78,9 +78,7 @@ class ExampleVariableBuilder(AbstractDecisionVariableBuilder):
     After solving, unpack_column_variables replaces the solver variable objects with solved values.
     """
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> ExampleInternalData:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.my_data = self.build_column_variables(
             solver=solver,
             data=data.my_data,
@@ -92,9 +90,7 @@ class ExampleVariableBuilder(AbstractDecisionVariableBuilder):
         )
         return data
 
-    def unpack(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> ExampleInternalData:
+    def unpack(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.my_data = self.unpack_column_variables(
             data=data.my_data,
             decision_variable_column=VAR,
@@ -108,9 +104,7 @@ class ExampleVariableBuilder(AbstractDecisionVariableBuilder):
 class ExampleCapacityConstraintBuilder(AbstractConstraintBuilder):
     """Adds the joint capacity constraint: x + y <= 100."""
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         solver.add_constraint(
             coefficients=np.ones(len(data.my_data)),
             variables=data.my_data[VAR].to_numpy(),
@@ -123,9 +117,7 @@ class ExampleCapacityConstraintBuilder(AbstractConstraintBuilder):
 class ExampleYCapConstraintBuilder(AbstractConstraintBuilder):
     """Adds the y upper bound constraint: y <= 20."""
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         y_row = data.my_data[data.my_data[VARIABLE_NAME] == "y"]
         solver.add_constraint(
             coefficients=np.ones(len(y_row)),
@@ -153,9 +145,7 @@ class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
             analytics_calculator=self._total_analytics,
         )
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         solver.add_multiple_objective_terms(
             coefficients=np.array([1.0, 4.0]),
             variables=data.my_data[VAR].to_numpy(),
@@ -165,9 +155,7 @@ class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
         return analytics_data.my_data[[VARIABLE_NAME, VALUE]]
 
     def _total_analytics(self, analytics_data: ExampleOutputData) -> float:
-        variable_analytics = self.get_analytics(
-            granularity="variable", analytics_data=analytics_data
-        )
+        variable_analytics = self.get_analytics(granularity="variable", analytics_data=analytics_data)
         return float(variable_analytics[VALUE].sum())
 
 
@@ -180,9 +168,7 @@ class ExampleMipModel(AbstractMipModel):
         redirect_solver_log: bool = True,
         **kwargs: Any,
     ) -> None:
-        super().build(
-            input_data=input_data, redirect_solver_log=redirect_solver_log, **kwargs
-        )
+        super().build(input_data=input_data, redirect_solver_log=redirect_solver_log, **kwargs)
         self._solver.set_optimization_direction(maximization=True)
 
     def _convert_internal_to_output_data(

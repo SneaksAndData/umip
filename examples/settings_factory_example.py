@@ -99,9 +99,7 @@ class ExampleDataPreparator(AbstractDataPreparator):
 class BaseVariableBuilder(AbstractDecisionVariableBuilder):
     """Creates the base model variables x and y."""
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> ExampleInternalData:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.x_var = solver.add_variable(
             name="x",
             variable_domain=VariableDomain.INTEGER,
@@ -116,9 +114,7 @@ class BaseVariableBuilder(AbstractDecisionVariableBuilder):
         )
         return data
 
-    def unpack(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> ExampleInternalData:
+    def unpack(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.x_value = solver.get_variable_value(var=data.x_var)
         data.y_value = solver.get_variable_value(var=data.y_var)
         return data
@@ -127,9 +123,7 @@ class BaseVariableBuilder(AbstractDecisionVariableBuilder):
 class BonusVariableBuilder(AbstractDecisionVariableBuilder):
     """Creates optional variable z when enabled by settings."""
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> ExampleInternalData:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.z_var = solver.add_variable(
             name="z",
             variable_domain=VariableDomain.INTEGER,
@@ -138,9 +132,7 @@ class BonusVariableBuilder(AbstractDecisionVariableBuilder):
         )
         return data
 
-    def unpack(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> ExampleInternalData:
+    def unpack(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.z_value = solver.get_variable_value(var=data.z_var)
         return data
 
@@ -148,9 +140,7 @@ class BonusVariableBuilder(AbstractDecisionVariableBuilder):
 class BaseConstraintBuilder(AbstractConstraintBuilder):
     """Adds the always-on constraints."""
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         solver.add_constraint(
             coefficients=np.array([1.0, 1.0]),
             variables=np.array([data.x_var, data.y_var]),
@@ -170,9 +160,7 @@ class BaseConstraintBuilder(AbstractConstraintBuilder):
 class TighterConstraintBuilder(AbstractConstraintBuilder):
     """Optional extra constraint that can tighten the feasible region."""
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         solver.add_constraint(
             coefficients=np.array([1.0, -1.0]),
             variables=np.array([data.x_var, data.z_var]),
@@ -205,23 +193,17 @@ class BaseObjectiveBuilder(AbstractObjectiveBuilder):
             analytics_calculator=self._total_analytics,
         )
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         solver.add_multiple_objective_terms(
             coefficients=np.array([1.0, 4.0]),
             variables=np.array([data.x_var, data.y_var]),
         )
 
-    def _variable_analytics(
-        self, analytics_data: ExampleOutputData
-    ) -> dict[str, float | None]:
+    def _variable_analytics(self, analytics_data: ExampleOutputData) -> dict[str, float | None]:
         return {"x": analytics_data.x_value, "y": analytics_data.y_value}
 
     def _total_analytics(self, analytics_data: ExampleOutputData) -> float:
-        variable_analytics = self.get_analytics(
-            granularity="variable", analytics_data=analytics_data
-        )
+        variable_analytics = self.get_analytics(granularity="variable", analytics_data=analytics_data)
         return variable_analytics["x"] * 1.0 + variable_analytics["y"] * 4.0
 
 
@@ -240,26 +222,16 @@ class BonusObjectiveBuilder(AbstractObjectiveBuilder):
             analytics_calculator=self._total_analytics,
         )
 
-    def build(
-        self, solver: AbstractOptimizationSolver, data: ExampleInternalData
-    ) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
         if data.z_var is not None:
             solver.add_objective_term(coefficient=2.0, variable=data.z_var)
 
-    def _variable_analytics(
-        self, analytics_data: ExampleOutputData
-    ) -> dict[str, float | None]:
+    def _variable_analytics(self, analytics_data: ExampleOutputData) -> dict[str, float | None]:
         return {"z": analytics_data.z_value}
 
     def _total_analytics(self, analytics_data: ExampleOutputData) -> float:
-        variable_analytics = self.get_analytics(
-            granularity="variable", analytics_data=analytics_data
-        )
-        return (
-            variable_analytics["z"] * 2.0
-            if variable_analytics["z"] is not None
-            else 0.0
-        )
+        variable_analytics = self.get_analytics(granularity="variable", analytics_data=analytics_data)
+        return variable_analytics["z"] * 2.0 if variable_analytics["z"] is not None else 0.0
 
 
 class ExampleMipModel(AbstractMipModel):
@@ -271,9 +243,7 @@ class ExampleMipModel(AbstractMipModel):
         redirect_solver_log: bool = True,
         **kwargs: Any,
     ) -> None:
-        super().build(
-            input_data=input_data, redirect_solver_log=redirect_solver_log, **kwargs
-        )
+        super().build(input_data=input_data, redirect_solver_log=redirect_solver_log, **kwargs)
         self._solver.set_optimization_direction(maximization=True)
 
     def _convert_internal_to_output_data(
@@ -282,9 +252,7 @@ class ExampleMipModel(AbstractMipModel):
         return ExampleOutputData(
             x_value=float(internal_unpacked_data.x_value or 0.0),
             y_value=float(internal_unpacked_data.y_value or 0.0),
-            z_value=float(internal_unpacked_data.z_value)
-            if internal_unpacked_data.z_value is not None
-            else None,
+            z_value=float(internal_unpacked_data.z_value) if internal_unpacked_data.z_value is not None else None,
             objective_value=float(self.get_objective_value()),
         )
 
@@ -301,15 +269,9 @@ class ExampleModelFactory(AbstractMipModelFactory):
         :param settings: Feature-switch settings.
         :return: Composed model ready to build and solve.
         """
-        variable_builder_types: set[type[AbstractDecisionVariableBuilder]] = {
-            BaseVariableBuilder
-        }
-        constraint_builder_types: set[type[AbstractConstraintBuilder]] = {
-            BaseConstraintBuilder
-        }
-        objective_builder_types: set[type[AbstractObjectiveBuilder]] = {
-            BaseObjectiveBuilder
-        }
+        variable_builder_types: set[type[AbstractDecisionVariableBuilder]] = {BaseVariableBuilder}
+        constraint_builder_types: set[type[AbstractConstraintBuilder]] = {BaseConstraintBuilder}
+        objective_builder_types: set[type[AbstractObjectiveBuilder]] = {BaseObjectiveBuilder}
 
         if settings.add_bonus_variable:
             variable_builder_types.add(BonusVariableBuilder)
@@ -323,26 +285,19 @@ class ExampleModelFactory(AbstractMipModelFactory):
         return ExampleMipModel(
             solver=self._solver,
             data_preparator=ExampleDataPreparator(logger=self._logger),
-            variable_builders=[
-                variable_builder(logger=self._logger)
-                for variable_builder in variable_builder_types
-            ],
+            variable_builders=[variable_builder(logger=self._logger) for variable_builder in variable_builder_types],
             constraint_builders=[
-                constraint_builder(logger=self._logger)
-                for constraint_builder in constraint_builder_types
+                constraint_builder(logger=self._logger) for constraint_builder in constraint_builder_types
             ],
             objective_builders=[
-                objective_builder(logger=self._logger)
-                for objective_builder in objective_builder_types
+                objective_builder(logger=self._logger) for objective_builder in objective_builder_types
             ],
             logger=self._logger,
         )
 
 
 def _run_case(logger: Any, settings: Settings) -> ExampleMipModel:
-    model = ExampleModelFactory(
-        logger=logger, solver_type=SolverType.ORTOOLS_SCIP
-    ).construct(settings=settings)
+    model = ExampleModelFactory(logger=logger, solver_type=SolverType.ORTOOLS_SCIP).construct(settings=settings)
     model.build(input_data=ExampleInputData())
     model.solve()
     return model
@@ -356,9 +311,7 @@ logger = SemanticLogger().add_log_source(
 )
 
 base_settings = Settings()
-feature_settings = Settings(
-    add_bonus_variable=True, add_tighter_constraint=True, add_bonus_objective=True
-)
+feature_settings = Settings(add_bonus_variable=True, add_tighter_constraint=True, add_bonus_objective=True)
 
 base_model = _run_case(logger=logger, settings=base_settings)
 feature_model = _run_case(logger=logger, settings=feature_settings)
@@ -373,9 +326,7 @@ print(base_model.get_analytics(granularity="variable"))
 print(base_model.get_analytics(granularity="total"))
 
 print("\nFeature-enabled model:")
-print(
-    f"x = {feature_output.x_value}, y = {feature_output.y_value}, z = {feature_output.z_value}"
-)
+print(f"x = {feature_output.x_value}, y = {feature_output.y_value}, z = {feature_output.z_value}")
 print(f"Objective: {feature_output.objective_value}")
 print(feature_model.get_analytics(granularity="variable"))
 print(feature_model.get_analytics(granularity="total"))

@@ -26,9 +26,7 @@ class AbstractMipModelFactory(ABC):
         :param logger: The logger to use.
         """
         self._logger = logger
-        self._solver = self._get_solver(
-            solver_type=solver_type, solver_config=solver_config
-        )
+        self._solver = self._get_solver(solver_type=solver_type, solver_config=solver_config)
 
     @abstractmethod
     def construct(
@@ -50,6 +48,4 @@ class AbstractMipModelFactory(ABC):
         :param solver_config: Optional typed configuration object for the solver type.
         :return: solver.
         """
-        return SolverFactory(logger=self._logger).construct(
-            solver_type=solver_type, solver_config=solver_config
-        )
+        return SolverFactory(logger=self._logger).construct(solver_type=solver_type, solver_config=solver_config)

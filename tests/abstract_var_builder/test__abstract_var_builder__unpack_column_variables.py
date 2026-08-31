@@ -78,9 +78,7 @@ def test__unpack_column_variables__invalid_dataframe__raises_value_error():
     """
     # Arrange
     variable_builder = MockDecisionVariableBuilder(logger=MagicMock())
-    variable_builder._get_dataframe_argument_type = MagicMock(
-        return_value="UNSUPPORTED_TYPE"
-    )
+    variable_builder._get_dataframe_argument_type = MagicMock(return_value="UNSUPPORTED_TYPE")
     variable_builder._get_indicators = MagicMock()
 
     # Act & Assert

@@ -49,14 +49,10 @@ class MockConstraintBuilder(AbstractConstraintBuilder):
 
 
 class MockDecisionVariableBuilder(AbstractDecisionVariableBuilder):
-    def build(
-        self, solver: AbstractOptimizationSolver, data: MockInternalData
-    ) -> MockInternalData:
+    def build(self, solver: AbstractOptimizationSolver, data: MockInternalData) -> MockInternalData:
         return data
 
-    def unpack(
-        self, solver: AbstractOptimizationSolver, data: MockInternalData
-    ) -> MockInternalData:
+    def unpack(self, solver: AbstractOptimizationSolver, data: MockInternalData) -> MockInternalData:
         return data
 
 

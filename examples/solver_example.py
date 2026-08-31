@@ -35,12 +35,8 @@ logger = SemanticLogger().add_log_source(
 
 solver = SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP)
 
-x = solver.add_variable(
-    lower_bound=0, upper_bound=100, name="x", variable_domain=VariableDomain.INTEGER
-)
-y = solver.add_variable(
-    lower_bound=0, upper_bound=100, name="y", variable_domain=VariableDomain.INTEGER
-)
+x = solver.add_variable(lower_bound=0, upper_bound=100, name="x", variable_domain=VariableDomain.INTEGER)
+y = solver.add_variable(lower_bound=0, upper_bound=100, name="y", variable_domain=VariableDomain.INTEGER)
 solver.add_multiple_objective_terms(
     coefficients=np.array([1.0, 4.0]),
     variables=np.array([x, y]),
