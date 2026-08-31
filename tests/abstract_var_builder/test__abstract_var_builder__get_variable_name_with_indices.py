@@ -7,7 +7,7 @@ import polars as pl
 import pytest
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
-from umip import DataFrameArgumentType, IndexColumnsArgumentType
+from umip.enums import DataFrameArgumentType, IndexColumnsArgumentType
 
 
 @dataclass

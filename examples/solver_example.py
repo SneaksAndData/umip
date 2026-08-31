@@ -23,7 +23,7 @@ x, y are integers
 This model is equivalent to the example in full_example.py.
 
 You can access the solver API directly for local experiments, prototyping, debugging and project initialization.
-For production grade models, use the generic_mip framework (full_example.py).
+For production grade models, use the umip framework (full_example.py).
 """
 
 logger = SemanticLogger().add_log_source(

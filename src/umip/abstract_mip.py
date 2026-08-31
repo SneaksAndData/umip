@@ -44,8 +44,8 @@ class AbstractMipModel(ABC):
         constraint_builders: list[AbstractConstraintBuilder],
         variable_builders: list[AbstractDecisionVariableBuilder],
         objective_builders: list[AbstractObjectiveBuilder],
-        logger: LoggerInterface,
-        metrics_provider: MetricsProvider,
+        logger: LoggerInterface | None = None,
+        metrics_provider: MetricsProvider | None = None,
     ):
         """
         Initialize the MIP model.
