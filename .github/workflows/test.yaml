@@ -34,4 +34,9 @@ jobs:
         run: uv sync --frozen --all-extras
 
       - name: Run Tests
-        run: uv run pytest
+        run: uv run pytest | tee pytest-coverage.txt
+
+      - name: Publish Code Coverage
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt

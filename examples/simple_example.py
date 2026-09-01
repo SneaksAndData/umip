@@ -1,4 +1,4 @@
-"""Simple end-to-end example of the generic-mip framework.
+"""Simple end-to-end example of the umip framework.
 
 Model:
 

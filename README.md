@@ -131,7 +131,7 @@ Relevant model APIs:
 - `model.get_named_objectives()`
 
 ## Framework-first project structure
-When implementing a model package on top of `generic-mip`, a common structure is:
+When implementing a model package on top of `umip`, a common structure is:
 
 - `data_prep/`: input normalization and derivations.
 - `variables/`: one builder per set of variables.
@@ -172,7 +172,7 @@ You can inspect the repository examples in [`examples/`](./examples), but treat 
 If you specifically want a minimal settings-driven factory composition example, see [`examples/settings_factory_example.py`](./examples/settings_factory_example.py)
 
 ## Class overview
-The Generic MIP framework is a collection of classes that can be used to construct a MIP model.
+The UMIP framework is a collection of classes that can be used to construct a MIP model.
 The classes are:
 * [`AbstractMipModel`](./umip/abstract_mip.py) - Represents a MIP model.
 * [`AbstractOptimizationSolver`](./umip/abstract_solver.py) - Represents a MIP solver regardless of implementation.
