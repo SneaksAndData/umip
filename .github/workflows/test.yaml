@@ -1,4 +1,4 @@
-name: Validate code format
+name: Run unit tests
 
 on:
   pull_request:
@@ -34,5 +34,4 @@ jobs:
         run: uv sync --frozen --all-extras
 
       - name: Run Tests
-        # uv run seamlessly executes pytest inside an environment mapped to that specific version
         run: uv run pytest
