@@ -28,12 +28,12 @@ class TestExpected:
     [
         pytest.param(
             TestInputs(
-                data=pl.DataFrame(),
+                data=pl.DataFrame({"index": []}),
                 names=np.array(["x", "y", "z"]),
                 indicators=np.array([True, True, True]),
             ),
             TestExpected(
-                expected_data=pl.DataFrame({"destination_column": [None]}),
+                expected_data=pl.DataFrame({"index": [], "destination_column": []}),
             ),
             id="Case 1: empty dataframe",
         ),
@@ -101,7 +101,7 @@ def test__build_column_variables_polars__general(inputs, expected):
     )
 
     # Assert
-    assert expected.expected_data.to_dicts() == result.sort("index").to_dicts()
+    assert expected.expected_data.to_dict(as_series=False) == result.sort("index").to_dict(as_series=False)
 
 
 def test__build_column_variables_polars__has_invalid_columns__raises_value_error():
