@@ -101,7 +101,7 @@ def test__build_column_variables_polars__general(inputs, expected):
     )
 
     # Assert
-    assert expected.expected_data.to_dicts() == result.to_dicts()
+    assert expected.expected_data.to_dicts() == result.sort("index").to_dicts()
 
 
 def test__build_column_variables_polars__has_invalid_columns__raises_value_error():
