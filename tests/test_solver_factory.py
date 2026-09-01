@@ -1,14 +1,14 @@
 """Tests for SolverFactory construction and solver config validation."""
 
 import pytest
-from generic_mip import AbstractOptimizationSolver
 
-from umip import SolverFactory
+from umip import AbstractOptimizationSolver
 from umip.enums.solver_type import SolverType
 from umip.solver.cplex import CplexSolver
 from umip.solver.highs import HighsSolver
 from umip.solver.or_tools import OrToolsSolver
 from umip.solver_config import GurobiSolverConfig
+from umip.solver_factory import SolverFactory
 
 
 @pytest.mark.parametrize(
@@ -37,7 +37,7 @@ def test_construct_unknown_solver_type_throws_exception(logger) -> None:
     sut = SolverFactory(logger=logger)
 
     # Act & Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         sut.construct(solver_type=100)
 
 
@@ -46,7 +46,7 @@ def test_construct_raises_for_incompatible_solver_config(logger) -> None:
     sut = SolverFactory(logger=logger)
 
     # Act & Assert
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         sut.construct(solver_type=SolverType.ORTOOLS_SCIP, solver_config=GurobiSolverConfig())
 
 

@@ -4,8 +4,8 @@ from typing import Any
 import numpy as np
 import pytest
 from adapta.logs import LoggerInterface
-from generic_mip import VariableDomain
 
+from umip import VariableDomain
 from umip.solver.cplex import CplexSolver
 from umip.solver.gurobi import GurobiSolver
 from umip.solver.highs import HighsSolver
