@@ -1,4 +1,4 @@
-"""DataFrame-backed example of the generic-mip framework.
+"""DataFrame-backed example of the umip framework.
 
 Model:
 

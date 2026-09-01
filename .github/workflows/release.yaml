@@ -1,9 +1,7 @@
 name: Release
 run-name: Publish ${{github.ref_name}} by @${{ github.actor }}
 
-on:
-  push:
-    branches: [ main ]
+on: workflow_dispatch
 
 jobs:
   create_release:
@@ -12,7 +10,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: SneaksAndData/github-actions/semver_release@v0.1.12
