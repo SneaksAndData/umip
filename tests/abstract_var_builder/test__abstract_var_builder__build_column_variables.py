@@ -210,6 +210,10 @@ def test__build_column_variables__functional(solver, input_data):
     )
 
     # Assert
+    if isinstance(data_with_vars, pl.DataFrame):
+        data_with_vars = data_with_vars.sort(index_col)
+    if isinstance(data_with_vars, pd.DataFrame):
+        data_with_vars = data_with_vars.sort_values(index_col)
 
     # row 1: variable named var[1] with lower bound 1.0 and upper bound 10.0
     assert data_with_vars[destination_column][0].name() == "var[1]"

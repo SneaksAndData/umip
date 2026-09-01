@@ -291,20 +291,23 @@ class AbstractDecisionVariableBuilder(ABC):
             }
         )
 
-        data = data.with_columns(
-            pl.when(pl.col(self.indicator_column_name))
-            .then(
-                pl.struct(
-                    [
-                        self.lower_bound_column_name,
-                        self.upper_bound_column_name,
-                        self.variable_name_column_name,
-                    ]
-                ).map_elements(build_variables, return_dtype=pl.datatypes.Object)
-            )
-            .otherwise(None)
-            .cast(pl.datatypes.Object)
-            .alias(destination_column)
+        data = pl.concat(
+            [
+                data.filter(pl.col(self.indicator_column_name)).with_columns(
+                    pl.struct(
+                        [
+                            self.lower_bound_column_name,
+                            self.upper_bound_column_name,
+                            self.variable_name_column_name,
+                        ]
+                    )
+                    .map_elements(build_variables, return_dtype=pl.datatypes.Object)
+                    .alias(destination_column)
+                ),
+                data.filter(~pl.col(self.indicator_column_name)).with_columns(
+                    pl.lit(None).cast(pl.datatypes.Object).alias(destination_column)
+                ),
+            ]
         )
 
         data = data.drop(
