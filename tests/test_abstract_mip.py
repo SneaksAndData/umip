@@ -1,14 +1,14 @@
 """
 Tests of the AbstractMipModel class. Tests do not cover the solver classes and simple wrappers.
 """
-from unittest import mock
-from unittest.mock import call, MagicMock
+
+from unittest.mock import MagicMock, call
 
 import pytest
 from adapta.logs import LoggerInterface
-from umip.solver_factory import SolverFactory
 
 from tests.mock_classes_and_data import *
+from umip import SolverFactory
 
 
 def _construct_solver(
@@ -26,7 +26,10 @@ def test__build__general():
     mock_variable_builder = MagicMock(spec=AbstractDecisionVariableBuilder, build=MagicMock(), unpack=MagicMock())
     mock_constraint_builder = MagicMock(spec=AbstractConstraintBuilder, build=MagicMock())
     mock_objective_builder = MagicMock(
-        spec=AbstractObjectiveBuilder, build=MagicMock(), unpack=MagicMock(), objective_name="test_name"
+        spec=AbstractObjectiveBuilder,
+        build=MagicMock(),
+        unpack=MagicMock(),
+        objective_name="test_name",
     )
     logger = MagicMock(spec=LoggerInterface)
 
@@ -169,7 +172,10 @@ def test__abstract_mip__get_analytics__analytics_data_not_provided(solver_type: 
     )
     assert model.get_analytics(granularity="sku") == {"builder_1": [1000, 500, 100]}
     assert model.get_analytics(granularity="sku_location") == {"builder_1": "something_else"}
-    assert model.get_analytics(granularity="aggregated") == {"builder_1": 1600, "ObjectiveBuilder2": 35}
+    assert model.get_analytics(granularity="aggregated") == {
+        "builder_1": 1600,
+        "ObjectiveBuilder2": 35,
+    }
     assert model.get_analytics(granularity="unknown") == {}
 
 

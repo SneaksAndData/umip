@@ -12,8 +12,9 @@ Model:
 For a DataFrame-backed version using build_column_variables and unpack_column_variables,
 see dataframe_example.py.
 """
-from dataclasses import dataclass
+
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -21,16 +22,20 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from generic_mip import AbstractConstraintBuilder
-from generic_mip import AbstractDataPreparator
-from generic_mip import AbstractDecisionVariableBuilder
-from generic_mip import AbstractMipModel
-from generic_mip import AbstractObjectiveBuilder
-from generic_mip import AbstractOptimizationSolver
-from generic_mip import VariableDomain
-from umip.abstract_dataclasses import AbstractInputData
-from umip.abstract_dataclasses import AbstractInternalData
-from umip.abstract_dataclasses import AbstractOutputData
+from umip import (
+    AbstractConstraintBuilder,
+    AbstractDataPreparator,
+    AbstractDecisionVariableBuilder,
+    AbstractMipModel,
+    AbstractObjectiveBuilder,
+    AbstractOptimizationSolver,
+    VariableDomain,
+)
+from umip.abstract_dataclasses import (
+    AbstractInputData,
+    AbstractInternalData,
+    AbstractOutputData,
+)
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
 
@@ -83,10 +88,16 @@ class ExampleVariableBuilder(AbstractDecisionVariableBuilder):
 
     def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
         data.x_var = solver.add_variable(
-            name="x", variable_domain=VariableDomain.INTEGER, lower_bound=0, upper_bound=100
+            name="x",
+            variable_domain=VariableDomain.INTEGER,
+            lower_bound=0,
+            upper_bound=100,
         )
         data.y_var = solver.add_variable(
-            name="y", variable_domain=VariableDomain.INTEGER, lower_bound=0, upper_bound=100
+            name="y",
+            variable_domain=VariableDomain.INTEGER,
+            lower_bound=0,
+            upper_bound=100,
         )
         return data
 
@@ -146,7 +157,12 @@ class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
 class ExampleMipModel(AbstractMipModel):
     """Concrete model for the simple example."""
 
-    def build(self, input_data: ExampleInputData, redirect_solver_log: bool = True, **kwargs: Any) -> None:
+    def build(
+        self,
+        input_data: ExampleInputData,
+        redirect_solver_log: bool = True,
+        **kwargs: Any,
+    ) -> None:
         super().build(input_data=input_data, redirect_solver_log=redirect_solver_log, **kwargs)
         self._solver.set_optimization_direction(maximization=True)
 

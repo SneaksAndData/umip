@@ -1,11 +1,13 @@
 from dataclasses import dataclass
 from unittest.mock import MagicMock
-import pytest
-import polars as pl
-from polars.testing import assert_frame_equal
+
 import numpy as np
-from umip.enums.variable_domain import VariableDomain
+import polars as pl
+import pytest
+from polars.testing import assert_frame_equal
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
+from umip import VariableDomain
 
 
 @dataclass
@@ -45,7 +47,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pl.DataFrame({"vars": ["var_1__value_1.8", "var_2__value_20.1", "var_3__value_4.0"]}),
+                data=pl.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_1.8",
+                            "var_2__value_20.1",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([False, False, False]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
@@ -55,7 +65,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pl.DataFrame({"vars": ["var_1__value_1.8", "var_2__value_20.1", "var_3__value_4.0"]}),
+                data=pl.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_1.8",
+                            "var_2__value_20.1",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, True, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
@@ -65,7 +83,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pl.DataFrame({"vars": ["var_1__value_1.8", "var_2__value_20.1", "var_3__value_4.0"]}),
+                data=pl.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_1.8",
+                            "var_2__value_20.1",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, False, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.CONTINUOUS,
@@ -75,7 +101,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pl.DataFrame({"vars": ["var_1__value_0.01", "var_2__value_0.999999", "var_3__value_1.0000002"]}),
+                data=pl.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_0.01",
+                            "var_2__value_0.999999",
+                            "var_3__value_1.0000002",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, True, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.BINARY,
@@ -85,7 +119,15 @@ def mock_get_variable_value(var):
         ),
         pytest.param(
             TestInputs(
-                data=pl.DataFrame({"vars": ["var_1__value_2.9999", "var_2__value_0.000001", "var_3__value_4.0"]}),
+                data=pl.DataFrame(
+                    {
+                        "vars": [
+                            "var_1__value_2.9999",
+                            "var_2__value_0.000001",
+                            "var_3__value_4.0",
+                        ]
+                    }
+                ),
                 indicators=np.array([True, True, True]),
                 default_unpack_value=0.0,
                 return_dtype=VariableDomain.INTEGER,
@@ -130,7 +172,10 @@ def test__unpack_column_variables_polars__has_invalid_columns__raises_value_erro
     var_builder.invalid_column_names_unpack = ["invalid_col", "another_invalid_col"]
 
     # Act & Assert
-    with pytest.raises(ValueError, match=f"DataFrame must not contain column names from the following list: "):
+    with pytest.raises(
+        ValueError,
+        match="DataFrame must not contain column names from the following list: ",
+    ):
         var_builder._unpack_column_variables_polars(
             data=MagicMock(),
             decision_variable_column=MagicMock(),

@@ -1,10 +1,9 @@
-from unittest.mock import MagicMock
-import pytest
 from dataclasses import dataclass
+from unittest.mock import MagicMock
 
-import polars as pl
 import numpy as np
-
+import polars as pl
+import pytest
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 
@@ -28,7 +27,11 @@ class TestExpected:
     ("inputs", "expected"),
     [
         pytest.param(
-            TestInputs(data=pl.DataFrame(), names=np.array(["x", "y", "z"]), indicators=np.array([True, True, True])),
+            TestInputs(
+                data=pl.DataFrame(),
+                names=np.array(["x", "y", "z"]),
+                indicators=np.array([True, True, True]),
+            ),
             TestExpected(
                 expected_data=pl.DataFrame({"destination_column": [None]}),
             ),
@@ -113,7 +116,10 @@ def test__build_column_variables_polars__has_invalid_columns__raises_value_error
     var_builder._dataframe_has_invalid_columns = MagicMock(return_value=True)
 
     # Act & Assert
-    with pytest.raises(ValueError, match="DataFrame must not contain column names from the following list: "):
+    with pytest.raises(
+        ValueError,
+        match="DataFrame must not contain column names from the following list: ",
+    ):
         var_builder._build_column_variables_polars(
             solver=MagicMock(),
             data=MagicMock(),

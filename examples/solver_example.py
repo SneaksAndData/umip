@@ -1,9 +1,11 @@
-import numpy as np
 import sys
+
+import numpy as np
 from adapta.logs import SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
-from generic_mip import VariableDomain
+
+from umip import VariableDomain
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
 
@@ -47,7 +49,11 @@ solver.add_constraint(
     name="my_constraint",
 )
 solver.add_constraint(
-    lower_bound=None, upper_bound=20, coefficients=np.array([1.0]), variables=np.array([y]), name="my_constraint2"
+    lower_bound=None,
+    upper_bound=20,
+    coefficients=np.array([1.0]),
+    variables=np.array([y]),
+    name="my_constraint2",
 )
 solver.set_optimization_direction(True)
 solver.set_verbose(True)

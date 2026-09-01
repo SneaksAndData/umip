@@ -1,10 +1,11 @@
-import pytest
-import pandas as pd
-import polars as pl
 from unittest.mock import MagicMock
 
-from umip.enums import DataFrameArgumentType
+import pandas as pd
+import polars as pl
+import pytest
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
+from umip.enums import DataFrameArgumentType
 
 
 @pytest.mark.parametrize(
@@ -89,5 +90,8 @@ def test__dataframe_has_column__unsupported_dataframe_type__raises_value_error()
     data = MagicMock()
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Cannot check for column existence for unsupported dataframe type"):
+    with pytest.raises(
+        ValueError,
+        match="Cannot check for column existence for unsupported dataframe type",
+    ):
         var_builder._dataframe_has_column(data=data, column_name="some_column")

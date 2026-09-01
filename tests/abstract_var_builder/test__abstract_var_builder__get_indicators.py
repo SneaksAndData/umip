@@ -1,11 +1,12 @@
-import pytest
-import pandas as pd
-import polars as pl
-import numpy as np
 from unittest.mock import MagicMock
 
-from umip.enums import FilterColumnArgumentType, DataFrameArgumentType
+import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
+from umip import DataFrameArgumentType, FilterColumnArgumentType
 
 
 @pytest.mark.parametrize(
@@ -72,7 +73,10 @@ def test__get_indicators__unsupported_dataframe_type__raises_value_error():
     filter_column = MagicMock()
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Cannot find a filter column in DataFrame of unsupported type INVALID_TYPE."):
+    with pytest.raises(
+        ValueError,
+        match="Cannot find a filter column in DataFrame of unsupported type INVALID_TYPE.",
+    ):
         var_builder._get_indicators(filter_column=filter_column, data=data)
 
 
@@ -90,5 +94,5 @@ def test__get_indicators__unsupported_filter_column__raises_value_error():
     filter_column = MagicMock()
 
     # Act & Assert
-    with pytest.raises(ValueError, match=f"Handling filter_column of type INVALID_TYPE not supported."):
+    with pytest.raises(ValueError, match="Handling filter_column of type INVALID_TYPE not supported."):
         var_builder._get_indicators(filter_column=filter_column, data=data)

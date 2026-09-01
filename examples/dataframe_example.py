@@ -13,8 +13,9 @@ This example is almost identical to simple_example.py. The only difference is in
 variable builder, which uses build_column_variables and unpack_column_variables instead
 of manually creating and unpacking solver variable objects.
 """
-from dataclasses import dataclass
+
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -23,16 +24,20 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from generic_mip import AbstractConstraintBuilder
-from generic_mip import AbstractDataPreparator
-from generic_mip import AbstractDecisionVariableBuilder
-from generic_mip import AbstractMipModel
-from generic_mip import AbstractObjectiveBuilder
-from generic_mip import AbstractOptimizationSolver
-from generic_mip import VariableDomain
-from umip.abstract_dataclasses import AbstractInputData
-from umip.abstract_dataclasses import AbstractInternalData
-from umip.abstract_dataclasses import AbstractOutputData
+from umip import (
+    AbstractConstraintBuilder,
+    AbstractDataPreparator,
+    AbstractDecisionVariableBuilder,
+    AbstractMipModel,
+    AbstractObjectiveBuilder,
+    AbstractOptimizationSolver,
+    VariableDomain,
+)
+from umip.abstract_dataclasses import (
+    AbstractInputData,
+    AbstractInternalData,
+    AbstractOutputData,
+)
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
 
@@ -157,7 +162,12 @@ class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
 class ExampleMipModel(AbstractMipModel):
     """Concrete model for mip DataFrame example."""
 
-    def build(self, input_data: ExampleInputData, redirect_solver_log: bool = True, **kwargs: Any) -> None:
+    def build(
+        self,
+        input_data: ExampleInputData,
+        redirect_solver_log: bool = True,
+        **kwargs: Any,
+    ) -> None:
         super().build(input_data=input_data, redirect_solver_log=redirect_solver_log, **kwargs)
         self._solver.set_optimization_direction(maximization=True)
 

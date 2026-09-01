@@ -5,14 +5,19 @@ Mock classes for use in tests
 from dataclasses import dataclass
 from typing import Any
 
+from umip import (
+    AbstractDataPreparator,
+    AbstractMipModel,
+    AbstractObjectiveBuilder,
+    AbstractOptimizationSolver,
+)
 from umip.abstract_constr_builder import AbstractConstraintBuilder
-from umip.enums import SolverType
+from umip.abstract_dataclasses import (
+    AbstractInputData,
+    AbstractInternalData,
+    AbstractOutputData,
+)
 from umip.abstract_var_builder import AbstractDecisionVariableBuilder
-from umip.abstract_obj_builder import AbstractObjectiveBuilder
-from umip.abstract_data_prep import AbstractDataPreparator
-from umip.abstract_solver import AbstractOptimizationSolver
-from umip.abstract_mip import AbstractMipModel
-from umip.abstract_dataclasses import AbstractInternalData, AbstractInputData, AbstractOutputData
 
 
 @dataclass
@@ -32,7 +37,9 @@ class MockOutputData(MockInternalData, AbstractOutputData):
 
 class MockMipModel(AbstractMipModel):
     @staticmethod
-    def _convert_internal_to_output_data(internal_unpacked_data: MockInternalData) -> MockOutputData:
+    def _convert_internal_to_output_data(
+        internal_unpacked_data: MockInternalData,
+    ) -> MockOutputData:
         pass
 
 

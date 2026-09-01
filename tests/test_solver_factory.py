@@ -1,17 +1,14 @@
 """Tests for SolverFactory construction and solver config validation."""
 
 import pytest
-
 from generic_mip import AbstractOptimizationSolver
+
+from umip import SolverFactory
 from umip.enums.solver_type import SolverType
 from umip.solver.cplex import CplexSolver
 from umip.solver.highs import HighsSolver
-from umip.solver.or_tools import OrToolsSolver, OrToolsSolverEngine
+from umip.solver.or_tools import OrToolsSolver
 from umip.solver_config import GurobiSolverConfig
-from umip.solver_config import HighsPresolveOption
-from umip.solver_config import HighsSolverConfig
-from umip.solver_config import OrToolsScipSolverConfig
-from umip.solver_factory.solver_factory import SolverFactory
 
 
 @pytest.mark.parametrize(

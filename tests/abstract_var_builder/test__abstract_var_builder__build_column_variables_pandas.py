@@ -1,11 +1,10 @@
-from unittest.mock import MagicMock
-import pytest
 from dataclasses import dataclass
+from unittest.mock import MagicMock
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
-
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 
@@ -29,7 +28,11 @@ def side_effect_add_variable(lower_bound, upper_bound, name, variable_domain):
     ("inputs", "expected"),
     [
         pytest.param(
-            TestInputs(data=pd.DataFrame(), names=np.array(["x", "y", "z"]), indicators=np.array([True, True, True])),
+            TestInputs(
+                data=pd.DataFrame(),
+                names=np.array(["x", "y", "z"]),
+                indicators=np.array([True, True, True]),
+            ),
             TestExpected(
                 expected_data=pd.DataFrame({"destination_column": pd.Series(dtype="object")}),
             ),
@@ -114,7 +117,10 @@ def test__build_column_variables_pandas__has_invalid_columns__raises_value_error
     var_builder._dataframe_has_invalid_columns = MagicMock(return_value=True)
 
     # Act & Assert
-    with pytest.raises(ValueError, match="DataFrame must not contain column names from the following list: "):
+    with pytest.raises(
+        ValueError,
+        match="DataFrame must not contain column names from the following list: ",
+    ):
         var_builder._build_column_variables_pandas(
             solver=MagicMock(),
             data=MagicMock(),

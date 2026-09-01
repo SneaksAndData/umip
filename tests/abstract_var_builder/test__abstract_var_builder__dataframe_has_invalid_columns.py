@@ -1,10 +1,11 @@
-import pytest
-import pandas as pd
-import polars as pl
 from unittest.mock import MagicMock
 
-from umip.enums import DataFrameArgumentType
+import pandas as pd
+import polars as pl
+import pytest
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
+from umip.enums import DataFrameArgumentType
 
 
 def test__dataframe_has_invalid_columns__pandas_with_invalid__returns_true():
@@ -99,5 +100,8 @@ def test__dataframe_has_invalid_columns__unsupported_type__raises_value_error():
     invalid_columns = ["col1"]
 
     # Act & Assert
-    with pytest.raises(ValueError, match="Cannot check for invalid column existence for unsupported dataframe type"):
+    with pytest.raises(
+        ValueError,
+        match="Cannot check for invalid column existence for unsupported dataframe type",
+    ):
         var_builder._dataframe_has_invalid_columns(data=data, invalid_column_names=invalid_columns)

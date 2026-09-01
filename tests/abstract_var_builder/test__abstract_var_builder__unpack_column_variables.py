@@ -1,14 +1,12 @@
 from unittest.mock import MagicMock
 
-import pytest
 import pandas as pd
 import polars as pl
+import pytest
 from polars.testing import assert_frame_equal
-
-from umip.enums import DataFrameArgumentType
-from umip.enums.variable_domain import VariableDomain
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
+from umip import VariableDomain
 
 variables_column = "vars"
 unpacked_values_column = "unpacked_val"
@@ -85,7 +83,8 @@ def test__unpack_column_variables__invalid_dataframe__raises_value_error():
 
     # Act & Assert
     with pytest.raises(
-        ValueError, match="No method for unpacking variables in DataFrame of type UNSUPPORTED_TYPE is defined"
+        ValueError,
+        match="No method for unpacking variables in DataFrame of type UNSUPPORTED_TYPE is defined",
     ):
         variable_builder.unpack_column_variables(
             data="not a dataframe",

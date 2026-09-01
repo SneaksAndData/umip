@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from unittest.mock import MagicMock
-import pytest
-import polars as pl
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
+import polars as pl
+import pytest
 from generic_mip import VariableDomain
-from umip.enums import BoundArgumentType, SolverType
-from umip.enums.bound_type import BoundType
-from umip.solver_factory import SolverFactory
 from tests.mock_classes_and_data import MockDecisionVariableBuilder
+
+from umip import BoundArgumentType, SolverFactory, SolverType
+from umip.enums.bound_type import BoundType
 
 bound_col = "bound"
 bound_col_none = "bound_none"
@@ -35,10 +35,12 @@ solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverTy
     "data",
     [
         pytest.param(
-            pd.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}), id="Pandas dataframe"
+            pd.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}),
+            id="Pandas dataframe",
         ),
         pytest.param(
-            pl.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}), id="Polars dataframe"
+            pl.DataFrame({bound_col: [10.0, 20.0, 30.0], bound_col_none: [10.0, None, 30.0]}),
+            id="Polars dataframe",
         ),
     ],
 )
@@ -107,7 +109,13 @@ solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverTy
                 bound_type=BoundType.UPPER,
             ),
             TestExpected(
-                expected_bound=np.array([solver_mocked.infinity(), solver_mocked.infinity(), solver_mocked.infinity()]),
+                expected_bound=np.array(
+                    [
+                        solver_mocked.infinity(),
+                        solver_mocked.infinity(),
+                        solver_mocked.infinity(),
+                    ]
+                ),
             ),
             id="Case 6: Bound is none, variable domain is continuous and bound type is upper",
         ),
@@ -124,7 +132,12 @@ solver_mocked = SolverFactory(logger=MagicMock()).construct(solver_type=SolverTy
         ),
     ],
 )
-def test__get_bounds__general(solver, data: pl.DataFrame | pd.DataFrame, inputs: TestInputs, expected: TestExpected):
+def test__get_bounds__general(
+    solver,
+    data: pl.DataFrame | pd.DataFrame,
+    inputs: TestInputs,
+    expected: TestExpected,
+):
     """
     Tests whether the _get_bounds method works as expected with polars and pandas dataframes.
     Case 1: bound is a string and column exists

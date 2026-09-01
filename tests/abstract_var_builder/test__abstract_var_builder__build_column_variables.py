@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock, call
-import pytest
 
 import pandas as pd
 import polars as pl
+import pytest
+from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
-from generic_mip import VariableDomain
+from umip import VariableDomain
 from umip.enums import DataFrameArgumentType
 from umip.enums.bound_type import BoundType
-from tests.mock_classes_and_data import MockDecisionVariableBuilder
 
 
 def test__build_column_variables__pandas_dataframe__pandas_method_is_called():
@@ -141,7 +141,10 @@ def test__build_column_variables__invalid_dataframe_type__raises_value_error():
     var_builder._get_variable_name_with_indices = MagicMock()
 
     # Act & Assert
-    with pytest.raises(ValueError, match="No method for building variables in DataFrame INVALID_TYPE type is defined."):
+    with pytest.raises(
+        ValueError,
+        match="No method for building variables in DataFrame INVALID_TYPE type is defined.",
+    ):
         var_builder.build_column_variables(
             solver=MagicMock(),
             data=MagicMock(),
