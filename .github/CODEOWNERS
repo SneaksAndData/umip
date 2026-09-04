@@ -4,7 +4,7 @@
 # These owners will be the default owners for everything in
 # the repo. Unless a later match takes precedence, these people will be requests a review
 # review when someone opens a pull request.
-umip                             @SneaksAndData/or-scientists
+src                                     @SneaksAndData/or-scientists
 examples                                @SneaksAndData/or-scientists
 tests                                   @SneaksAndData/or-scientists
 .github                                 @SneaksAndData/platform-engineering @SneaksAndData/or-scientists

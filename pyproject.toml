@@ -4,6 +4,8 @@ version = "0.0.0"
 description = "Universal MIP"
 authors = [{ name = "Matthias Als", email = "mata@ecco.com" }]
 maintainers = [{ name = "ECCO Data & AI", email = "esdsupport@ecco.com"}]
+license = 'Apache-2.0'
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 readme = "README.md"
 classifiers = [
@@ -12,6 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "License :: OSI Approved :: Apache Software License",
 ]
 dependencies = [
     "numpy>=2.0.2,<3",
