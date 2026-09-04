@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 
+
 class OptimizationException(Exception):
     """A general optimization exception"""
 
