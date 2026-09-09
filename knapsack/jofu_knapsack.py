@@ -116,13 +116,13 @@ class ExampleCapacityConstraintBuilder(AbstractConstraintBuilder):
             coefficients=data.my_data["Volume"].to_numpy(),
             variables=data.my_data[VAR].to_numpy(),
             lower_bound=None,
-            upper_bound=100,
+            upper_bound=20,
             name="capacity",
         )
 
 
-# class ExampleYCapConstraintBuilder(AbstractConstraintBuilder):
-#     """Adds the y upper bound constraint: y <= 20."""
+# class ExampleLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
+#     """Adds the large-small difference gap upper bound constraint: max(weight)-min(weight) <= 20."""
 #
 #     def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
 #         y_row = data.my_data.filter(pl.col(VARIABLE_NAME) == "y")
@@ -130,10 +130,22 @@ class ExampleCapacityConstraintBuilder(AbstractConstraintBuilder):
 #             coefficients=np.ones(len(y_row)),
 #             variables=y_row[VAR].to_numpy(),
 #             lower_bound=None,
-#             upper_bound=20,
-#             name="y_cap",
+#             upper_bound=,
+#             name="gap_cap",
 #         )
 
+# class ExampleSameVolumeTwiceConstraintBuilder(AbstractConstraintBuilder):
+#     """Adds the at least two items with same volume constraint: sum(x with same weight >= 2."""
+#
+#     def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
+#         y_row = data.my_data.filter(pl.col(VARIABLE_NAME) == "y")
+#         solver.add_constraint(
+#             coefficients=np.ones(len(y_row)),
+#             variables=y_row[VAR].to_numpy(),
+#             lower_bound=2,
+#             upper_bound=None,
+#             name="duplicate_vol",
+#         )
 
 class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
     """
