@@ -53,7 +53,7 @@ from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
 
 VARIABLE_NAME = "variable_name"
-SAME_VOLUME_PAIR = "same_volume_pairs"
+SAME_VOLUME_PAIR = "same_volume_pair"
 VAR = "var"
 Y_VAR = "y_var"
 VALUE = "value"
@@ -68,7 +68,7 @@ class KnapsackInputData(AbstractInputData):
 @dataclass
 class KnapsackInternalData(AbstractInternalData):
     knapsack_data: pl.DataFrame
-    same_volume_pairs: pl.DataFrame
+    same_volume_pair: pl.DataFrame
 
 
 @dataclass
@@ -84,7 +84,7 @@ class KnapsackDataPreparator(AbstractDataPreparator):
     def prepare(self, input_data: KnapsackInputData) -> KnapsackInternalData:
         knapsack_data = input_data.knapsack_data
 
-        same_volume_pairs = (
+        same_volume_pair = (
             knapsack_data
             .with_row_index("i")
             .join(
@@ -107,7 +107,7 @@ class KnapsackDataPreparator(AbstractDataPreparator):
 
         return KnapsackInternalData(
             knapsack_data=knapsack_data,
-            same_volume_pairs=same_volume_pairs,
+            same_volume_pair=same_volume_pair,
         )
 
 
@@ -144,12 +144,12 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
     """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
-        if data.same_volume_pairs.is_empty():
+        if data.same_volume_pair.is_empty():
             raise ValueError("No same-volume pairs found in the data.")
 
-        data.same_volume_pairs = self.build_column_variables(
+        data.same_volume_pair = self.build_column_variables(
             solver=solver,
-            data=data.same_volume_pairs,
+            data=data.same_volume_pair,
             destination_column=Y_VAR,
             variable_domain=VariableDomain.BINARY,
             index_name_columns=[SAME_VOLUME_PAIR],
@@ -157,8 +157,8 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         return data
 
     def unpack(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
-        data.same_volume_pairs = self.unpack_column_variables(
-            data=data.same_volume_pairs,
+        data.same_volume_pair = self.unpack_column_variables(
+            data=data.same_volume_pair,
             decision_variable_column=Y_VAR,
             decision_variable_value_column=Y_VALUE,
             solver=solver,
@@ -222,7 +222,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
     """Requires at least one selected pair with the same volume."""
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
-        pairs = data.same_volume_pairs
+        pairs = data.same_volume_pair
         pair_count = len(pairs)
 
         if pair_count == 0:
