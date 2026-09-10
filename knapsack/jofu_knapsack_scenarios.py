@@ -52,6 +52,8 @@ from umip.abstract_dataclasses import (
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
 
+import plotly.express as px
+
 VARIABLE_NAME = "variable_name"
 SAME_VOLUME_PAIR = "same_volume_pair"
 VAR = "var"
@@ -389,11 +391,31 @@ input_data = KnapsackInputData(
     )
 )
 
+"""Scenarios to test maximum capacity"""
+# scenarios = [
+#     {"capacity": 10, "max_gap": 2},
+#     {"capacity": 15, "max_gap": 2},
+#     {"capacity": 20, "max_gap": 2},
+#     {"capacity": 25, "max_gap": 2},
+#     {"capacity": 30, "max_gap": 2},
+#     {"capacity": 35, "max_gap": 2},
+#     {"capacity": 40, "max_gap": 2},
+#     {"capacity": 45, "max_gap": 2},
+#     {"capacity": 50, "max_gap": 2},
+#     {"capacity": 55, "max_gap": 2},
+#     {"capacity": 60, "max_gap": 2},
+#     {"capacity": 65, "max_gap": 2},
+#     {"capacity": 70, "max_gap": 2},
+# ]
+
+"""Scenarios to test volume difference L"""
 scenarios = [
-    {"capacity": 10, "max_gap": 1},
-    {"capacity": 15, "max_gap": 2},
-    {"capacity": 20, "max_gap": 3},
+    {"capacity": 100, "max_gap": 1},
     {"capacity": 100, "max_gap": 2},
+    {"capacity": 100, "max_gap": 3},
+    {"capacity": 100, "max_gap": 4},
+    {"capacity": 100, "max_gap": 5},
+    {"capacity": 100, "max_gap": 6},
 ]
 
 results = []
@@ -435,3 +457,52 @@ for scenario in scenarios:
 
 print("\nSummary:")
 print(pl.DataFrame(results))
+
+results_plots = pl.DataFrame(results)
+
+profit_by_capacity = (
+    results_plots
+    .group_by("capacity")
+    .agg(pl.col("profit").max())
+    .sort("capacity")
+)
+
+fig = px.line(
+    x=profit_by_capacity["capacity"].to_list(),
+    y=profit_by_capacity["profit"].to_list(),
+    markers=True,
+    labels={"x": "Capacity (liters)", "y": "Profit (€)"},
+    title="Profit vs. Capacity",
+)
+fig.show()
+
+profit_by_gap = (
+    results_plots
+    .group_by("max_gap")
+    .agg(pl.col("profit").max())
+    .sort("max_gap")
+)
+
+fig = px.line(
+    x=profit_by_gap["max_gap"].to_list(),
+    y=profit_by_gap["profit"].to_list(),
+    markers=True,
+    labels={"x": "Maximum volume gap (L)", "y": "Profit (€)"},
+    title="Profit vs. L",
+)
+fig.show()
+
+fig = px.density_heatmap(
+    x=results_plots["capacity"].to_list(),
+    y=results_plots["max_gap"].to_list(),
+    z=results_plots["profit"].to_list(),
+    histfunc="max",
+    text_auto=True,
+    labels={
+        "x": "Capacity (liters)",
+        "y": "Maximum volume gap (L)",
+        "color": "Profit (€)",
+    },
+    title="Profit by Capacity and L",
+)
+fig.show()
