@@ -237,7 +237,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
 
         variables = np.column_stack((x_i, x_j, y)).astype(object)
 
-        # 2*y_i,j <= x_i + x_j
+        # x_i + x_j >= 2*y_i,j
         solver.add_multiple_constraints(
             coefficients=np.tile(
                 np.array([-1, -1, 2]),
@@ -268,7 +268,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             ),
         )
 
-        # V_j*x_j - V_i*x_i <= M*(1-y_i,j)
+        # - V_i*x_i + V_j*x_j <= M*(1-y_i,j)
         solver.add_multiple_constraints(
             coefficients=np.column_stack(
                 (
