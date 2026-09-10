@@ -116,7 +116,7 @@ class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
             coefficients=data.knapsack_data["Volume"].to_numpy(),
             variables=data.knapsack_data[VAR].to_numpy(),
             lower_bound=None,
-            upper_bound=20,
+            upper_bound=10,
             name="capacity",
         )
 
@@ -125,27 +125,59 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
     """Adds the large-small difference gap constraint."""
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
-        y_row = data.knapsack_data.filter(pl.col(VARIABLE_NAME) == "y")
-        solver.add_constraint(
-            coefficients=np.ones(len(y_row)),
-            variables=y_row[VAR].to_numpy(),
-            lower_bound=None,
-            upper_bound=None,
-            name="gap_cap",
+        T = 2
+        M = data.knapsack_data["Volume"].max()
+        pairs = (
+            data.knapsack_data
+            .with_row_index("i")
+            .join(
+                data.knapsack_data.with_row_index("j"),
+                how="cross",
+                suffix="_j",
+            )
+            .filter(pl.col("i") != pl.col("j"))
+        )
+        solver.add_multiple_constraints(
+            coefficients=np.array(
+                list(
+                    zip(
+                        pairs["Volume"].to_numpy() + M,
+                        M - pairs["Volume_j"].to_numpy(),
+                    )
+                ),
+                dtype=object,
+            ),
+            variables=np.array(
+                list(
+                    zip(
+                        pairs[VAR].to_numpy(),
+                        pairs[f"{VAR}_j"].to_numpy(),
+                    )
+                ),
+                dtype=object,
+            ),
+            lower_bounds=None,
+            upper_bounds=np.full(
+                len(pairs),
+                T + 2 * M,
+            ),
+            names=np.array(
+                [f"gap_{i}" for i in range(len(pairs))],
+            ),
         )
 
-class KnapsackSameVolumeTwiceConstraintBuilder(AbstractConstraintBuilder):
-    """Adds the at least two items with same volume constraint."""
-
-    def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
-        y_row = data.knapsack_data.filter(pl.col(VARIABLE_NAME) == "y")
-        solver.add_constraint(
-            coefficients=np.ones(len(y_row)),
-            variables=y_row[VAR].to_numpy(),
-            lower_bound=2,
-            upper_bound=None,
-            name="duplicate_vol",
-        )
+# class KnapsackSameVolumeTwiceConstraintBuilder(AbstractConstraintBuilder):
+#     """Adds the at least two items with same volume constraint."""
+#
+#     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
+#         y_row = data.knapsack_data.filter(pl.col(VARIABLE_NAME) == "y")
+#         solver.add_constraint(
+#             coefficients=np.ones(len(y_row)),
+#             variables=y_row[VAR].to_numpy(),
+#             lower_bound=2,
+#             upper_bound=None,
+#             name="duplicate_vol",
+#         )
 
 class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
     """
@@ -209,7 +241,7 @@ model = KnapsackMipModel(
     variable_builders=[KnapsackVariableBuilder(logger=logger)],
     constraint_builders=[
         KnapsackCapacityConstraintBuilder(logger=logger),
-        #KnapsackLargeSmallGapConstraintBuilder(logger=logger),
+        KnapsackLargeSmallGapConstraintBuilder(logger=logger),
         #KnapsackSameVolumeTwiceConstraintBuilder(logger=logger),
     ],
     objective_builders=[KnapsackObjectiveBuilder(logger=logger)],
