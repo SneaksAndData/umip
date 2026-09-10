@@ -116,7 +116,7 @@ class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
             coefficients=data.knapsack_data["Volume"].to_numpy(),
             variables=data.knapsack_data[VAR].to_numpy(),
             lower_bound=None,
-            upper_bound=10,
+            upper_bound=15,
             name="capacity",
         )
 
@@ -125,7 +125,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
     """Adds the large-small difference gap constraint."""
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
-        T = 2
+        L = 2
         M = data.knapsack_data["Volume"].max()
         pairs = (
             data.knapsack_data
@@ -159,7 +159,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
             lower_bounds=None,
             upper_bounds=np.full(
                 len(pairs),
-                T + 2 * M,
+                L + 2 * M,
             ),
             names=np.array(
                 [f"gap_{i}" for i in range(len(pairs))],
