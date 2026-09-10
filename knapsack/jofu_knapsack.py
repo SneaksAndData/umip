@@ -138,24 +138,18 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
             .filter(pl.col("i") != pl.col("j"))
         )
         solver.add_multiple_constraints(
-            coefficients=np.array(
-                list(
-                    zip(
-                        pairs["Volume"].to_numpy() + M,
-                        M - pairs["Volume_j"].to_numpy(),
-                    )
-                ),
-                dtype=object,
+            coefficients=np.column_stack(
+                (
+                    pairs["Volume"].to_numpy() + M,
+                    M - pairs["Volume_j"].to_numpy(),
+                )
             ),
-            variables=np.array(
-                list(
-                    zip(
-                        pairs[VAR].to_numpy(),
-                        pairs[f"{VAR}_j"].to_numpy(),
-                    )
-                ),
-                dtype=object,
-            ),
+            variables=np.column_stack(
+                (
+                    pairs[VAR].to_numpy(),
+                    pairs[f"{VAR}_j"].to_numpy(),
+                )
+            ).astype(object),
             lower_bounds=None,
             upper_bounds=np.full(
                 len(pairs),
