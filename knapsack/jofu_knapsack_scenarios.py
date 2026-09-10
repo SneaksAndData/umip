@@ -169,12 +169,16 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
 class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
     """Adds the joint capacity constraint: sum(x) <= CAPACITY"""
 
+    def __init__(self, logger: LoggerInterface, capacity: int) -> None:
+        super().__init__(logger=logger)
+        self.capacity = capacity
+
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         solver.add_constraint(
             coefficients=data.knapsack_data["Volume"].to_numpy(),
             variables=data.knapsack_data[VAR].to_numpy(),
             lower_bound=None,
-            upper_bound=15,
+            upper_bound=self.capacity,
             name="capacity",
         )
 
@@ -182,8 +186,12 @@ class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
 class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
     """Adds the large-small difference gap constraint."""
 
+    def __init__(self, logger: LoggerInterface, max_gap: int) -> None:
+        super().__init__(logger=logger)
+        self.max_gap = max_gap
+
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
-        L = 2
+        L = self.max_gap
         M = data.knapsack_data["Volume"].max()
         pairs = (
             data.knapsack_data
@@ -350,43 +358,80 @@ logger = SemanticLogger().add_log_source(
     is_default=True,
 )
 
-model = KnapsackMipModel(
-    solver=SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP),
-    data_preparator=KnapsackDataPreparator(logger=logger),
-    variable_builders=[KnapsackVariableBuilder(logger=logger),
-                       KnapsackSameVolumePairsVariableBuilder(logger=logger)],
-    constraint_builders=[
-        KnapsackCapacityConstraintBuilder(logger=logger),
-        KnapsackLargeSmallGapConstraintBuilder(logger=logger),
-        KnapsackSameVolumePairsConstraintBuilder(logger=logger),
-    ],
-    objective_builders=[KnapsackObjectiveBuilder(logger=logger)],
-    logger=logger,
-)
+def build_model(capacity: int, max_gap: int) -> KnapsackMipModel:
+    solver = SolverFactory(logger=logger).construct(
+        solver_type=SolverType.ORTOOLS_SCIP
+    )
 
-model.build(
-    input_data=KnapsackInputData(
-        knapsack_data=(
-            pl.read_parquet("data/knapsack.parquet")
-            .with_row_index("item_id")
-            .with_columns(
-                pl.col("item_id").cast(pl.String).alias(VARIABLE_NAME),
-            )
+    return KnapsackMipModel(
+        solver=solver,
+        data_preparator=KnapsackDataPreparator(logger=logger),
+        variable_builders=[
+            KnapsackVariableBuilder(logger=logger),
+            KnapsackSameVolumePairsVariableBuilder(logger=logger)
+        ],
+        constraint_builders=[
+            KnapsackCapacityConstraintBuilder(logger=logger, capacity=capacity),
+            KnapsackLargeSmallGapConstraintBuilder(logger=logger, max_gap=max_gap),
+            KnapsackSameVolumePairsConstraintBuilder(logger=logger)
+        ],
+        objective_builders=[KnapsackObjectiveBuilder(logger=logger)],
+        logger=logger,
+    )
+
+input_data = KnapsackInputData(
+    knapsack_data=(
+        pl.read_parquet("data/knapsack.parquet")
+        .with_row_index("item_id")
+        .with_columns(
+            pl.col("item_id").cast(pl.String).alias(VARIABLE_NAME),
         )
     )
 )
-model.solve()
 
-output = model.get_output_data()
-print(output.knapsack_data[[VARIABLE_NAME, VALUE]])
-print(model.get_analytics(granularity="variable"))
-print(model.get_analytics(granularity="total"))
+scenarios = [
+    {"capacity": 10, "max_gap": 1},
+    {"capacity": 15, "max_gap": 2},
+    {"capacity": 20, "max_gap": 3},
+    {"capacity": 100, "max_gap": 2},
+]
 
-selected = output.knapsack_data.filter(pl.col(VALUE) > 0.5)
+results = []
 
-print(selected)
+for scenario in scenarios:
+    capacity = scenario["capacity"]
+    max_gap = scenario["max_gap"]
 
-print(
-    selected["Profit"].sum(),
-    selected["Volume"].sum(),
-)
+    model = build_model(
+        capacity=capacity,
+        max_gap=max_gap,
+    )
+
+    model.build(
+        input_data=KnapsackInputData(
+            knapsack_data=input_data.knapsack_data.clone(),
+        ),
+        redirect_solver_log=False,
+    )
+    model.solve()
+
+    output = model.get_output_data()
+    selected = output.knapsack_data.filter(pl.col(VALUE))
+
+    result = {
+        "capacity": capacity,
+        "max_gap": max_gap,
+        "profit": selected["Profit"].sum(),
+        "volume": selected["Volume"].sum(),
+        "selected_items": selected.height,
+    }
+    results.append(result)
+
+    print(f"\nScenario: capacity={capacity}, max_gap={max_gap}")
+    print(selected)
+    print(f"Profit: {result['profit']}")
+    print(f"Volume: {result['volume']}")
+    print(f"Selected items: {result['selected_items']}")
+
+print("\nSummary:")
+print(pl.DataFrame(results))
