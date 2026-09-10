@@ -6,7 +6,7 @@ Model:
 
     subject to:
         sum(Volume*x) <= CAPACITY
-        0 <= x, binary
+        x, binary
 
 """
 
@@ -58,48 +58,48 @@ VALUE = "value"
 
 
 @dataclass
-class ExampleInputData(AbstractInputData):
-    my_data: pl.DataFrame
+class KnapsackInputData(AbstractInputData):
+    knapsack_data: pl.DataFrame
 
 
 @dataclass
-class ExampleInternalData(AbstractInternalData):
-    my_data: pl.DataFrame
+class KnapsackInternalData(AbstractInternalData):
+    knapsack_data: pl.DataFrame
 
 
 @dataclass
-class ExampleOutputData(AbstractOutputData):
-    my_data: pl.DataFrame
+class KnapsackOutputData(AbstractOutputData):
+    knapsack_data: pl.DataFrame
 
 
-class ExampleDataPreparator(AbstractDataPreparator):
+class KnapsackDataPreparator(AbstractDataPreparator):
     """
     Data preparator for example, that does nothing.
     """
 
-    def prepare(self, input_data: ExampleInputData) -> ExampleInternalData:
-        return ExampleInternalData(my_data=input_data.my_data)
+    def prepare(self, input_data: KnapsackInputData) -> KnapsackInternalData:
+        return KnapsackInternalData(knapsack_data=input_data.knapsack_data)
 
 
-class ExampleVariableBuilder(AbstractDecisionVariableBuilder):
+class KnapsackVariableBuilder(AbstractDecisionVariableBuilder):
     """
-    Creates variable x using build_column_variables, stored as a column in my_data.
+    Creates variable x using build_column_variables, stored as a column in knapsack_data.
     After solving, unpack_column_variables replaces the solver variable objects with solved values.
     """
 
-    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
-        data.my_data = self.build_column_variables(
+    def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
+        data.knapsack_data = self.build_column_variables(
             solver=solver,
-            data=data.my_data,
+            data=data.knapsack_data,
             destination_column=VAR,
             variable_domain=VariableDomain.BINARY,
             index_name_columns=[VARIABLE_NAME],
         )
         return data
 
-    def unpack(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> ExampleInternalData:
-        data.my_data = self.unpack_column_variables(
-            data=data.my_data,
+    def unpack(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
+        data.knapsack_data = self.unpack_column_variables(
+            data=data.knapsack_data,
             decision_variable_column=VAR,
             decision_variable_value_column=VALUE,
             solver=solver,
@@ -108,46 +108,46 @@ class ExampleVariableBuilder(AbstractDecisionVariableBuilder):
         return data
 
 
-class ExampleCapacityConstraintBuilder(AbstractConstraintBuilder):
+class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
     """Adds the joint capacity constraint: sum(x) <= CAPACITY"""
 
-    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         solver.add_constraint(
-            coefficients=data.my_data["Volume"].to_numpy(),
-            variables=data.my_data[VAR].to_numpy(),
+            coefficients=data.knapsack_data["Volume"].to_numpy(),
+            variables=data.knapsack_data[VAR].to_numpy(),
             lower_bound=None,
             upper_bound=20,
             name="capacity",
         )
 
 
-# class ExampleLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
-#     """Adds the large-small difference gap upper bound constraint: max(weight)-min(weight) <= 20."""
-#
-#     def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
-#         y_row = data.my_data.filter(pl.col(VARIABLE_NAME) == "y")
-#         solver.add_constraint(
-#             coefficients=np.ones(len(y_row)),
-#             variables=y_row[VAR].to_numpy(),
-#             lower_bound=None,
-#             upper_bound=,
-#             name="gap_cap",
-#         )
+class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
+    """Adds the large-small difference gap constraint."""
 
-# class ExampleSameVolumeTwiceConstraintBuilder(AbstractConstraintBuilder):
-#     """Adds the at least two items with same volume constraint: sum(x with same weight >= 2."""
-#
-#     def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
-#         y_row = data.my_data.filter(pl.col(VARIABLE_NAME) == "y")
-#         solver.add_constraint(
-#             coefficients=np.ones(len(y_row)),
-#             variables=y_row[VAR].to_numpy(),
-#             lower_bound=2,
-#             upper_bound=None,
-#             name="duplicate_vol",
-#         )
+    def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
+        y_row = data.knapsack_data.filter(pl.col(VARIABLE_NAME) == "y")
+        solver.add_constraint(
+            coefficients=np.ones(len(y_row)),
+            variables=y_row[VAR].to_numpy(),
+            lower_bound=None,
+            upper_bound=None,
+            name="gap_cap",
+        )
 
-class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
+class KnapsackSameVolumeTwiceConstraintBuilder(AbstractConstraintBuilder):
+    """Adds the at least two items with same volume constraint."""
+
+    def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
+        y_row = data.knapsack_data.filter(pl.col(VARIABLE_NAME) == "y")
+        solver.add_constraint(
+            coefficients=np.ones(len(y_row)),
+            variables=y_row[VAR].to_numpy(),
+            lower_bound=2,
+            upper_bound=None,
+            name="duplicate_vol",
+        )
+
+class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
     """
     Adds objective term: maximize sum(profit*x) and adds granularity analytics.
     """
@@ -164,26 +164,26 @@ class ExampleObjectiveBuilder(AbstractObjectiveBuilder):
             analytics_calculator=self._total_analytics,
         )
 
-    def build(self, solver: AbstractOptimizationSolver, data: ExampleInternalData) -> None:
+    def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         solver.add_multiple_objective_terms(
-            coefficients=data.my_data["Profit"].to_numpy(),
-            variables=data.my_data[VAR].to_numpy(),
+            coefficients=data.knapsack_data["Profit"].to_numpy(),
+            variables=data.knapsack_data[VAR].to_numpy(),
         )
 
-    def _variable_analytics(self, analytics_data: ExampleOutputData) -> pl.DataFrame:
-        return analytics_data.my_data[[VARIABLE_NAME, VALUE]]
+    def _variable_analytics(self, analytics_data: KnapsackOutputData) -> pl.DataFrame:
+        return analytics_data.knapsack_data[[VARIABLE_NAME, VALUE]]
 
-    def _total_analytics(self, analytics_data: ExampleOutputData) -> float:
+    def _total_analytics(self, analytics_data: KnapsackOutputData) -> float:
         variable_analytics = self.get_analytics(granularity="variable", analytics_data=analytics_data)
         return float(variable_analytics[VALUE].sum())
 
 
-class ExampleMipModel(AbstractMipModel):
+class KnapsackMipModel(AbstractMipModel):
     """Concrete model for mip DataFrame example."""
 
     def build(
         self,
-        input_data: ExampleInputData,
+        input_data: KnapsackInputData,
         redirect_solver_log: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -191,33 +191,34 @@ class ExampleMipModel(AbstractMipModel):
         self._solver.set_optimization_direction(maximization=True)
 
     def _convert_internal_to_output_data(
-        self, internal_unpacked_data: ExampleInternalData, **kwargs: Any
-    ) -> ExampleOutputData:
-        return ExampleOutputData(my_data=internal_unpacked_data.my_data)
+        self, internal_unpacked_data: KnapsackInternalData, **kwargs: Any
+    ) -> KnapsackOutputData:
+        return KnapsackOutputData(knapsack_data=internal_unpacked_data.knapsack_data)
 
 
 logger = SemanticLogger().add_log_source(
-    log_source_name="DataFrameExample",
+    log_source_name="DataFrameKnapsack",
     min_log_level=LogLevel.INFO,
     log_handlers=[SafeStreamHandler(sys.stdout)],
     is_default=True,
 )
 
-model = ExampleMipModel(
+model = KnapsackMipModel(
     solver=SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP),
-    data_preparator=ExampleDataPreparator(logger=logger),
-    variable_builders=[ExampleVariableBuilder(logger=logger)],
+    data_preparator=KnapsackDataPreparator(logger=logger),
+    variable_builders=[KnapsackVariableBuilder(logger=logger)],
     constraint_builders=[
-        ExampleCapacityConstraintBuilder(logger=logger),
-        #ExampleYCapConstraintBuilder(logger=logger),
+        KnapsackCapacityConstraintBuilder(logger=logger),
+        #KnapsackLargeSmallGapConstraintBuilder(logger=logger),
+        #KnapsackSameVolumeTwiceConstraintBuilder(logger=logger),
     ],
-    objective_builders=[ExampleObjectiveBuilder(logger=logger)],
+    objective_builders=[KnapsackObjectiveBuilder(logger=logger)],
     logger=logger,
 )
 
 model.build(
-    input_data=ExampleInputData(
-        my_data=(
+    input_data=KnapsackInputData(
+        knapsack_data=(
             pl.read_parquet("data/knapsack.parquet")
             .with_row_index("item_id")
             .with_columns(
@@ -229,11 +230,11 @@ model.build(
 model.solve()
 
 output = model.get_output_data()
-print(output.my_data[[VARIABLE_NAME, VALUE]])
+print(output.knapsack_data[[VARIABLE_NAME, VALUE]])
 print(model.get_analytics(granularity="variable"))
 print(model.get_analytics(granularity="total"))
 
-selected = output.my_data.filter(pl.col(VALUE) > 0.5)
+selected = output.knapsack_data.filter(pl.col(VALUE) > 0.5)
 
 print(selected)
 
