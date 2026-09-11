@@ -86,8 +86,7 @@ class KnapsackDataPreparator(AbstractDataPreparator):
         knapsack_data = input_data.knapsack_data
 
         same_volume_pair = (
-            knapsack_data
-            .with_row_index("i")
+            knapsack_data.with_row_index("i")
             .join(
                 knapsack_data.with_row_index("j"),
                 how="cross",
@@ -168,6 +167,7 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         )
         return data
 
+
 class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
     """
     Adds the joint capacity constraint: sum(x) <= CAPACITY
@@ -192,8 +192,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         L = 2
         M = data.knapsack_data["Volume"].max()
         pairs = (
-            data.knapsack_data
-            .with_row_index("i")
+            data.knapsack_data.with_row_index("i")
             .join(
                 data.knapsack_data.with_row_index("j"),
                 how="cross",
@@ -223,6 +222,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
                 [f"gap_{i}" for i in range(len(pairs))],
             ),
         )
+
 
 class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
     """
@@ -302,6 +302,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             name="at_least_one_same_volume_pair",
         )
 
+
 class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
     """
     Adds objective term: maximize profit and adds granularity analytics.
@@ -363,8 +364,7 @@ logger = SemanticLogger().add_log_source(
 model = KnapsackMipModel(
     solver=SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP),
     data_preparator=KnapsackDataPreparator(logger=logger),
-    variable_builders=[KnapsackVariableBuilder(logger=logger),
-                       KnapsackSameVolumePairsVariableBuilder(logger=logger)],
+    variable_builders=[KnapsackVariableBuilder(logger=logger), KnapsackSameVolumePairsVariableBuilder(logger=logger)],
     constraint_builders=[
         KnapsackCapacityConstraintBuilder(logger=logger),
         KnapsackLargeSmallGapConstraintBuilder(logger=logger),

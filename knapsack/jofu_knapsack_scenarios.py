@@ -87,8 +87,7 @@ class KnapsackDataPreparator(AbstractDataPreparator):
         knapsack_data = input_data.knapsack_data
 
         same_volume_pair = (
-            knapsack_data
-            .with_row_index("i")
+            knapsack_data.with_row_index("i")
             .join(
                 knapsack_data.with_row_index("j"),
                 how="cross",
@@ -169,6 +168,7 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         )
         return data
 
+
 class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
     """
     Adds the joint capacity constraint: sum(x) <= CAPACITY
@@ -201,8 +201,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         L = self.max_gap
         M = data.knapsack_data["Volume"].max()
         pairs = (
-            data.knapsack_data
-            .with_row_index("i")
+            data.knapsack_data.with_row_index("i")
             .join(
                 data.knapsack_data.with_row_index("j"),
                 how="cross",
@@ -232,6 +231,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
                 [f"gap_{i}" for i in range(len(pairs))],
             ),
         )
+
 
 class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
     """
@@ -311,6 +311,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             name="at_least_one_same_volume_pair",
         )
 
+
 class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
     """
     Adds objective term: maximize profit and adds granularity analytics.
@@ -369,26 +370,26 @@ logger = SemanticLogger().add_log_source(
     is_default=True,
 )
 
+
 def build_model(capacity: int, max_gap: int) -> KnapsackMipModel:
-    solver = SolverFactory(logger=logger).construct(
-        solver_type=SolverType.ORTOOLS_SCIP
-    )
+    solver = SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP)
 
     return KnapsackMipModel(
         solver=solver,
         data_preparator=KnapsackDataPreparator(logger=logger),
         variable_builders=[
             KnapsackVariableBuilder(logger=logger),
-            KnapsackSameVolumePairsVariableBuilder(logger=logger)
+            KnapsackSameVolumePairsVariableBuilder(logger=logger),
         ],
         constraint_builders=[
             KnapsackCapacityConstraintBuilder(logger=logger, capacity=capacity),
             KnapsackLargeSmallGapConstraintBuilder(logger=logger, max_gap=max_gap),
-            KnapsackSameVolumePairsConstraintBuilder(logger=logger)
+            KnapsackSameVolumePairsConstraintBuilder(logger=logger),
         ],
         objective_builders=[KnapsackObjectiveBuilder(logger=logger)],
         logger=logger,
     )
+
 
 input_data = KnapsackInputData(
     knapsack_data=(
@@ -470,12 +471,7 @@ print(pl.DataFrame(results))
 results_plots = pl.DataFrame(results)
 
 """Plot Profit vs Capacity"""
-profit_by_capacity = (
-    results_plots
-    .group_by("capacity")
-    .agg(pl.col("profit").max())
-    .sort("capacity")
-)
+profit_by_capacity = results_plots.group_by("capacity").agg(pl.col("profit").max()).sort("capacity")
 
 fig = px.line(
     x=profit_by_capacity["capacity"].to_list(),
@@ -487,12 +483,7 @@ fig = px.line(
 fig.show()
 
 """Plot Profit vs L"""
-profit_by_gap = (
-    results_plots
-    .group_by("max_gap")
-    .agg(pl.col("profit").max())
-    .sort("max_gap")
-)
+profit_by_gap = results_plots.group_by("max_gap").agg(pl.col("profit").max()).sort("max_gap")
 
 fig = px.line(
     x=profit_by_gap["max_gap"].to_list(),
