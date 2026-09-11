@@ -1,4 +1,5 @@
-"""KNAPSACK Problem using the umip framework.
+"""
+KNAPSACK Problem using the umip framework.
 
 Model:
 
@@ -143,6 +144,7 @@ class KnapsackVariableBuilder(AbstractDecisionVariableBuilder):
 class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
     """
     Creates y_i,j variables for all distinct item pairs.
+    After solving, unpack_column_variables replaces the solver variable objects with solved values.
     """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
@@ -169,7 +171,9 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         return data
 
 class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
-    """Adds the joint capacity constraint: sum(x) <= CAPACITY"""
+    """
+    Adds the joint capacity constraint: sum(x) <= CAPACITY
+    """
 
     def __init__(self, logger: LoggerInterface, capacity: int) -> None:
         super().__init__(logger=logger)
@@ -186,7 +190,9 @@ class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
 
 
 class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
-    """Adds the large-small difference gap constraint."""
+    """
+    Adds the large-small difference gap constraint.
+    """
 
     def __init__(self, logger: LoggerInterface, max_gap: int) -> None:
         super().__init__(logger=logger)
@@ -229,7 +235,9 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         )
 
 class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
-    """Requires at least one selected pair with the same volume."""
+    """
+    Requires at least one selected pair with the same volume.
+    """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         pairs = data.same_volume_pair
@@ -336,7 +344,9 @@ class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
 
 
 class KnapsackMipModel(AbstractMipModel):
-    """Concrete model for mip knapsack problem."""
+    """
+    Concrete model for mip knapsack problem.
+    """
 
     def build(
         self,
@@ -460,6 +470,7 @@ print(pl.DataFrame(results))
 
 results_plots = pl.DataFrame(results)
 
+"""Plot Profit vs Capacity"""
 profit_by_capacity = (
     results_plots
     .group_by("capacity")
@@ -476,6 +487,7 @@ fig = px.line(
 )
 fig.show()
 
+"""Plot Profit vs L"""
 profit_by_gap = (
     results_plots
     .group_by("max_gap")
@@ -492,6 +504,7 @@ fig = px.line(
 )
 fig.show()
 
+"""Heatmap Profit for Capacity vs L"""
 fig = px.density_heatmap(
     x=results_plots["capacity"].to_list(),
     y=results_plots["max_gap"].to_list(),

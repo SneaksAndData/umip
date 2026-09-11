@@ -1,4 +1,5 @@
-"""KNAPSACK Problem using the umip framework.
+"""
+KNAPSACK Problem using the umip framework.
 
 Model:
 
@@ -141,6 +142,7 @@ class KnapsackVariableBuilder(AbstractDecisionVariableBuilder):
 class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
     """
     Creates y_i,j variables for all distinct item pairs.
+    After solving, unpack_column_variables replaces the solver variable objects with solved values.
     """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
@@ -167,7 +169,9 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         return data
 
 class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
-    """Adds the joint capacity constraint: sum(x) <= CAPACITY"""
+    """
+    Adds the joint capacity constraint: sum(x) <= CAPACITY
+    """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         solver.add_constraint(
@@ -180,7 +184,9 @@ class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
 
 
 class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
-    """Adds the large-small difference gap constraint."""
+    """
+    Adds the large-small difference gap constraint.
+    """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         L = 2
@@ -219,7 +225,9 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         )
 
 class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
-    """Requires at least one selected pair with the same volume."""
+    """
+    Requires at least one selected pair with the same volume.
+    """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         pairs = data.same_volume_pair
@@ -326,7 +334,9 @@ class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
 
 
 class KnapsackMipModel(AbstractMipModel):
-    """Concrete model for mip knapsack problem."""
+    """
+    Concrete model for mip knapsack problem.
+    """
 
     def build(
         self,
