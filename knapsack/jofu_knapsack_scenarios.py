@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+import plotly.express as px
 import polars as pl
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
@@ -52,8 +53,6 @@ from umip.abstract_dataclasses import (
 )
 from umip.enums import SolverType
 from umip.solver_factory import SolverFactory
-
-import plotly.express as px
 
 VARIABLE_NAME = "variable_name"
 SAME_VOLUME_PAIR = "same_volume_pair"
