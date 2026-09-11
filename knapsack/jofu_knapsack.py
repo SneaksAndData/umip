@@ -41,6 +41,7 @@ from umip import (
     AbstractDataPreparator,
     AbstractDecisionVariableBuilder,
     AbstractMipModel,
+    AbstractMipModelFactory,
     AbstractObjectiveBuilder,
     AbstractOptimizationSolver,
     VariableDomain,
@@ -51,67 +52,92 @@ from umip.abstract_dataclasses import (
     AbstractOutputData,
 )
 from umip.enums import SolverType
-from umip.solver_factory import SolverFactory
 
-VARIABLE_NAME = "variable_name"
-SAME_VOLUME_PAIR = "same_volume_pair"
-VAR = "var"
-Y_VAR = "y_var"
-VALUE = "value"
-Y_VALUE = "y_value"
+ITEM_NUMBER = "item_number"
+ITEM_IS_SELECTED_VAR = "item_is_selected_var"
+SAME_VOLUME_VAR = "same_volume_var"
+ITEM_IS_SELECTED_VALUE = "item_is_selected_value"
+SAME_VOLUME_VALUE = "same_volume_value"
+VOLUME_COLUMN = "Volume"
+PROFIT_COLUMN = "Profit"
+VOLUME_I = "volume_i"
+VOLUME_J = "volume_j"
+INDEX_I = "index_i"
+INDEX_J = "index_j"
+VOLUMES_ARE_EQUAL = "volumes_are_equal"
+
+@dataclass(frozen=True)
+class KnapsackSettings:
+    add_large_small_gap_constraint: bool = False
+    add_same_volume_pairs_constraint: bool = False
 
 
 @dataclass
 class KnapsackInputData(AbstractInputData):
     knapsack_data: pl.DataFrame
+    knapsack_capacity: int
+    knapsack_volume_max_gap: int
+
 
 
 @dataclass
-class KnapsackInternalData(AbstractInternalData):
-    knapsack_data: pl.DataFrame
+class KnapsackInternalData(KnapsackInputData, AbstractInternalData):
     same_volume_pair: pl.DataFrame
 
 
 @dataclass
-class KnapsackOutputData(AbstractOutputData):
-    knapsack_data: pl.DataFrame
-
+class KnapsackOutputData(KnapsackInternalData, AbstractOutputData):
+    pass
 
 class KnapsackDataPreparator(AbstractDataPreparator):
     """
     Data preparator for the pair dataframe.
     """
+    def __init__(
+            self,
+            logger: LoggerInterface,
+            settings: KnapsackSettings,
+    ) -> None:
+        super().__init__(logger=logger)
+        self._settings = settings
+
 
     def prepare(self, input_data: KnapsackInputData) -> KnapsackInternalData:
         knapsack_data = input_data.knapsack_data
 
-        same_volume_pair = (
-            knapsack_data.with_row_index("i")
-            .join(
-                knapsack_data.with_row_index("j"),
-                how="cross",
-                suffix="_j",
+        if self._settings.add_same_volume_pairs_constraint:
+            same_volume_pair = (
+                knapsack_data.select(pl.col(VOLUME_COLUMN).alias(VOLUME_I))
+                .with_row_index(INDEX_I)
+                .join(
+                    knapsack_data.select(pl.col(VOLUME_COLUMN).alias(VOLUME_J)).with_row_index(INDEX_J),
+                    how="cross",
+                )
+                .filter(pl.col(INDEX_I) != pl.col(INDEX_J))
+                .with_columns(
+                    (pl.col(VOLUME_I) == pl.col(VOLUME_J)).alias(VOLUMES_ARE_EQUAL),
+                )
             )
-            .filter(pl.col("i") != pl.col("j"))
-            .with_columns(
-                pl.concat_str(
-                    [
-                        pl.lit("y_"),
-                        pl.col("i").cast(pl.String),
-                        pl.lit("_"),
-                        pl.col("j").cast(pl.String),
-                    ]
-                ).alias(SAME_VOLUME_PAIR)
+        else:
+            same_volume_pair = pl.DataFrame(
+                schema={
+                    INDEX_I: pl.UInt32,
+                    VOLUME_I: knapsack_data.schema[VOLUME_COLUMN],
+                    INDEX_J: pl.UInt32,
+                    VOLUME_J: knapsack_data.schema[VOLUME_COLUMN],
+                    VOLUMES_ARE_EQUAL: pl.Boolean,
+                }
             )
-        )
 
         return KnapsackInternalData(
             knapsack_data=knapsack_data,
             same_volume_pair=same_volume_pair,
+            knapsack_capacity=input_data.knapsack_capacity,
+            knapsack_volume_max_gap=input_data.knapsack_volume_max_gap,
         )
 
 
-class KnapsackVariableBuilder(AbstractDecisionVariableBuilder):
+class KnapsackIsSelectedVariableBuilder(AbstractDecisionVariableBuilder):
     """
     Creates variable x using build_column_variables, stored as a column in knapsack_data.
     After solving, unpack_column_variables replaces the solver variable objects with solved values.
@@ -121,17 +147,18 @@ class KnapsackVariableBuilder(AbstractDecisionVariableBuilder):
         data.knapsack_data = self.build_column_variables(
             solver=solver,
             data=data.knapsack_data,
-            destination_column=VAR,
+            destination_column=ITEM_IS_SELECTED_VAR,
             variable_domain=VariableDomain.BINARY,
-            index_name_columns=[VARIABLE_NAME],
+            index_name_columns=[ITEM_NUMBER],
+            variable_name="x",
         )
         return data
 
     def unpack(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
         data.knapsack_data = self.unpack_column_variables(
             data=data.knapsack_data,
-            decision_variable_column=VAR,
-            decision_variable_value_column=VALUE,
+            decision_variable_column=ITEM_IS_SELECTED_VAR,
+            decision_variable_value_column=ITEM_IS_SELECTED_VALUE,
             solver=solver,
             variable_domain=VariableDomain.BINARY,
         )
@@ -151,17 +178,18 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         data.same_volume_pair = self.build_column_variables(
             solver=solver,
             data=data.same_volume_pair,
-            destination_column=Y_VAR,
+            destination_column=SAME_VOLUME_VAR,
             variable_domain=VariableDomain.BINARY,
-            index_name_columns=[SAME_VOLUME_PAIR],
+            index_name_columns=[INDEX_I, INDEX_J],
+            variable_name="y",
         )
         return data
 
     def unpack(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> KnapsackInternalData:
         data.same_volume_pair = self.unpack_column_variables(
             data=data.same_volume_pair,
-            decision_variable_column=Y_VAR,
-            decision_variable_value_column=Y_VALUE,
+            decision_variable_column=SAME_VOLUME_VAR,
+            decision_variable_value_column=SAME_VOLUME_VALUE,
             solver=solver,
             variable_domain=VariableDomain.BINARY,
         )
@@ -170,27 +198,41 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
 
 class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
     """
-    Adds the joint capacity constraint: sum(x) <= CAPACITY
+    Adds the joint capacity constraint: sum(x_i) <= C
+
+    C: data.knapsack_capacity
+    VOLUME_COLUMN: "Volume" column in the data, referred to V_i parameter in the formulation
+    ITEM_IS_SELECTED_VAR: x_i variable
     """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         solver.add_constraint(
-            coefficients=data.knapsack_data["Volume"].to_numpy(),
-            variables=data.knapsack_data[VAR].to_numpy(),
+            coefficients=data.knapsack_data.get_column(VOLUME_COLUMN).to_numpy(),
+            variables=data.knapsack_data.get_column(ITEM_IS_SELECTED_VAR).to_numpy(),
             lower_bound=None,
-            upper_bound=15,
+            upper_bound=data.knapsack_capacity,
             name="capacity",
         )
 
 
 class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
     """
-    Adds the large-small difference gap constraint.
+    Adds the large-small difference gap constraint: V_i * x_i - V_j * x_j <= L + M * (2 - x_i - x_j)
+    Where,
+    VOLUME_GAP_MAX: L
+    BIG_M_MAX_VOLUME: M
+    ITEM_IS_SELECTED_VAR: x_i and x_j
+    VOLUME_COLUMN: V_i and V_j
     """
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
-        L = 2
-        M = data.knapsack_data["Volume"].max()
+        if data.knapsack_volume_max_gap is None:
+            raise ValueError(
+                "knapsack_volume_max_gap must be provided when the large-small gap constraint is enabled."
+            )
+
+        VOLUME_GAP_MAX = data.knapsack_volume_max_gap
+        BIG_M_MAX_VOLUME = data.knapsack_data[VOLUME_COLUMN].max()
         pairs = (
             data.knapsack_data.with_row_index("i")
             .join(
@@ -203,20 +245,20 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         solver.add_multiple_constraints(
             coefficients=np.column_stack(
                 (
-                    pairs["Volume"].to_numpy() + M,
-                    M - pairs["Volume_j"].to_numpy(),
+                    pairs.get_column(VOLUME_COLUMN).to_numpy() + BIG_M_MAX_VOLUME,
+                    BIG_M_MAX_VOLUME - pairs["Volume_j"].to_numpy(),
                 )
             ),
             variables=np.column_stack(
                 (
-                    pairs[VAR].to_numpy(),
-                    pairs[f"{VAR}_j"].to_numpy(),
+                    pairs[ITEM_IS_SELECTED_VAR].to_numpy(),
+                    pairs[f"{ITEM_IS_SELECTED_VAR}_j"].to_numpy(),
                 )
             ).astype(object),
             lower_bounds=None,
             upper_bounds=np.full(
                 len(pairs),
-                L + 2 * M,
+                VOLUME_GAP_MAX + 2 * BIG_M_MAX_VOLUME,
             ),
             names=np.array(
                 [f"gap_{i}" for i in range(len(pairs))],
@@ -236,21 +278,28 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
         if pair_count == 0:
             raise ValueError("No same-volume pairs found in the data.")
 
-        M = data.knapsack_data["Volume"].max()
-        item_variables = data.knapsack_data[VAR].to_numpy()
+        BIG_M_MAX_VOLUME = data.knapsack_data[VOLUME_COLUMN].max()
+        item_variables = data.knapsack_data.get_column(ITEM_IS_SELECTED_VAR).to_numpy()
 
-        x_i = item_variables[pairs["i"].to_numpy()]
-        x_j = item_variables[pairs["j"].to_numpy()]
-        y = pairs[Y_VAR].to_numpy()
+        x_i = item_variables[pairs[INDEX_I].to_numpy()]
+        x_j = item_variables[pairs[INDEX_J].to_numpy()]
+        y = pairs.get_column(SAME_VOLUME_VAR).to_numpy()
 
         variables = np.column_stack((x_i, x_j, y)).astype(object)
 
-        # x_i + x_j >= 2*y_i,j
+        self._build_variables_link_constraints(solver, variables, pair_count)
+        self._build_forward_same_volume_constraints(solver, pairs, variables, pair_count, BIG_M_MAX_VOLUME)
+        self._build_reverse_same_volume_constraints(solver, pairs, variables, pair_count, BIG_M_MAX_VOLUME)
+        self._build_at_least_one_pair_constraint(solver, y, pair_count)
+
+    @staticmethod
+    def _build_variables_link_constraints(solver: AbstractOptimizationSolver, variables: np.ndarray, pair_count: int,) -> None:
+        """
+        Adds constraint that ensures y_i,j takes the value of 1 only when x_i = x_j = 1
+        Constraint: x_i + x_j >= 2*y_i,j
+        """
         solver.add_multiple_constraints(
-            coefficients=np.tile(
-                np.array([-1, -1, 2]),
-                (pair_count, 1),
-            ),
+            coefficients=np.tile(np.array([-1, -1, 2]),(pair_count, 1)),
             variables=variables,
             lower_bounds=None,
             upper_bounds=np.zeros(pair_count),
@@ -259,41 +308,58 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             ),
         )
 
-        # V_i*x_i - V_j*x_j <= M*(1-y_i,j)
+    @staticmethod
+    def _build_forward_same_volume_constraints(solver: AbstractOptimizationSolver, pairs: pl.DataFrame, variables: np.ndarray, pair_count: int, BIG_M_MAX_VOLUME: int,) -> None:
+        """
+        Adds constraint that ensures volume between two items is zero when both are chosen and y_i,j =1
+        Constraint: V_i*x_i - V_j*x_j <= M*(1-y_i,j)
+        BIG_M_MAX_VOLUME is the maximum volume of any item in the knapsack, used as a big M constant.
+        """
         solver.add_multiple_constraints(
             coefficients=np.column_stack(
                 (
-                    pairs["Volume"].to_numpy(),
-                    -pairs["Volume_j"].to_numpy(),
-                    np.full(pair_count, M),
+                    pairs[VOLUME_I].to_numpy(),
+                    -pairs[VOLUME_J].to_numpy(),
+                    np.full(pair_count, BIG_M_MAX_VOLUME),
                 )
             ),
             variables=variables,
             lower_bounds=None,
-            upper_bounds=np.full(pair_count, M),
+            upper_bounds=np.full(pair_count, BIG_M_MAX_VOLUME),
             names=np.array(
                 [f"same_volume_forward_{i}" for i in range(pair_count)],
             ),
         )
 
-        # - V_i*x_i + V_j*x_j <= M*(1-y_i,j)
+    @staticmethod
+    def _build_reverse_same_volume_constraints(solver: AbstractOptimizationSolver, pairs: pl.DataFrame, variables: np.ndarray, pair_count: int, BIG_M_MAX_VOLUME: int,) -> None:
+        """
+        Adds constraint that ensures volume between two items is zero when both are chosen and y_i,j =1
+        Constraint: - V_i*x_i + V_j*x_j <= M*(1-y_i,j)
+        BIG_M_MAX_VOLUME is the maximum volume of any item in the knapsack, used as a big M constant.
+        """
         solver.add_multiple_constraints(
             coefficients=np.column_stack(
                 (
-                    -pairs["Volume"].to_numpy(),
-                    pairs["Volume_j"].to_numpy(),
-                    np.full(pair_count, M),
+                    -pairs[VOLUME_I].to_numpy(),
+                    pairs[VOLUME_J].to_numpy(),
+                    np.full(pair_count, BIG_M_MAX_VOLUME),
                 )
             ),
             variables=variables,
             lower_bounds=None,
-            upper_bounds=np.full(pair_count, M),
+            upper_bounds=np.full(pair_count, BIG_M_MAX_VOLUME),
             names=np.array(
                 [f"same_volume_reverse_{i}" for i in range(pair_count)],
             ),
         )
 
-        # sum(y_i,j) >= 1
+    @staticmethod
+    def _build_at_least_one_pair_constraint(solver: AbstractOptimizationSolver, y: np.ndarray, pair_count: int, ) -> None:
+        """
+        Adds constraint that ensures at least 1 pair with the same volume is present in the knapsack
+        Constraint: sum(y_i,j) >= 1
+        """
         solver.add_constraint(
             coefficients=np.ones(pair_count),
             variables=y,
@@ -322,16 +388,16 @@ class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
 
     def build(self, solver: AbstractOptimizationSolver, data: KnapsackInternalData) -> None:
         solver.add_multiple_objective_terms(
-            coefficients=data.knapsack_data["Profit"].to_numpy(),
-            variables=data.knapsack_data[VAR].to_numpy(),
+            coefficients=data.knapsack_data.get_column(PROFIT_COLUMN).to_numpy(),
+            variables=data.knapsack_data.get_column(ITEM_IS_SELECTED_VAR).to_numpy(),
         )
 
     def _variable_analytics(self, analytics_data: KnapsackOutputData) -> pl.DataFrame:
-        return analytics_data.knapsack_data[[VARIABLE_NAME, VALUE]]
+        return analytics_data.knapsack_data.select(ITEM_NUMBER, ITEM_IS_SELECTED_VALUE)
 
     def _total_analytics(self, analytics_data: KnapsackOutputData) -> float:
         variable_analytics = self.get_analytics(granularity="variable", analytics_data=analytics_data)
-        return float(variable_analytics[VALUE].sum())
+        return float(variable_analytics[ITEM_IS_SELECTED_VALUE].sum())
 
 
 class KnapsackMipModel(AbstractMipModel):
@@ -351,7 +417,46 @@ class KnapsackMipModel(AbstractMipModel):
     def _convert_internal_to_output_data(
         self, internal_unpacked_data: KnapsackInternalData, **kwargs: Any
     ) -> KnapsackOutputData:
-        return KnapsackOutputData(knapsack_data=internal_unpacked_data.knapsack_data)
+        return KnapsackOutputData(
+            knapsack_data=internal_unpacked_data.knapsack_data,
+            same_volume_pair=internal_unpacked_data.same_volume_pair,
+            knapsack_capacity=internal_unpacked_data.knapsack_capacity,
+            knapsack_volume_max_gap=internal_unpacked_data.knapsack_volume_max_gap,
+        )
+
+
+class KnapsackModelFactory(AbstractMipModelFactory):
+    def construct(self, settings: KnapsackSettings) -> KnapsackMipModel:
+        variable_builders = [
+            KnapsackIsSelectedVariableBuilder(logger=self._logger)
+        ]
+        constraint_builders = [
+            KnapsackCapacityConstraintBuilder(logger=self._logger)
+        ]
+
+        if settings.add_large_small_gap_constraint:
+            constraint_builders.append(
+                KnapsackLargeSmallGapConstraintBuilder(logger=self._logger)
+            )
+
+        if settings.add_same_volume_pairs_constraint:
+            variable_builders.append(
+                KnapsackSameVolumePairsVariableBuilder(logger=self._logger)
+            )
+            constraint_builders.append(
+                KnapsackSameVolumePairsConstraintBuilder(logger=self._logger)
+            )
+
+        return KnapsackMipModel(
+            solver=self._solver,
+            data_preparator=KnapsackDataPreparator(logger=self._logger, settings=settings),
+            variable_builders=variable_builders,
+            constraint_builders=constraint_builders,
+            objective_builders=[
+                KnapsackObjectiveBuilder(logger=self._logger)
+            ],
+            logger=self._logger,
+        )
 
 
 logger = SemanticLogger().add_log_source(
@@ -361,42 +466,44 @@ logger = SemanticLogger().add_log_source(
     is_default=True,
 )
 
-model = KnapsackMipModel(
-    solver=SolverFactory(logger=logger).construct(solver_type=SolverType.ORTOOLS_SCIP),
-    data_preparator=KnapsackDataPreparator(logger=logger),
-    variable_builders=[KnapsackVariableBuilder(logger=logger), KnapsackSameVolumePairsVariableBuilder(logger=logger)],
-    constraint_builders=[
-        KnapsackCapacityConstraintBuilder(logger=logger),
-        KnapsackLargeSmallGapConstraintBuilder(logger=logger),
-        KnapsackSameVolumePairsConstraintBuilder(logger=logger),
-    ],
-    objective_builders=[KnapsackObjectiveBuilder(logger=logger)],
-    logger=logger,
-)
+def main() -> None:
+    settings = KnapsackSettings(
+        add_large_small_gap_constraint=True,
+        add_same_volume_pairs_constraint=True,
+    )
 
-model.build(
-    input_data=KnapsackInputData(
-        knapsack_data=(
-            pl.read_parquet("data/knapsack.parquet")
-            .with_row_index("item_id")
-            .with_columns(
-                pl.col("item_id").cast(pl.String).alias(VARIABLE_NAME),
-            )
+    model = KnapsackModelFactory(
+        logger=logger,
+        solver_type=SolverType.ORTOOLS_SCIP,
+    ).construct(settings=settings)
+
+    model.build(
+        input_data=KnapsackInputData(
+            knapsack_data=(
+                pl.read_parquet("data/knapsack.parquet")
+                .with_row_index("item_id")
+                .with_columns(
+                    pl.col("item_id").cast(pl.String).alias(ITEM_NUMBER),
+                )
+            ),
+            knapsack_capacity=15,
+            knapsack_volume_max_gap=2,
         )
     )
-)
-model.solve()
+    model.solve()
 
-output = model.get_output_data()
-print(output.knapsack_data[[VARIABLE_NAME, VALUE]])
-print(model.get_analytics(granularity="variable"))
-print(model.get_analytics(granularity="total"))
+    output = model.get_output_data()
+    print(output.knapsack_data[[ITEM_NUMBER, ITEM_IS_SELECTED_VALUE]])
+    print(model.get_analytics(granularity="variable"))
+    print(model.get_analytics(granularity="total"))
 
-selected = output.knapsack_data.filter(pl.col(VALUE) > 0.5)
+    selected = output.knapsack_data.filter(pl.col(ITEM_IS_SELECTED_VALUE))
 
-print(selected)
+    print(
+        selected.get_column(PROFIT_COLUMN).sum(),
+        selected.get_column(VOLUME_COLUMN).sum(),
+    )
 
-print(
-    selected["Profit"].sum(),
-    selected["Volume"].sum(),
-)
+
+if __name__ == "__main__":
+    main()
