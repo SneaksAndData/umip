@@ -10,8 +10,8 @@ from adapta.logs import SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 from jofu_knapsack import (
+    ITEM_ID,
     ITEM_IS_SELECTED_VALUE,
-    ITEM_NUMBER,
     PROFIT_COLUMN,
     VOLUME_COLUMN,
     KnapsackInputData,
@@ -29,9 +29,9 @@ DATA_PATH = Path(__file__).parent / "data" / "knapsack.parquet"
 def load_knapsack_data() -> pl.DataFrame:
     return (
         pl.read_parquet(DATA_PATH)
-        .with_row_index("item_id")
+        .with_row_index(ITEM_ID)
         .with_columns(
-            pl.col("item_id").cast(pl.String).alias(ITEM_NUMBER),
+            pl.col(ITEM_ID).cast(pl.String),
         )
     )
 
@@ -89,11 +89,7 @@ def run_scenarios(
 
 
 def show_plots(results: pl.DataFrame) -> None:
-    profit_by_capacity = (
-        results.group_by("capacity")
-        .agg(pl.col("profit").max())
-        .sort("capacity")
-    )
+    profit_by_capacity = results.group_by("capacity").agg(pl.col("profit").max()).sort("capacity")
     px.line(
         x=profit_by_capacity["capacity"].to_list(),
         y=profit_by_capacity["profit"].to_list(),
@@ -102,11 +98,7 @@ def show_plots(results: pl.DataFrame) -> None:
         title="Profit vs. Capacity",
     ).show()
 
-    profit_by_gap = (
-        results.group_by("max_gap")
-        .agg(pl.col("profit").max())
-        .sort("max_gap")
-    )
+    profit_by_gap = results.group_by("max_gap").agg(pl.col("profit").max()).sort("max_gap")
     px.line(
         x=profit_by_gap["max_gap"].to_list(),
         y=profit_by_gap["profit"].to_list(),
