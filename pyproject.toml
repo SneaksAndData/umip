@@ -38,6 +38,7 @@ dev = [
     "pytest-cov>=7",
     "pandas>=2.2.0,<3",
     "ruff>=0.16.5",
+    "plotly>=7.0.0",
 ]
 
 [tool.uv]
