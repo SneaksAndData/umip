@@ -48,8 +48,8 @@ def run_scenarios(
         is_default=True,
     )
     settings = KnapsackSettings(
-        add_large_small_gap_constraint=True,
-        add_same_volume_pairs_constraint=True,
+        enable_max_volume_difference=True,
+        enable_at_least_one_same_volume_pair=True,
     )
     results: list[dict[str, int | float]] = []
 
@@ -69,13 +69,12 @@ def run_scenarios(
         model.solve()
 
         output = model.get_output_data()
-        selected = output.knapsack_data.filter(pl.col(ITEM_IS_SELECTED_VALUE))
         result = {
             "capacity": capacity,
             "max_gap": max_gap,
-            "profit": selected.get_column(PROFIT_COLUMN).sum(),
-            "volume": selected.get_column(VOLUME_COLUMN).sum(),
-            "selected_items": selected.height,
+            "profit": output.knapsack_data.get_column(PROFIT_COLUMN).sum(),
+            "volume": output.knapsack_data.get_column(VOLUME_COLUMN).sum(),
+            "selected_items": output.knapsack_data.filter(pl.col(ITEM_IS_SELECTED_VALUE)).height,
         }
         results.append(result)
 
