@@ -21,8 +21,8 @@ from jofu_knapsack import (
 
 from umip.enums import SolverType
 
-CAPACITIES = range(10, 71, 5)
-MAX_VOLUME_GAPS = range(1, 7)
+CAPACITIES = range(10, 30, 5)
+MAX_VOLUME_GAPS = range(1, 3)
 DATA_PATH = Path(__file__).parent / "data" / "knapsack.parquet"
 
 
@@ -60,7 +60,7 @@ def run_scenarios(
         ).construct(settings=settings)
         model.build(
             input_data=KnapsackInputData(
-                knapsack_data=knapsack_data.clone(),
+                item=knapsack_data.clone(),
                 knapsack_capacity=capacity,
                 knapsack_volume_max_gap=max_gap,
             ),
@@ -69,12 +69,13 @@ def run_scenarios(
         model.solve()
 
         output = model.get_output_data()
+        selected_items = output.item.filter(pl.col(ITEM_IS_SELECTED_VALUE))
         result = {
             "capacity": capacity,
             "max_gap": max_gap,
-            "profit": output.knapsack_data.get_column(PROFIT_COLUMN).sum(),
-            "volume": output.knapsack_data.get_column(VOLUME_COLUMN).sum(),
-            "selected_items": output.knapsack_data.filter(pl.col(ITEM_IS_SELECTED_VALUE)).height,
+            "profit": selected_items.get_column(PROFIT_COLUMN).sum(),
+            "volume": selected_items.get_column(VOLUME_COLUMN).sum(),
+            "selected_items": selected_items.height,
         }
         results.append(result)
 
