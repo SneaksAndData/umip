@@ -279,6 +279,22 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             raise ValueError("No same-volume pairs found in the data.")
 
         BIG_M_MAX_VOLUME = data.item.get_column(VOLUME_COLUMN).max()
+        item_i_is_selected_var = "item_i_is_selected"
+
+        # todo continue on this, if you want a challenge - make it a method on the abstract constraint builder, so it can be reused
+        item_pairs_with_selected_variable = data.item_pair.join(
+            data.item.select(
+                pl.col(INDEX_I),
+                pl.col(ITEM_IS_SELECTED_VAR).alias(item_i_is_selected_var),
+                on = INDEX_I,
+                validate = "m:1"
+            )
+        ).join(data.item.select(
+            pl.col(INDEX_J),
+            pl.col(ITEM_IS_SELECTED_VAR).alias(item_i_is_selected_var),
+            on = INDEX_I,
+            validate = "m:1"
+        ))
 
         variables = np.column_stack(
             (
