@@ -229,8 +229,8 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         VOLUME_GAP_MAX = data.knapsack_volume_max_gap
         BIG_M_MAX_VOLUME = data.item.get_column(VOLUME_COLUMN).max()
 
-        item_i_is_selected_var = "item_i_is_selected"
-        item_j_is_selected_var = "item_j_is_selected"
+        item_i_is_selected_var_column = "item_i_is_selected"
+        item_j_is_selected_var_column = "item_j_is_selected"
 
         item_pairs_with_selected_variable = self._join_item_column_to_pairs(
             item_pair=data.item_pair,
@@ -238,12 +238,12 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
             item_column=ITEM_IS_SELECTED_VAR,
             index_i_column=INDEX_I,
             index_j_column=INDEX_J,
-            item_i_is_selected_var=item_i_is_selected_var,
-            item_j_is_selected_var=item_j_is_selected_var,
+            item_i_is_selected_var_column=item_i_is_selected_var_column,
+            item_j_is_selected_var_column=item_j_is_selected_var_column,
         )
 
         variables = (
-            item_pairs_with_selected_variable.select(item_i_is_selected_var, item_j_is_selected_var)
+            item_pairs_with_selected_variable.select(item_i_is_selected_var_column, item_j_is_selected_var_column)
             .to_numpy()
             .astype(object)
         )
@@ -279,8 +279,8 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             raise ValueError("No same-volume pairs found in the data.")
 
         BIG_M_MAX_VOLUME = data.item.get_column(VOLUME_COLUMN).max()
-        item_i_is_selected_var = "item_i_is_selected"
-        item_j_is_selected_var = "item_j_is_selected"
+        item_i_is_selected_var_column = "item_i_is_selected"
+        item_j_is_selected_var_column = "item_j_is_selected"
 
         item_pairs_with_selected_variable = self._join_item_column_to_pairs(
             item_pair=data.item_pair,
@@ -288,25 +288,25 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             item_column=ITEM_IS_SELECTED_VAR,
             index_i_column=INDEX_I,
             index_j_column=INDEX_J,
-            item_i_is_selected_var=item_i_is_selected_var,
-            item_j_is_selected_var=item_j_is_selected_var,
+            item_i_is_selected_var_column=item_i_is_selected_var_column,
+            item_j_is_selected_var_column=item_j_is_selected_var_column,
         )
 
         variables = (
-            item_pairs_with_selected_variable.select(item_i_is_selected_var, item_j_is_selected_var, SAME_VOLUME_VAR)
+            item_pairs_with_selected_variable.select(item_i_is_selected_var_column, item_j_is_selected_var_column, SAME_VOLUME_VAR)
             .to_numpy()
             .astype(object)
         )
 
-        self._build_variables_link_constraints(solver, variables, len(data.item_pair))
+        self._build_variables_link_constraints(solver=solver, variables=variables, pair_count=len(data.item_pair))
         self._build_forward_same_volume_constraints(
-            solver, data.item_pair, variables, len(data.item_pair), BIG_M_MAX_VOLUME
+            solver=solver, item_pair=data.item_pair, variables=variables, pair_count=len(data.item_pair), BIG_M_MAX_VOLUME=BIG_M_MAX_VOLUME
         )
         self._build_reverse_same_volume_constraints(
-            solver, data.item_pair, variables, len(data.item_pair), BIG_M_MAX_VOLUME
+            solver=solver, item_pair=data.item_pair, variables=variables, pair_count=len(data.item_pair), BIG_M_MAX_VOLUME=BIG_M_MAX_VOLUME
         )
         self._build_at_least_one_pair_constraint(
-            solver, data.item_pair.get_column(SAME_VOLUME_VAR).to_numpy(), len(data.item_pair)
+            solver=solver, y=data.item_pair.get_column(SAME_VOLUME_VAR).to_numpy(), pair_count=len(data.item_pair)
         )
 
     @staticmethod
@@ -375,7 +375,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
             coefficients=np.column_stack(
                 (
                     -item_pair.get_column(VOLUME_I).to_numpy(),
-                    item_pair.get_column(VOLUME_I).to_numpy(),
+                    item_pair.get_column(VOLUME_J).to_numpy(),
                     np.full(pair_count, BIG_M_MAX_VOLUME),
                 )
             ),
