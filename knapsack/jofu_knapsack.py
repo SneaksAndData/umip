@@ -36,19 +36,10 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
-from umip.knapsack_builder import (
-    KnapsackConstraintBuilder,
-    KnapsackDecisionVariableBuilder,
-    KnapsackObjectiveFunctionBuilder,
-)
-
 from umip import (
-    AbstractConstraintBuilder,
     AbstractDataPreparator,
-    AbstractDecisionVariableBuilder,
     AbstractMipModel,
     AbstractMipModelFactory,
-    AbstractObjectiveBuilder,
     AbstractOptimizationSolver,
     VariableDomain,
 )
@@ -58,6 +49,11 @@ from umip.abstract_dataclasses import (
     AbstractOutputData,
 )
 from umip.enums import SolverType
+from umip.knapsack_builder import (
+    KnapsackConstraintBuilder,
+    KnapsackDecisionVariableBuilder,
+    KnapsackObjectiveFunctionBuilder,
+)
 
 ITEM_ID = "item_id"
 ITEM_IS_SELECTED_VAR = "item_is_selected_var"
@@ -115,15 +111,9 @@ class KnapsackDataPreparator(AbstractDataPreparator):
 
         if self._settings.enable_at_least_one_same_volume_pair or self._settings.enable_max_volume_difference:
             item_pair = (
-                item.select(
-                    pl.col(ITEM_ID).alias(INDEX_I),
-                    pl.col(VOLUME_COLUMN).alias(VOLUME_I)
-                )
+                item.select(pl.col(ITEM_ID).alias(INDEX_I), pl.col(VOLUME_COLUMN).alias(VOLUME_I))
                 .join(
-                    item.select(
-                        pl.col(ITEM_ID).alias(INDEX_J),
-                        pl.col(VOLUME_COLUMN).alias(VOLUME_J)
-                    ),
+                    item.select(pl.col(ITEM_ID).alias(INDEX_J), pl.col(VOLUME_COLUMN).alias(VOLUME_J)),
                     how="cross",
                 )
                 .filter(pl.col(INDEX_I) != pl.col(INDEX_J))
@@ -246,7 +236,7 @@ class KnapsackLargeSmallGapConstraintBuilder(KnapsackConstraintBuilder):
         item_pairs_with_selected_variable = self._join_item_column_to_pairs(
             item_pair=data.item_pair,
             item=data.item,
-            item_id_column = ITEM_ID,
+            item_id_column=ITEM_ID,
             item_column=ITEM_IS_SELECTED_VAR,
             index_i_column=INDEX_I,
             index_j_column=INDEX_J,
@@ -306,17 +296,27 @@ class KnapsackSameVolumePairsConstraintBuilder(KnapsackConstraintBuilder):
         )
 
         variables = (
-            item_pairs_with_selected_variable.select(item_i_is_selected_var_column, item_j_is_selected_var_column, SAME_VOLUME_VAR)
+            item_pairs_with_selected_variable.select(
+                item_i_is_selected_var_column, item_j_is_selected_var_column, SAME_VOLUME_VAR
+            )
             .to_numpy()
             .astype(object)
         )
 
         self._build_variables_link_constraints(solver=solver, variables=variables, pair_count=len(data.item_pair))
         self._build_forward_same_volume_constraints(
-            solver=solver, item_pair=data.item_pair, variables=variables, pair_count=len(data.item_pair), BIG_M_MAX_VOLUME=BIG_M_MAX_VOLUME
+            solver=solver,
+            item_pair=data.item_pair,
+            variables=variables,
+            pair_count=len(data.item_pair),
+            BIG_M_MAX_VOLUME=BIG_M_MAX_VOLUME,
         )
         self._build_reverse_same_volume_constraints(
-            solver=solver, item_pair=data.item_pair, variables=variables, pair_count=len(data.item_pair), BIG_M_MAX_VOLUME=BIG_M_MAX_VOLUME
+            solver=solver,
+            item_pair=data.item_pair,
+            variables=variables,
+            pair_count=len(data.item_pair),
+            BIG_M_MAX_VOLUME=BIG_M_MAX_VOLUME,
         )
         self._build_at_least_one_pair_constraint(
             solver=solver, y=data.item_pair.get_column(SAME_VOLUME_VAR).to_numpy(), pair_count=len(data.item_pair)

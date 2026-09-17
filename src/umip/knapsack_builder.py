@@ -15,13 +15,13 @@
 #  limitations under the License.
 #
 
-import polars as pl
-
 from abc import ABC
 
+import polars as pl
+
 from umip.abstract_constr_builder import AbstractConstraintBuilder
-from umip.abstract_var_builder import AbstractDecisionVariableBuilder
 from umip.abstract_obj_builder import AbstractObjectiveBuilder
+from umip.abstract_var_builder import AbstractDecisionVariableBuilder
 
 
 class KnapsackDecisionVariableBuilder(AbstractDecisionVariableBuilder, ABC):
