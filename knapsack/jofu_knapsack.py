@@ -35,6 +35,11 @@ import polars as pl
 from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
+from knapsack.knapsack_builder import (
+    KnapsackConstraintBuilder,
+    KnapsackDecisionVariableBuilder,
+    KnapsackObjectiveFunctionBuilder,
+)
 
 from umip import (
     AbstractDataPreparator,
@@ -49,11 +54,6 @@ from umip.abstract_dataclasses import (
     AbstractOutputData,
 )
 from umip.enums import SolverType
-from umip.knapsack_builder import (
-    KnapsackConstraintBuilder,
-    KnapsackDecisionVariableBuilder,
-    KnapsackObjectiveFunctionBuilder,
-)
 
 ITEM_ID = "item_id"
 ITEM_IS_SELECTED_VAR = "item_is_selected_var"
@@ -68,6 +68,9 @@ INDEX_I = "index_i"
 INDEX_J = "index_j"
 VOLUMES_ARE_EQUAL = "volumes_are_equal"
 OBJECTIVE_PROFIT_CONTRIBUTION = "objective_profit_contribution"
+GRANULARITY_ANALYTICS_VARIABLE = "variable"
+GRANULARITY_ANALYTICS_TOTAL = "total"
+OBJECTIVE_FUNCTION_MAXIMIZE_PROFIT = "maximize_profit"
 
 
 @dataclass(frozen=True)
@@ -426,13 +429,13 @@ class KnapsackObjectiveBuilder(KnapsackObjectiveFunctionBuilder):
 
     def __init__(self, logger: LoggerInterface) -> None:
         super().__init__(logger=logger)
-        self.objective_name = "maximize_profit"
+        self.objective_name = OBJECTIVE_FUNCTION_MAXIMIZE_PROFIT
         self.add_analytics_granularity(
-            granularity_name="variable",
+            granularity_name=GRANULARITY_ANALYTICS_VARIABLE,
             analytics_calculator=self._variable_analytics,
         )
         self.add_analytics_granularity(
-            granularity_name="total",
+            granularity_name=GRANULARITY_ANALYTICS_TOTAL,
             analytics_calculator=self._total_analytics,
         )
 
@@ -450,7 +453,9 @@ class KnapsackObjectiveBuilder(KnapsackObjectiveFunctionBuilder):
         )
 
     def _total_analytics(self, analytics_data: KnapsackOutputData) -> float:
-        variable_analytics = self.get_analytics(granularity="variable", analytics_data=analytics_data)
+        variable_analytics = self.get_analytics(
+            granularity=GRANULARITY_ANALYTICS_VARIABLE, analytics_data=analytics_data
+        )
         return float(variable_analytics.get_column(OBJECTIVE_PROFIT_CONTRIBUTION).sum())
 
 
@@ -543,8 +548,8 @@ def main() -> None:
 
     output = model.get_output_data()
     print(output.item[[ITEM_ID, ITEM_IS_SELECTED_VALUE]])
-    print(model.get_analytics(granularity="variable"))
-    print(model.get_analytics(granularity="total"))
+    print(model.get_analytics(granularity=GRANULARITY_ANALYTICS_VARIABLE))
+    print(model.get_analytics(granularity=GRANULARITY_ANALYTICS_TOTAL))
 
     selected = output.item.filter(pl.col(ITEM_IS_SELECTED_VALUE))
 
