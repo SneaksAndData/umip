@@ -17,7 +17,6 @@
 
 from abc import ABC, abstractmethod
 
-import polars as pl
 from adapta.logs import LoggerInterface
 
 from umip.abstract_dataclasses import AbstractInternalData
@@ -43,34 +42,3 @@ class AbstractConstraintBuilder(ABC):
         :param data: The data (e.g. dataframes) providing variables and parameters for the constraints.
         :return:
         """
-
-    @staticmethod
-    def _join_item_column_to_pairs(
-        item_pair: pl.DataFrame,
-        item: pl.DataFrame,
-        item_column: str,
-        index_i_column: str,
-        index_j_column: str,
-        item_i_is_selected_var_column: str,
-        item_j_is_selected_var_column: str,
-    ) -> pl.DataFrame:
-        """
-        Joins the item column to the item pair dataframe on the index columns.
-        """
-        return item_pair.join(
-            item.with_row_index(index_i_column).select(
-                index_i_column,
-                pl.col(item_column).alias(item_i_is_selected_var_column),
-            ),
-            on=index_i_column,
-            how="left",
-            validate="m:1",
-        ).join(
-            item.with_row_index(index_j_column).select(
-                index_j_column,
-                pl.col(item_column).alias(item_j_is_selected_var_column),
-            ),
-            on=index_j_column,
-            how="left",
-            validate="m:1",
-        )

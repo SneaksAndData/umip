@@ -36,6 +36,12 @@ from adapta.logs import LoggerInterface, SemanticLogger
 from adapta.logs.handlers.safe_stream_handler import SafeStreamHandler
 from adapta.logs.models import LogLevel
 
+from umip.knapsack_builder import (
+    KnapsackConstraintBuilder,
+    KnapsackDecisionVariableBuilder,
+    KnapsackObjectiveFunctionBuilder,
+)
+
 from umip import (
     AbstractConstraintBuilder,
     AbstractDataPreparator,
@@ -131,7 +137,7 @@ class KnapsackDataPreparator(AbstractDataPreparator):
         )
 
 
-class KnapsackIsSelectedVariableBuilder(AbstractDecisionVariableBuilder):
+class KnapsackIsSelectedVariableBuilder(KnapsackDecisionVariableBuilder):
     """
     Creates variable x using build_column_variables, stored as a column in 'item'.
     After solving, unpack_column_variables replaces the solver variable objects with solved values.
@@ -159,7 +165,7 @@ class KnapsackIsSelectedVariableBuilder(AbstractDecisionVariableBuilder):
         return data
 
 
-class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
+class KnapsackSameVolumePairsVariableBuilder(KnapsackDecisionVariableBuilder):
     """
     Creates y_i,j variables for all distinct item pairs.
     After solving, unpack_column_variables replaces the solver variable objects with solved values.
@@ -190,7 +196,7 @@ class KnapsackSameVolumePairsVariableBuilder(AbstractDecisionVariableBuilder):
         return data
 
 
-class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
+class KnapsackCapacityConstraintBuilder(KnapsackConstraintBuilder):
     """
     Adds the joint capacity constraint: sum(x_i) <= C
 
@@ -209,7 +215,7 @@ class KnapsackCapacityConstraintBuilder(AbstractConstraintBuilder):
         )
 
 
-class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
+class KnapsackLargeSmallGapConstraintBuilder(KnapsackConstraintBuilder):
     """
     Class for adding the large-small difference gap constraint to the knapsack problem.
     """
@@ -264,7 +270,7 @@ class KnapsackLargeSmallGapConstraintBuilder(AbstractConstraintBuilder):
         )
 
 
-class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
+class KnapsackSameVolumePairsConstraintBuilder(KnapsackConstraintBuilder):
     """
     Requires at least one selected pair with the same volume.
     Adds constraints to ensure that if two items have the same volume and are both selected, then the corresponding y_i,j variable is set to 1.
@@ -406,7 +412,7 @@ class KnapsackSameVolumePairsConstraintBuilder(AbstractConstraintBuilder):
         )
 
 
-class KnapsackObjectiveBuilder(AbstractObjectiveBuilder):
+class KnapsackObjectiveBuilder(KnapsackObjectiveFunctionBuilder):
     """
     Adds objective term: maximize profit and adds granularity analytics.
     """
