@@ -115,10 +115,15 @@ class KnapsackDataPreparator(AbstractDataPreparator):
 
         if self._settings.enable_at_least_one_same_volume_pair or self._settings.enable_max_volume_difference:
             item_pair = (
-                item.select(pl.col(VOLUME_COLUMN).alias(VOLUME_I))
-                .with_row_index(INDEX_I)
+                item.select(
+                    pl.col(ITEM_ID).alias(INDEX_I),
+                    pl.col(VOLUME_COLUMN).alias(VOLUME_I)
+                )
                 .join(
-                    item.select(pl.col(VOLUME_COLUMN).alias(VOLUME_J)).with_row_index(INDEX_J),
+                    item.select(
+                        pl.col(ITEM_ID).alias(INDEX_J),
+                        pl.col(VOLUME_COLUMN).alias(VOLUME_J)
+                    ),
                     how="cross",
                 )
                 .filter(pl.col(INDEX_I) != pl.col(INDEX_J))
@@ -241,6 +246,7 @@ class KnapsackLargeSmallGapConstraintBuilder(KnapsackConstraintBuilder):
         item_pairs_with_selected_variable = self._join_item_column_to_pairs(
             item_pair=data.item_pair,
             item=data.item,
+            item_id_column = ITEM_ID,
             item_column=ITEM_IS_SELECTED_VAR,
             index_i_column=INDEX_I,
             index_j_column=INDEX_J,
@@ -291,6 +297,7 @@ class KnapsackSameVolumePairsConstraintBuilder(KnapsackConstraintBuilder):
         item_pairs_with_selected_variable = self._join_item_column_to_pairs(
             item_pair=data.item_pair,
             item=data.item,
+            item_id_column=ITEM_ID,
             item_column=ITEM_IS_SELECTED_VAR,
             index_i_column=INDEX_I,
             index_j_column=INDEX_J,

@@ -28,7 +28,7 @@ class KnapsackDecisionVariableBuilder(AbstractDecisionVariableBuilder, ABC):
     """
     Abstract base class for knapsack decision variable builders.
     """
-    pass
+
 
 class KnapsackConstraintBuilder(AbstractConstraintBuilder, ABC):
     """
@@ -39,6 +39,7 @@ class KnapsackConstraintBuilder(AbstractConstraintBuilder, ABC):
     def _join_item_column_to_pairs(
         item_pair: pl.DataFrame,
         item: pl.DataFrame,
+        item_id_column: str,
         item_column: str,
         index_i_column: str,
         index_j_column: str,
@@ -49,20 +50,20 @@ class KnapsackConstraintBuilder(AbstractConstraintBuilder, ABC):
         Joins the item column to the item pair dataframe on the index columns.
         """
         return item_pair.join(
-            item.with_row_index(index_i_column).select(
-                index_i_column,
+            item.select(
+                item_id_column,
                 pl.col(item_column).alias(item_i_is_selected_var_column),
             ),
-            on=index_i_column,
-            how="left",
+            left_on=index_i_column,
+            right_on=item_id_column,
             validate="m:1",
         ).join(
-            item.with_row_index(index_j_column).select(
-                index_j_column,
+            item.select(
+                item_id_column,
                 pl.col(item_column).alias(item_j_is_selected_var_column),
             ),
-            on=index_j_column,
-            how="left",
+            left_on=index_j_column,
+            right_on=item_id_column,
             validate="m:1",
         )
 
@@ -71,4 +72,3 @@ class KnapsackObjectiveFunctionBuilder(AbstractObjectiveBuilder, ABC):
     """
     Abstract base class for knapsack objective function builders.
     """
-    pass
