@@ -1906,7 +1906,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adapta", specifier = ">=5.0,<6" },
+    { name = "adapta", specifier = ">=4.0,<6" },
     { name = "dataclasses-json", specifier = ">=0.6.7,<0.7" },
     { name = "docplex", marker = "extra == 'docplex'", specifier = ">=2.25,<3" },
     { name = "gurobipy", marker = "extra == 'gurobi'" },
